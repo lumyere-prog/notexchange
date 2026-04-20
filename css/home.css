@@ -1,0 +1,596 @@
+body{
+    margin:0;
+    min-height:100vh;
+
+    background-image: url("/photos/background.png");
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+}
+
+.top-area{
+position: sticky;
+top: 0;
+background-image: url("/photos/background.png");
+z-index: 1000;
+padding-bottom: 10px;
+}
+
+#topbar{
+    padding:15px 20px;
+}
+
+/* top row */
+
+.header-row{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    margin-top: 3vh;
+}
+
+/* title */
+
+#topbar .sign{
+    color:#9D182B;
+    font-size:26px;
+    font-weight:bold;
+    margin:0;
+}
+
+/* bell */
+
+#topbar .bell{
+    height:28px;
+    width:28px;
+    padding:8px;
+    border-radius:50%;
+    border: 2px solid #f2a6a6;
+}
+#topbar .button{
+    background:none;
+    border:none;
+    cursor:pointer;
+}
+.bell-container{
+position:relative;
+cursor:pointer;
+}
+
+.notification-badge{
+position:absolute;
+top:-5px;
+right:-5px;
+
+background:red;
+color:white;
+
+font-size:11px;
+font-weight:bold;
+
+padding:2px 6px;
+
+border-radius:50%;
+}
+/* profile row */
+
+.profile-row{
+    display:flex;
+    align-items:center;
+    gap:12px;
+    margin-top:15px;
+}
+
+/* profile picture */
+
+.profile{
+    height:55px;
+    width:55px;
+    border-radius:50%;
+}
+
+/* name */
+
+.name{
+    color:#9D182B;
+    font-size:18px;
+    font-weight:bold;
+}
+
+/* search row */
+/* Search Bar */
+
+.search-container{
+    margin-top:15px;
+    margin-bottom:20px;
+    width: 90%;
+    padding-left: .5vh;
+}
+
+.search-input{
+    width:100%;
+    padding:12px 15px;
+    border-radius:12px;
+    border:none;
+    outline:none;
+    font-size:14px;
+}
+
+/* Categories */
+
+.category-title{
+    margin-bottom:10px;
+    padding-left: .5vh;
+}
+
+/* Scroll container */
+
+.categories-scroll{
+    display:flex;
+    overflow-x:auto;
+    gap:10px;
+    padding-bottom:5px;
+
+    /* smooth scrolling */
+    scroll-behavior:smooth;
+    padding-left: .5vh;
+}
+
+/* Hide scrollbar (mobile look) */
+
+.categories-scroll::-webkit-scrollbar{
+    display:none;
+}
+
+/* Category buttons */
+
+.category{
+    flex:0 0 auto;
+    padding:8px 16px;
+    border:none;
+    border-radius:20px;
+    background:#f2a6a6;
+    cursor:pointer;
+    white-space:nowrap;
+    font-size:14px;
+}
+
+/* Active category */
+
+.category.active{
+    background:#9D182B;
+    color:white;
+}
+
+/* Notes grid */
+.notes-feed{
+    width:92%;
+    max-width:450px;
+    margin:20px auto;
+    padding-bottom: 70px; /* adjust based on navbar height */
+
+}
+
+.note-card{
+    background:#ead7c8;
+    border-radius:14px;
+    padding:12px;
+    margin-bottom:16px;
+    cursor:pointer;
+}
+
+/* smaller preview image */
+
+.note-image{
+    height:90px;
+    background:#e68383;
+    border-radius:10px;
+    margin-bottom:8px;
+}
+
+/* text sizes */
+
+.note-code{
+    font-size:11px;
+    color:#7c5b5b;
+}
+
+.note-title{
+    font-size:16px;
+    margin:3px 0;
+}
+
+.note-desc{
+    font-size:13px;
+    color:#444;
+}
+
+/* author */
+
+.note-author{
+    display:flex;
+    align-items:center;
+    margin-top:6px;
+}
+
+.author-pic{
+    width:22px;
+    height:22px;
+    border-radius:50%;
+    margin-right:6px;
+}
+
+/* actions */
+
+.note-actions{
+    display:flex;
+    align-items:center;
+    gap:15px;
+    margin-top:15px;
+}
+
+/* reddit vote */
+
+.vote-box{
+    display:flex;
+    align-items:center;
+    gap:6px;
+}
+
+.vote-btn{
+    border:none;
+    background:none;
+    font-size:18px;
+    cursor:pointer;
+}
+
+.vote-btn:hover{
+    color:#ff6a00;
+}
+
+.vote-count{
+    font-weight:bold;
+}
+
+/* comment section */
+
+.comment-section{
+    margin-top:15px;
+}
+
+.comment-input{
+    width:80%;
+    padding:6px;
+}
+
+.comment-btn{
+    padding:6px 10px;
+}
+
+.comment{
+    background:#f3f3f3;
+    padding:8px;
+    border-radius:6px;
+    margin-top:6px;
+}
+
+.post-modal{
+    position:fixed;
+    top:0;
+    left:0;
+    width:100%;
+    height:100%;
+    background:rgba(0,0,0,0.45);
+    display:none;
+    justify-content:center;
+    align-items:center;
+    z-index:9999;
+}
+
+.modal-content{
+    background:#f3d6d6;
+    width:90%;
+    max-width:420px;
+    max-height:85vh;
+    overflow-y:auto;
+    border-radius:18px;
+    padding:18px;
+    animation:modalPop 0.25s ease;
+}
+
+@keyframes modalPop{
+    from{
+        transform:scale(.9);
+        opacity:0;
+    }
+    to{
+        transform:scale(1);
+        opacity:1;
+    }
+}
+
+.close-btn{
+    float:right;
+    font-size:18px;
+    cursor:pointer;
+}
+
+.note-preview-text{
+    background:#e88383;
+    border-radius:14px;
+    padding:16px;
+    margin-bottom:10px;
+
+    max-height:120px;
+    overflow:hidden;
+
+    font-size:13px;
+    line-height:1.4;
+}
+
+.modal-text{
+white-space:pre-line;
+}
+
+.note-footer{
+display:flex;
+justify-content:space-between;
+align-items:center;
+margin-top:10px;
+}
+
+.fav-btn{
+border:none;
+background:none;
+font-size:18px;
+cursor:pointer;
+}
+
+.fav-btn:hover{
+transform:scale(1.1);
+}
+
+
+/* search  */
+.search-page{
+position:fixed;
+top:0;
+left:0;
+width:100%;
+height:100%;
+
+background-image:url("/photos/background.png");
+background-size:cover;
+
+transform:translateY(100%);
+transition:0.3s;
+
+z-index:2000;
+padding:20px;
+}
+
+.search-page.active{
+transform:translateY(0);
+}
+
+
+/* header */
+
+.search-header{
+display:flex;
+align-items:center;
+gap:10px;
+padding:10px 15px;
+}
+
+.search-full{
+flex:1;
+max-width:80%;
+padding:8px 12px;
+border-radius:10px;
+border:1px solid #999;
+background:#eee;
+font-size:14px;
+}
+
+.back-btn{
+font-size:22px;
+cursor:pointer;
+}
+
+/* recent */
+
+.recent-title{
+margin-top:20px;
+}
+
+
+.recent-item{
+display:flex;
+align-items:center;
+gap:12px;
+padding:12px 0;
+}
+
+.recent-avatar{
+width:40px;
+height:40px;
+border-radius:50%;
+}
+
+.remove{
+margin-left:auto;
+cursor:pointer;
+}
+
+.search-icon{
+font-size:20px;
+}
+
+/* chat bot */
+
+/* Floating Button */
+
+#chatbot-btn{
+    position: fixed;
+    bottom: 100px;
+    right: 20px;
+    width: 60px;
+    height: 60px;
+    background: #9D182B;
+    color: white;
+    font-size: 28px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+    z-index: 10000;
+}
+
+/* Chat Modal */
+
+#chatbot-modal{
+    position: fixed;
+    bottom: 0;
+    right: 0;
+    width: 100%;
+    height: 85vh; /* not full screen */
+    max-width: 420px; /* mobile app width */
+    background: white;
+    border-radius: 20px 20px 0 0; /* rounded top */
+    display: none;
+    flex-direction: column;
+    box-shadow: 0 -5px 20px rgba(0,0,0,0.3);
+    z-index: 10001;
+}
+
+/* Header */
+
+.chat-header{
+    background: #9D182B;
+    color: white;
+    padding: 15px;
+
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+
+    font-size: 18px;
+    font-weight: bold;
+
+}.chat-header{
+    background: #9D182B;
+    color: white;
+    padding: 15px;
+
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+
+    font-size: 18px;
+    font-weight: bold;
+}
+
+#close-chat{
+    background: none;
+    border: none;
+    color: white;
+    font-size: 16px;
+    cursor: pointer;
+}
+
+/* Body */
+
+.chat-body{
+    flex: 1;
+    padding: 10px;
+    overflow-y: auto;
+    background: #f5f5f5;
+}
+
+.bot-msg{
+    background: #e0e0e0;
+    padding: 8px 12px;
+    border-radius: 10px;
+    margin-bottom: 10px;
+    width: fit-content;
+}
+
+/* Footer */
+
+.chat-footer{
+    display: flex;
+    border-top: 1px solid #ddd;
+}
+
+#chat-input{
+    flex: 1;
+    border: none;
+    padding: 10px;
+    outline: none;
+}
+
+#send-btn{
+    background: #9D182B;
+    color: white;
+    border: none;
+    padding: 0 15px;
+    cursor: pointer;
+}
+
+/* Bottom Navigation */
+
+.bottom-nav{
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+
+    background: #fff;
+
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+
+    padding: 10px 0;
+
+    box-shadow: 0 -4px 10px rgba(0,0,0,0.1);
+
+    z-index: 999;
+}
+
+/* Nav Items */
+
+.nav-item{
+    font-size: 22px;
+    text-decoration: none;
+    color: black;
+    opacity: 0.6;
+}
+
+/* Active Page */
+
+.nav-item.active{
+    opacity: 1;
+    background: #f4c7c7;
+    padding: 6px 10px;
+    border-radius: 10px;
+}
+
+/* Center Add Button */
+
+.add-btn{
+    width: 50px;
+    height: 50px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 22px;
+    background: #9D182B;
+    color: white;
+    border-radius: 20%;
+    margin-top: -5px; /* float effect */
+}
+

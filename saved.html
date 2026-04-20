@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NoteXchange - Save</title>
+
+<link rel="stylesheet" href="/css/saved.css">
+<link rel="stylesheet" href="/css/global.css">
+</head>
+<body>
+    
+<div class="saved-header">
+    <h2>Favorites</h2>
+</div>
+
+<div class="saved-controls">
+    <button onclick="setView('grid')">⬜</button>
+    <button onclick="setView('list')">☰</button>
+</div>
+
+<div id="postModal" class="post-modal">
+    <div class="modal-content">
+        <span class="close-btn" onclick="closeModal()">✕</span>
+        <div id="modalBody"></div>
+    </div>
+</div>
+
+<div id="savedContainer" class="saved-grid"></div>
+
+
+
+    <div class="bottom-nav">
+
+    <a href="home.html" class="nav-item">
+        🏠
+    </a>
+
+    <a href="saved.html" class="nav-item">
+        💻
+    </a>
+
+    <a href="upload.html" class="nav-item add-btn">
+        ➕
+    </a>
+
+    <a href="profile.html" class="nav-item">
+        👤
+    </a>
+
+</div>
+
+<script src="/js/script.js"></script>
+<script src="/js/nav.js"></script>
+<script type="module" src="/js/auth-state.js"></script>
+</body>
+</html>

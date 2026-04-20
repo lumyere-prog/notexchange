@@ -1,0 +1,126 @@
+/* prevent horizontal scroll */
+body {
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+    font-family: Arial, sans-serif;
+}
+
+/* =========================
+   LOGO / TITLE
+========================= */
+.title {
+    display: flex;
+    justify-content: center;
+    margin-top: 10vh;
+    margin-bottom: 10px;
+}
+
+.title .logo {
+    width: 70vw;
+    max-width: 300px;
+}
+
+/* =========================
+   LOGIN CONTAINER
+========================= */
+.login {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 100%;
+    padding: 0 5vw;
+    box-sizing: border-box;
+
+    margin-top: 10vh; /* 👈 pushes everything down */
+}
+
+/* Title */
+.sign {
+    font-size: 28px;
+    margin-bottom: 10px;
+    text-align: center;
+    color: #9D182B;
+}
+
+/* Subtitle */
+#sign-p {
+    font-size: 16px;          /* bigger */
+    margin-bottom: 25px;
+    text-align: center;
+    color: #9D182B;           /* same color as "Sign in" */
+    font-weight: 500;         /* slightly stronger */
+}
+
+/* =========================
+   MICROSOFT BUTTON
+========================= */
+.ms-btn {
+    width: 90%;
+    max-width: 400px;
+    padding: 14px;
+    background-color: #2F2F2F;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-size: 16px;
+    cursor: pointer;
+    transition: 0.2s ease;
+}
+
+/* Press effect */
+.ms-btn:active {
+    transform: scale(0.98);
+}
+
+/* =========================
+   NOTE TEXT
+========================= */
+.note {
+    font-size: 15px;          /* bigger */
+    color: #9D182B;           /* same as title */
+    margin-top: 14px;
+    text-align: center;
+    font-weight: 500;
+}
+
+/* =========================
+   SMALL SCREEN FIXES
+========================= */
+@media (max-width: 350px) {
+    .title .logo {
+        width: 55vw;
+    }
+
+    .sign {
+        font-size: 24px;
+    }
+
+    .ms-btn {
+        padding: 12px;
+        font-size: 14px;
+    }
+}
+
+.footer-terms {
+    position: fixed;
+    bottom: 10px;
+    width: 100%;
+    text-align: center;
+    font-size: 12px;
+    color: #9D182B;
+    background: transparent;
+    font-weight: 500;
+    user-select: none;
+    padding: 5px 0;
+}
+
+.footer-terms a {
+    color: #9D182B;
+    text-decoration: underline;
+}
+
+.footer-terms a:hover,
+.footer-terms a:focus {
+    text-decoration: none;
+}

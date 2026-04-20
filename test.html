@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>NoteXchange Test</title>
+</head>
+<body>
+
+<h1>🔥 NoteXchange Test Panel</h1>
+
+<h2>Create User</h2>
+<input id="username" placeholder="Username">
+<input id="msAcc" placeholder="MS Account">
+<input id="points" placeholder="Points">
+<button onclick="createUser()">Create User</button>
+
+<h2>Create Post</h2>
+<input id="title" placeholder="Title">
+<input id="desc" placeholder="Description">
+<input id="userID" placeholder="User ID">
+<button onclick="createPost()">Create Post</button>
+
+<h2>Logs</h2>
+<pre id="log"></pre>
+
+<script>
+const API = 'http://localhost:3000';
+
+function log(msg) {
+  document.getElementById('log').textContent += msg + '\n';
+}
+
+// 🔹 Create User
+async function createUser() {
+  const username = document.getElementById('username').value;
+  const msAcc = document.getElementById('msAcc').value;
+  const points = document.getElementById('points').value;
+
+  const res = await fetch(`${API}/user`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({ username, msAcc })
+  });
+
+  const data = await res.json();
+  log('User Created: ' + JSON.stringify(data));
+}
+
+// 🔹 Create Post
+async function createPost() {
+  const title = document.getElementById('title').value;
+  const description = document.getElementById('desc').value;
+  const userID = document.getElementById('userID').value;
+
+  const res = await fetch(`${API}/posts`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({ title, description, userID })
+  });
+
+  const data = await res.json();
+  log('Post Created: ' + JSON.stringify(data));
+}
+</script>
+
+</body>
+</html>

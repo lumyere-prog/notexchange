@@ -1,0 +1,218 @@
+body{
+    margin:0;
+    min-height:100vh;
+
+    background-image: url("/photos/background.png");
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+}
+
+/* grid */
+/* HEADER */
+.saved-header{
+    padding:15px 20px;
+    font-size:20px;
+    font-weight:bold;
+    color:#9D182B;
+}
+
+/* GRID */
+.saved-grid{
+    display:grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap:20px;        /* 🔥 this controls BOTH row + column spacing */
+    padding:15px;
+}
+/* CARD */
+.saved-card{
+    background:#f3d6d6;
+    border-radius:18px;
+    padding:18px;
+    box-shadow:0 4px 10px rgba(0,0,0,0.08);
+    cursor:pointer;
+    transition:0.2s ease;
+    position:relative;
+    margin-bottom:15px;
+}
+
+/* HOVER / TAP EFFECT */
+.saved-card:active{
+    transform:scale(0.97);
+}
+
+.saved-controls{
+    display:flex;
+    gap:10px;
+    padding:10px 15px;   /* 🔥 aligns with cards */
+}
+
+/* SUBJECT TAG */
+.saved-top{
+    font-size:11px;
+    background:#9D182B;
+    color:white;
+    display:inline-block;
+    padding:4px 8px;
+    border-radius:8px;
+    margin-bottom:8px;
+}
+
+/* TITLE */
+.saved-title{
+    font-weight:bold;
+    font-size:15px;
+    margin-bottom:6px;
+}
+
+/* AUTHOR */
+.saved-author{
+    font-size:12px;
+    opacity:0.7;
+}
+
+/* PIN ICON (top right) */
+.saved-card::after{
+    content:"🔖";
+    position:absolute;
+    top:10px;
+    right:12px;
+    font-size:14px;
+}
+
+/* EMPTY STATE */
+/* EMPTY STATE */
+.empty{
+    text-align:center;
+    margin-top:50px;
+    opacity:0.7;
+}
+
+
+/* MODAL CARD */
+.modal-note{
+    background:#e48b8b;
+    padding:15px;
+    border-radius:15px;
+}
+
+
+/* AUTHOR SECTION */
+.note-author{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    margin-top:5px;
+}
+
+/* PROFILE IMAGE (small circle only) */
+.author-pic{
+    width:35px;
+    height:35px;
+    border-radius:50%;
+    object-fit:cover;
+}
+
+
+/* TEXT CONTENT */
+.note-full{
+    margin-top:10px;
+    font-size:14px;
+    line-height:1.5;
+}
+
+
+/* ONLY CONTENT IMAGES (NOT PROFILE) */
+.note-full img{
+    width:100%;
+    max-height:200px;
+    object-fit:cover;
+    border-radius:10px;
+    margin:10px 0;
+}
+
+
+/* MODAL BACKGROUND */
+.post-modal{
+    display:none; /* hidden by default */
+}
+
+
+
+
+
+
+/* footer */
+.chat-footer{
+    display: flex;
+    border-top: 1px solid #ddd;
+}
+
+#chat-input{
+    flex: 1;
+    border: none;
+    padding: 10px;
+    outline: none;
+}
+
+#send-btn{
+    background: #9D182B;
+    color: white;
+    border: none;
+    padding: 0 15px;
+    cursor: pointer;
+}
+
+/* Bottom Navigation */
+
+.bottom-nav{
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+
+    background: #fff;
+
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+
+    padding: 10px 0;
+
+    box-shadow: 0 -4px 10px rgba(0,0,0,0.1);
+
+    z-index: 999;
+}
+
+/* Nav Items */
+
+.nav-item{
+    font-size: 22px;
+    text-decoration: none;
+    color: black;
+    opacity: 0.6;
+}
+
+/* Active Page */
+
+.nav-item.active{
+    opacity: 1;
+    background: #f4c7c7;
+    padding: 6px 10px;
+    border-radius: 10px;
+}
+
+/* Center Add Button */
+
+.add-btn{
+    width: 50px;
+    height: 50px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 22px;
+    background: #9D182B;
+    color: white;
+    border-radius: 20%;
+    margin-top: -5px; /* float effect */
+}

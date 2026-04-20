@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NoteXchange - Save</title>
+
+<link rel="stylesheet" href="/css/profile.css">
+<link rel="stylesheet" href="/css/global.css">
+</head>
+<body>
+    
+    <div class="profile-page">
+
+    <!-- HEADER -->
+    <div class="top-row">
+        <h2 class="logo">Note Exchange</h2>
+
+        <div class="menu-container">
+            <span class="menu-btn" onclick="toggleMenu()">⋯</span>
+
+            <div id="dropdownMenu" class="dropdown">
+                <p class="menu-title">☰ Settings</p>
+                <hr>
+                <p>Edit profiles</p>
+                <p>Settings and privacy</p>
+                <p>Login activity</p>
+                <button class="logout-btn">Log out</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- PROFILE INFO -->
+    <div class="profile-info">
+
+        <img src="/photos/guest.jpg" class="profile-img">
+
+        <div>
+            <h2 class="name">User</h2>
+            <p class="username">@User</p>
+        </div>
+
+    </div>
+
+    <!-- BIO -->
+    <div class="bio">
+        <p><strong>BIO:</strong></p>
+        <p><strong>INTEREST:</strong></p>
+    </div>
+
+    <!-- STATS -->
+    <div class="stats">
+        <div><strong>7</strong><span>Post</span></div>
+        <div><strong>90.03k</strong><span>Points</span></div>
+        <div><strong>100</strong><span>Votes</span></div>
+    </div>
+
+    <!-- TABS -->
+    <div class="tabs">
+        <span class="active">My Notes</span>
+        <span>Comments</span>
+    </div>
+
+    <!-- POSTS -->
+    <div class="profile-post">
+
+        <div class="post-image"></div>
+
+        <div class="post-content">
+            <p class="author">Jennifer Cabutin</p>
+            <h3>Database</h3>
+            <p class="desc">Database...</p>
+
+            <div class="actions">
+                <span>▲ 273</span>
+                <span>▼ 273</span>
+                <span>💬 273</span>
+                <span>🔖</span>
+            </div>
+        </div>
+
+    </div>
+
+</div>
+
+
+    
+    <div class="bottom-nav">
+
+    <a href="home.html" class="nav-item">
+        🏠
+    </a>
+
+    <a href="saved.html" class="nav-item">
+        💻
+    </a>
+
+    <a href="upload.html" class="nav-item add-btn">
+        ➕
+    </a>
+
+    <a href="profile.html" class="nav-item">
+        👤
+    </a>
+
+</div>
+<script type="module" src="/js/auth-state.js"></script>
+<script type="module" src="/js/profile.js"></script>
+<script type="module" src="js/logout.js"></script>
+<script src="/js/nav.js"></script>
+</body>
+</html>

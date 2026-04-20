@@ -1,0 +1,288 @@
+body{
+    margin:0;
+    font-family: Arial, sans-serif;
+    background: #f7f2ec;
+
+    display:flex;
+    justify-content:center;
+    align-items:flex-start;
+
+    min-height:100vh;
+    padding:20px 0;
+    overflow-x:hidden;
+}
+
+/* Overlay */
+#forgot-overlay{
+    position: fixed;
+    top:0;
+    left:0;
+    width:100%;
+    height:100%;
+    background: rgba(0,0,0,0.4);
+    display:none;
+    z-index:1000;
+}
+
+#forgot-overlay.show{
+    display:block;
+}
+
+/* Modal */
+#forgot-modal{
+    position: fixed;
+    bottom: 0;
+    left: 50%;
+    transform: translateX(-50%);
+
+    width: 100%;
+    max-width: 400px;
+    height: 60vh;
+
+    background: white;
+    border-radius: 20px 20px 0 0;
+
+    padding: 25px 20px 30px; /* 🔥 FIXED */
+    
+    display:flex;
+    flex-direction: column;
+    gap: 18px; /* 🔥 FIXED */
+
+    opacity:0;
+    pointer-events:none;
+
+    z-index:1001;
+}
+
+#forgot-modal.show{
+    opacity:1;
+    pointer-events:auto;
+}
+
+/* Container */
+.auth-container{
+    width:90%;
+    max-width:350px;
+    margin:0 auto;
+    text-align:center;
+}
+
+/* Logo */
+.logo{
+    width:170px;
+    display:block;
+    margin:10px auto 5px;
+}
+
+/* Title */
+h2{
+    color:#9D182B;
+    margin:5px 0;
+}
+
+.subtitle{
+    font-size:12px;
+    color:#666;
+    margin-bottom:20px;
+}
+
+/* Forms */
+.form{
+    display:none;
+}
+
+.form.active{
+    display:block;
+}
+
+/* Inputs */
+input{
+    width:100%;
+    padding:12px;
+    margin-bottom:12px;
+
+    border-radius:10px;
+    border:none;
+    background:#f1f1f1;
+
+    box-sizing:border-box;
+}
+
+/* Checkbox */
+.checkbox{
+    display:flex;
+    align-items:center;
+    gap:8px;
+    font-size:12px;
+    margin-bottom:12px;
+    justify-content:flex-start;
+}
+
+.checkbox input{
+    width:14px;
+    height:14px;
+}
+
+/* Button */
+.main-btn{
+    width:100%;
+    padding:12px;
+    margin-top:10px;
+
+    background:#9D182B;
+    color:white;
+
+    border:none;
+    border-radius:10px;
+    cursor:pointer;
+}
+
+/* Divider */
+.divider{
+    margin:20px 0;
+    font-size:12px;
+    color:#999;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+}
+
+/* Google */
+.google-btn{
+    width:100%;
+    padding:10px;
+
+    border-radius:10px;
+    border:1px solid #ddd;
+    background:white;
+
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    gap:10px;
+
+    font-size:13px;
+}
+
+.google-btn img{
+    width:18px;
+}
+
+/* Switch */
+.switch-text{
+    font-size:12px;
+    margin-top:15px;
+}
+
+.switch-text span{
+    color:#9D182B;
+    cursor:pointer;
+    font-weight:bold;
+}
+
+/* Forgot */
+.forgot{
+    text-align:right;
+    font-size:12px;
+    color:#9D182B;
+    margin-bottom:10px;
+    cursor:pointer;
+}
+
+/* ===== FORGOT PASSWORD DESIGN ===== */
+
+/* HEADER */
+.fp-header{
+    display:flex;
+    align-items:center;
+    margin-bottom:10px;
+}
+
+.fp-back{
+    font-size:18px;
+    cursor:pointer;
+}
+
+/* LOGO */
+.fp-logo{
+    width:140px; /* 🔥 cleaner */
+    margin:5px auto 15px; /* 🔥 FIXED spacing */
+    display:block;
+}
+
+/* STEP */
+.fp-step{
+    display:none;
+}
+
+.fp-step.active{
+    display:block;
+}
+
+/* TEXT */
+#forgot-modal h3{
+    font-size:18px;
+    margin-bottom:8px; /* 🔥 FIXED */
+}
+
+#forgot-modal p{
+    font-size:12px;
+    color:#666;
+    margin-bottom:18px; /* 🔥 FIXED */
+}
+
+/* LABEL */
+.fp-label{
+    font-size:12px;
+    display:block;
+    margin-bottom:8px; /* 🔥 FIXED */
+    text-align:left;
+}
+
+/* INPUT */
+.fp-input{
+    width:100%;
+    padding:14px; /* 🔥 nicer feel */
+    border-radius:10px;
+    border:none;
+    background:#eee;
+    margin-bottom:20px; /* 🔥 FIXED */
+}
+
+/* ALT TEXT */
+.fp-alt{
+    font-size:12px;
+    text-align:center;
+    margin-top:12px;
+}
+
+.resend{
+    color:#9D182B;
+    cursor:pointer;
+    font-weight:bold;
+}
+
+/* OTP */
+.otp-box{
+    display:flex;
+    justify-content:center;
+    gap:12px;
+    margin:20px 0;
+}
+
+.otp-box input{
+    width:50px;
+    height:50px;
+    text-align:center;
+    font-size:18px;
+    border-radius:10px;
+    border:1px solid #ccc;
+}
+
+.fp-content{
+    width:100%;
+    max-width:320px;   /* 🔥 THIS fixes the cramped look */
+    margin:0 auto;     /* center content */
+
+    padding:0 5px;     /* small inner breathing space */
+}

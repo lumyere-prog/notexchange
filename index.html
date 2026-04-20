@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NoteXchange</title>
+    <link rel="stylesheet" href="css/style.css">
+
+    <!-- Microsoft Auth Library -->
+    <script src="https://alcdn.msauth.net/browser/2.38.0/js/msal-browser.min.js"></script>
+</head>
+
+<body style="background-image: url('/photos/background.png'); background-size: cover; background-position: center; height: 100vh; margin: 0;">
+
+    <!-- LOGO -->
+    <div class="title">
+        <img src="photos/title.png" alt="NoteXchange logo" class="logo">
+    </div>
+
+    <!-- LOGIN CONTAINER -->
+    <div class="login">
+
+        <h1 class="sign">Sign in</h1>
+        <p id="sign-p">Smarter way to study, share, and ask questions.</p>
+        <button id="go-login-btn" class="ms-btn">
+            Go to Login
+        </button>
+
+<script>
+document.getElementById("go-login-btn").addEventListener("click", function () {
+    window.location.href = "login.html";
+});
+</script>
+
+        <p class="note">
+            A project for <b>Quezon City University</b> students.
+        </p>
+
+    </div>
+<footer class="footer-terms">
+  <p>
+    By using this app, you agree to the
+    <a href="assets/terms.pdf" id="terms-link">Terms & Conditions</a>.
+  </p>
+</footer>
+    
+    <script src="js/script.js"></script>
+
+</body>
+</html>
