@@ -1,250 +1,269 @@
+import { db } from "/firebase/firebase-client.js";
+import {
+  collection,
+  getDocs,
+  query,
+  limit,
+  onSnapshot,
+  doc,
+  updateDoc,
+  increment,
+  getDoc,
+  orderBy
+} from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
+/* =========================
+   CATEGORY BUTTONS
+========================= */
 const categories = [
-    "All",
-    "Art",
-    "Programming",
-    "Math",
-    "Physics",
-    "Psychology",
-    "Business",
-    "History",
-    "Engineering",
-    "Design",
-    "Medicine"
+  "All",
+  "Art",
+  "Programming",
+  "Math",
+  "Physics",
+  "Psychology",
+  "Business",
+  "History",
+  "Engineering",
+  "Design",
+  "Medicine"
 ];
 
 generateCategories(categories);
 
+function generateCategories(categoryList) {
+  const container = document.getElementById("categoriesContainer");
 
+  categoryList.forEach(category => {
+    const button = document.createElement("button");
 
-function generateCategories(categoryList){
+    button.classList.add("category");
+    button.textContent = category;
 
-    const container = document.getElementById("categoriesContainer");
+    if (category === "All") {
+      button.classList.add("active");
+    }
 
-    categoryList.forEach(category => {
+    button.addEventListener("click", () => {
+      document.querySelectorAll(".category")
+        .forEach(btn => btn.classList.remove("active"));
 
-        const button = document.createElement("button");
+      button.classList.add("active");
 
-        button.classList.add("category");
-        button.textContent = category;
+      console.log("Selected category:", category);
 
-        if(category === "All"){
-            button.classList.add("active");
-        }
-
-        button.addEventListener("click", () => {
-
-            document.querySelectorAll(".category")
-                .forEach(btn => btn.classList.remove("active"));
-
-            button.classList.add("active");
-
-            console.log("Selected category:", category);
-
-            /*
-                FUTURE FIREBASE NOTE FILTER
-
-                Example:
-
-                loadNotesByCategory(category);
-
-            */
-
-        });
-
-        container.appendChild(button);
-
+      // 🔥 future filter
+      // loadPosts(category);
     });
 
+    container.appendChild(button);
+  });
 }
 
-// TEMPORARY note data for UI presentation
+/* =========================
+   LOAD POSTS FROM FIRESTORE
+========================= */
+function loadPostsRealtime() {
 
-// SAMPLE DATA (later comes from Firebase)
+  const container = document.getElementById("notesFeed");
 
-const posts = [
+  const q = query(
+    collection(db, "posts"),
+    orderBy("timestamp", "desc"),
+    limit(8)
+  );
 
-{
-id:1,
-code:"CC106",
-title:"Application Development and Emerging Technologies",
-desc:"This subject examines modern software development practices.",
-author:"Jennifer Cabutin",
-votes:273,
-content:"Application Development and Emerging Technologies explores APIs, mobile development, cloud services, and modern frameworks."
+  onSnapshot(q, (snapshot) => {
 
-},
+    container.innerHTML = "";
 
-{
-id:2,
-code:"IT201",
-title:"Database Management Systems",
-desc:"Learn relational databases, SQL, and data modeling.",
-author:"Mark Rivera",
-votes:142,
-content:"Topics include normalization, indexing, transactions, and database design."
-},
+    snapshot.forEach(docSnap => {
+      const post = docSnap.data();
 
-{
-id:3,
-code:"IT201",
-title:"Database Management Systems",
-desc:"Learn relational databases, SQL, and data modeling.",
-author:"Mark Rivera",
-votes:142,
-content:"Topics include normalization, indexing, transactions, and database design."
-},
+      const card = document.createElement("div");
+      card.className = "note-card";
 
-{
-id:4,
-code:"IT201",
-title:"Database Management Systems",
-desc:"Learn relational databases, SQL, and data modeling.",
-author:"Mark Rivera",
-votes:142,
-content:"Topics include normalization, indexing, transactions, and database design."
-},
+      // 🔥 OPEN POST (safe for modules)
+      card.addEventListener("click", () => {
+        openPost(docSnap.id);
+      });
 
-{
-id:5,
-code:"IT201",
-title:"Database Management Systems",
-desc:"Learn relational databases, SQL, and data modeling.",
-author:"Mark Rivera",
-votes:142,
-content:"Topics include normalization, indexing, transactions, and database design."
-}
-];
+      card.innerHTML = `
+        <div class="note-preview">
 
+          <div class="note-preview-text">
+            ${post.description || "No description"}
+          </div>
 
-// LOAD POSTS INTO FEED
+          <p class="note-code">${post.subject || ""}</p>
 
-function loadPosts(){
+          <h3 class="note-title">
+            ${post.title || "Untitled"}
+          </h3>
 
-let container = document.getElementById("notesFeed");
+          <div class="note-author">
+            <img src="${post.profilePic || "/photos/profile.jpg"}" class="author-pic">
+            <span>${post.username || "Unknown"}</span>
+          </div>
 
-posts.forEach(post => {
+          <div class="note-footer">
 
-let card = document.createElement("div");
+            <div class="vote-box">
+              <button class="upvote-btn">▲</button>
+              <span id="voteCount">
+                 ${post.upvotes || 0} |  ${post.downvotes || 0}
+              </span>
+              <button class="downvote-btn">▼</button>
+            </div>
 
-card.className = "note-card";
+            <a href="${post.fileURL}" target="_blank" onclick="event.stopPropagation()">
+              📄 ${post.fileName || "Open File"}
+            </a>
 
-card.innerHTML = `
+          </div>
 
-<div class="note-preview" onclick="openPost(${post.id})">
+        </div>
+      `;
 
-<div class="note-preview-text">
-${post.content}
-</div>
+      // 🔥 VOTE EVENTS (no inline onclick)
+      const upBtn = card.querySelector(".upvote-btn");
+      const downBtn = card.querySelector(".downvote-btn");
 
-<p class="note-code">${post.code}</p>
+      upBtn.addEventListener("click", (e) => {
+        e.stopPropagation();
+        vote(e, docSnap.id, 1);
+      });
 
-<h3 class="note-title">${post.title}</h3>
+      downBtn.addEventListener("click", (e) => {
+        e.stopPropagation();
+        vote(e, docSnap.id, -1);
+      });
 
-<div class="note-author">
-<img src="/photos/profile.jpg" class="author-pic">
-<span>${post.author}</span>
-</div>
+      container.appendChild(card);
+    });
 
-<div class="note-footer">
-
-<div class="vote-box">
-<button class="vote-btn" onclick="vote(event,this,1)">▲</button>
-<span class="vote-count">${post.votes}</span>
-<button class="vote-btn" onclick="vote(event,this,-1)">▼</button>
-</div>
-
-<button class="fav-btn" onclick="toggleFav(event,this)">🔖</button>
-
-</div>
-
-</div>
-
-`;
-
-container.appendChild(card);
-
-});
-
+  });
 }
 
-
+/* =========================
+   INIT
+========================= */
+loadPostsRealtime();
 // OPEN MODAL POST
 
-function openPost(id){
+async function openPost(postId){
 
-let post = posts.find(p => p.id === id);
+  const modal = document.getElementById("postModal");
+  const body = document.getElementById("modalBody");
 
-let modal = document.getElementById("postModal");
+  const ref = doc(db, "posts", postId);
+  const snap = await getDoc(ref);
 
-let body = document.getElementById("modalBody");
+  if (!snap.exists()) return;
 
-body.innerHTML = `
+  const post = snap.data();
 
-<h3>${post.title}</h3>
+  body.innerHTML = `
+    <h3>${post.title}</h3>
 
-<p style="font-size:12px;">${post.code}</p>
+    <p style="font-size:12px;">${post.subject || ""}</p>
 
-<div class="modal-text">${post.content}</div>
+    <div class="modal-text">${post.description}</div>
 
-<div class="note-actions">
+    <a href="${post.fileURL}" target="_blank">📄 Open File</a>
 
-<div class="vote-box">
-<button class="vote-btn" onclick="vote(event,this,1)">▲</button>
-<span class="vote-count">${post.votes}</span>
-<button class="vote-btn" onclick="vote(event,this,-1)">▼</button>
-</div>
+    <div class="note-actions">
 
-<button class="fav-btn" onclick="toggleFav(event,this)">🔖</button>
+      <div class="vote-box">
+        <button class="upvote-btn">▲</button>
+        <span id="voteCount">
+  👍 ${post.upvotes || 0} | 👎 ${post.downvotes || 0}
+        </span>
+        <button class="downvote-btn">▼</button>
+      </div>
 
-<button onclick="toggleComments(event,this)">💬 Comment</button>
+    </div>
+  `;
 
-</div>
-
-<div class="comment-section" style="display:none">
-
-<input type="text" class="comment-input" placeholder="Write a comment">
-
-<button class="comment-btn" onclick="addComment(this)">Post</button>
-
-<div class="comments"></div>
-
-</div>
-
-`;
-
-modal.style.display = "flex";
-
+  modal.style.display = "flex";
 }
-
 
 // CLOSE MODAL
+const modal = document.getElementById("postModal");
 
-function closeModal(){
-
-document.getElementById("postModal").style.display = "none";
-
+function closeModal() {
+  modal.style.display = "none";
 }
 
-window.onclick = function(event){
-    const modal = document.getElementById("postModal");
+// click outside modal content to close
+modal.addEventListener("click", (event) => {
+  if (event.target === modal) {
+    closeModal();
+  }
+});
 
-    if(event.target === modal){
-        modal.style.display = "none";
-    }
-}
+// expose only if you're using onclick="closeModal()"
+window.closeModal = closeModal;
+
 
 // VOTING (Reddit Style)
+async function vote(event, postId, value){
+  event.stopPropagation();
 
-function vote(event,btn,value){
+  const user = JSON.parse(localStorage.getItem("user"));
+  if (!user) return alert("Login first");
 
-event.stopPropagation();
+  const ref = doc(db, "posts", postId);
+  const snap = await getDoc(ref);
 
-let count = btn.parentElement.querySelector(".vote-count");
+  if (!snap.exists()) return;
 
-count.innerText = parseInt(count.innerText) + value;
+  const post = snap.data();
 
+  let userVotes = post.userVotes || {};
+  let currentVote = userVotes[user.uid] || 0;
+
+  let updates = {
+    userVotes: userVotes
+  };
+
+  // 🔥 REMOVE SAME VOTE
+  if (currentVote === value) {
+
+    delete userVotes[user.uid];
+
+    if (value === 1) {
+      updates.upvotes = increment(-1);
+    } else {
+      updates.downvotes = increment(-1);
+    }
+
+  } 
+  // 🔥 SWITCH VOTE
+  else {
+
+    userVotes[user.uid] = value;
+
+    if (value === 1) {
+      updates.upvotes = increment(1);
+
+      if (currentVote === -1) {
+        updates.downvotes = increment(-1);
+      }
+
+    } else {
+      updates.downvotes = increment(1);
+
+      if (currentVote === 1) {
+        updates.upvotes = increment(-1);
+      }
+    }
+  }
+
+  await updateDoc(ref, updates);
 }
+  console.log("🔥 Vote updated");
+
 
 
 // TOGGLE COMMENTS
@@ -302,7 +321,6 @@ btn.innerText="📌";
 
 // INIT PAGE
 
-loadPosts();
 
 //bell notification
 

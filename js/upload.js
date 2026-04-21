@@ -11,6 +11,23 @@ import {
   getDownloadURL
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-storage.js";
 
+document.addEventListener("DOMContentLoaded", () => {
+
+  const fileInput = document.getElementById("fileInput");
+  const fileNameText = document.getElementById("fileName");
+
+  fileInput.addEventListener("change", () => {
+    const file = fileInput.files[0];
+
+    if (file) {
+      fileNameText.textContent = file.name;
+    } else {
+      fileNameText.textContent = "";
+    }
+  });
+
+});
+
 document.getElementById("postForm").addEventListener("submit", async (e) => {
   e.preventDefault();
 
@@ -52,7 +69,8 @@ document.getElementById("postForm").addEventListener("submit", async (e) => {
       userID: user.uid,
       username: user.username || user.name,
       profilePic: user.profilePic || user.photo,
-      timestamp: serverTimestamp()
+      timestamp: serverTimestamp(),
+      userVotes: {}
     };
 
     const refDoc = await addDoc(collection(db, "posts"), postData);

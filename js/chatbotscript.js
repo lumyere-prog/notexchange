@@ -1,10 +1,5 @@
+const user = JSON.parse(localStorage.getItem("user"));
 const API = 'http://localhost:3000';
-
-if (!user) {
-    alert("Not logged in!");
-    window.location.href = "login.html";
-}
-
 const userID = user.email;
 
 // wait for DOM
