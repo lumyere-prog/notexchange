@@ -3,7 +3,9 @@ body {
     margin: 0;
     padding: 0;
     overflow: hidden;
-    font-family: Arial, sans-serif;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background: linear-gradient(135deg, #F8FAFC 0%, #E2E8F0 100%);
+    min-height: 100vh;
 }
 
 /* =========================
@@ -13,12 +15,13 @@ body {
     display: flex;
     justify-content: center;
     margin-top: 10vh;
-    margin-bottom: 10px;
+    margin-bottom: 20px;
 }
 
 .title .logo {
     width: 70vw;
     max-width: 300px;
+    filter: drop-shadow(0 4px 12px rgba(0, 0, 0, 0.1));
 }
 
 /* =========================
@@ -31,25 +34,26 @@ body {
     width: 100%;
     padding: 0 5vw;
     box-sizing: border-box;
-
-    margin-top: 10vh; /* 👈 pushes everything down */
+    margin-top: 8vh;
 }
 
 /* Title */
 .sign {
     font-size: 28px;
-    margin-bottom: 10px;
+    margin-bottom: 12px;
     text-align: center;
-    color: #9D182B;
+    color: #1F2937;
+    font-weight: 700;
 }
 
 /* Subtitle */
 #sign-p {
-    font-size: 16px;          /* bigger */
-    margin-bottom: 25px;
+    font-size: 16px;
+    margin-bottom: 32px;
     text-align: center;
-    color: #9D182B;           /* same color as "Sign in" */
-    font-weight: 500;         /* slightly stronger */
+    color: #6B7280;
+    font-weight: 500;
+    line-height: 1.5;
 }
 
 /* =========================
@@ -58,14 +62,22 @@ body {
 .ms-btn {
     width: 90%;
     max-width: 400px;
-    padding: 14px;
-    background-color: #2F2F2F;
+    padding: 16px;
+    background: black;
     color: white;
     border: none;
-    border-radius: 8px;
+    border-radius: 12px;
     font-size: 16px;
+    font-weight: 600;
     cursor: pointer;
-    transition: 0.2s ease;
+    transition: all 0.2s ease-in-out;
+    box-shadow: 0 4px 12px rgba(136, 126, 177, 0.3);
+}
+
+.ms-btn:hover {
+    background: #F2BFC7;
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(196, 181, 253, 0.4);
 }
 
 /* Press effect */
@@ -77,11 +89,12 @@ body {
    NOTE TEXT
 ========================= */
 .note {
-    font-size: 15px;          /* bigger */
-    color: #9D182B;           /* same as title */
-    margin-top: 14px;
+    font-size: 15px;
+    color: #6B7280;
+    margin-top: 20px;
     text-align: center;
     font-weight: 500;
+    line-height: 1.5;
 }
 
 /* =========================
@@ -97,30 +110,32 @@ body {
     }
 
     .ms-btn {
-        padding: 12px;
+        padding: 14px;
         font-size: 14px;
     }
 }
 
 .footer-terms {
     position: fixed;
-    bottom: 10px;
+    bottom: 20px;
     width: 100%;
     text-align: center;
     font-size: 12px;
-    color: #9D182B;
+    color: #6B7280;
     background: transparent;
     font-weight: 500;
     user-select: none;
-    padding: 5px 0;
+    padding: 10px 20px;
 }
 
 .footer-terms a {
-    color: #9D182B;
-    text-decoration: underline;
+    color: black;
+    text-decoration: none;
+    transition: all 0.2s ease-in-out;
 }
 
 .footer-terms a:hover,
 .footer-terms a:focus {
-    text-decoration: none;
+    color: #F2BFC7;
+    text-decoration: underline;
 }

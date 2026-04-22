@@ -1,596 +1,782 @@
-body{
-    margin:0;
-    min-height:100vh;
-
-    background-image: url("/photos/background.png");
-    background-size: cover;
-    background-position: center;
-    background-repeat: no-repeat;
+/* =========================================
+   GLOBAL RESET & MOBILE DEFAULTS
+   ========================================= */
+*, *::before, *::after {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
 }
 
-.top-area{
-position: sticky;
-top: 0;
-background-image: url("/photos/background.png");
-z-index: 1000;
-padding-bottom: 10px;
+body {
+    -webkit-text-size-adjust: 100%;
+    -webkit-tap-highlight-color: transparent;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    background: #F8FAFC;
 }
 
-#topbar{
-    padding:15px 20px;
+/* =========================================
+   TOP NAVIGATION AREA
+   ========================================= */
+.top-area {
+    position: sticky;
+    top: 0;
+    background: #C4B5FD;
+    z-index: 1000;
+    padding-top: calc(env(safe-area-inset-top) + 20px); 
+    padding-bottom: 16px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+    transition: transform 0.3s ease-in-out; 
+}
+
+.top-area.hide-on-scroll {
+    transform: translateY(-100%);
+}
+
+#topbar {
+    padding: 16px 20px 0;
 }
 
 /* top row */
-
-.header-row{
-    display:flex;
-    justify-content:space-between;
-    align-items:center;
-    margin-top: 3vh;
+.header-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
 }
 
 /* title */
-
-#topbar .sign{
-    color:#9D182B;
-    font-size:26px;
-    font-weight:bold;
-    margin:0;
-}
-
-/* bell */
-
-#topbar .bell{
-    height:28px;
-    width:28px;
-    padding:8px;
-    border-radius:50%;
-    border: 2px solid #f2a6a6;
-}
-#topbar .button{
-    background:none;
-    border:none;
-    cursor:pointer;
-}
-.bell-container{
-position:relative;
-cursor:pointer;
-}
-
-.notification-badge{
-position:absolute;
-top:-5px;
-right:-5px;
-
-background:red;
-color:white;
-
-font-size:11px;
-font-weight:bold;
-
-padding:2px 6px;
-
-border-radius:50%;
-}
-/* profile row */
-
-.profile-row{
-    display:flex;
-    align-items:center;
-    gap:12px;
-    margin-top:15px;
-}
-
-/* profile picture */
-
-.profile{
-    height:55px;
-    width:55px;
-    border-radius:50%;
-}
-
-/* name */
-
-.name{
-    color:#9D182B;
-    font-size:18px;
-    font-weight:bold;
-}
-
-/* search row */
-/* Search Bar */
-
-.search-container{
-    margin-top:15px;
-    margin-bottom:20px;
-    width: 90%;
-    padding-left: .5vh;
-}
-
-.search-input{
-    width:100%;
-    padding:12px 15px;
-    border-radius:12px;
-    border:none;
-    outline:none;
-    font-size:14px;
-}
-
-/* Categories */
-
-.category-title{
-    margin-bottom:10px;
-    padding-left: .5vh;
-}
-
-/* Scroll container */
-
-.categories-scroll{
-    display:flex;
-    overflow-x:auto;
-    gap:10px;
-    padding-bottom:5px;
-
-    /* smooth scrolling */
-    scroll-behavior:smooth;
-    padding-left: .5vh;
-}
-
-/* Hide scrollbar (mobile look) */
-
-.categories-scroll::-webkit-scrollbar{
-    display:none;
-}
-
-/* Category buttons */
-
-.category{
-    flex:0 0 auto;
-    padding:8px 16px;
-    border:none;
-    border-radius:20px;
-    background:#f2a6a6;
-    cursor:pointer;
-    white-space:nowrap;
-    font-size:14px;
-}
-
-/* Active category */
-
-.category.active{
-    background:#9D182B;
-    color:white;
-}
-
-/* Notes grid */
-.notes-feed{
-    width:92%;
-    max-width:450px;
-    margin:20px auto;
-    padding-bottom: 70px; /* adjust based on navbar height */
-
-}
-
-.note-card{
-    background:#ead7c8;
-    border-radius:14px;
-    padding:12px;
-    margin-bottom:16px;
-    cursor:pointer;
-}
-
-/* smaller preview image */
-
-.note-image{
-    height:90px;
-    background:#e68383;
-    border-radius:10px;
-    margin-bottom:8px;
-}
-
-/* text sizes */
-
-.note-code{
-    font-size:11px;
-    color:#7c5b5b;
-}
-
-.note-title{
-    font-size:16px;
-    margin:3px 0;
-}
-
-.note-desc{
-    font-size:13px;
-    color:#444;
-}
-
-/* author */
-
-.note-author{
-    display:flex;
-    align-items:center;
-    margin-top:6px;
-}
-
-.author-pic{
-    width:22px;
-    height:22px;
-    border-radius:50%;
-    margin-right:6px;
-}
-
-/* actions */
-
-.note-actions{
-    display:flex;
-    align-items:center;
-    gap:15px;
-    margin-top:15px;
-}
-
-/* reddit vote */
-
-.vote-box{
-    display:flex;
-    align-items:center;
-    gap:6px;
-}
-
-.vote-btn{
-    border:none;
-    background:none;
-    font-size:18px;
-    cursor:pointer;
-}
-
-.vote-btn:hover{
-    color:#ff6a00;
-}
-
-.vote-count{
-    font-weight:bold;
-}
-
-/* comment section */
-
-.comment-section{
-    margin-top:15px;
-}
-
-.comment-input{
-    width:80%;
-    padding:6px;
-}
-
-.comment-btn{
-    padding:6px 10px;
-}
-
-.comment{
-    background:#f3f3f3;
-    padding:8px;
-    border-radius:6px;
-    margin-top:6px;
-}
-
-.post-modal{
-    position:fixed;
-    top:0;
-    left:0;
-    width:100%;
-    height:100%;
-    background:rgba(0,0,0,0.45);
-    display:none;
-    justify-content:center;
-    align-items:center;
-    z-index:9999;
-}
-
-.modal-content{
-    background:#f3d6d6;
-    width:90%;
-    max-width:420px;
-    max-height:85vh;
-    overflow-y:auto;
-    border-radius:18px;
-    padding:18px;
-    animation:modalPop 0.25s ease;
-}
-
-@keyframes modalPop{
-    from{
-        transform:scale(.9);
-        opacity:0;
-    }
-    to{
-        transform:scale(1);
-        opacity:1;
-    }
-}
-
-.close-btn{
-    float:right;
-    font-size:18px;
-    cursor:pointer;
-}
-
-.note-preview-text{
-    background:#e88383;
-    border-radius:14px;
-    padding:16px;
-    margin-bottom:10px;
-
-    max-height:120px;
-    overflow:hidden;
-
-    font-size:13px;
-    line-height:1.4;
-}
-
-.modal-text{
-white-space:pre-line;
-}
-
-.note-footer{
-display:flex;
-justify-content:space-between;
-align-items:center;
-margin-top:10px;
-}
-
-.fav-btn{
-border:none;
-background:none;
-font-size:18px;
-cursor:pointer;
-}
-
-.fav-btn:hover{
-transform:scale(1.1);
+#topbar .sign {
+    color: #1F2937;
+    font-size: 24px;
+    font-weight: 700;
 }
 
 
-/* search  */
-.search-page{
-position:fixed;
-top:0;
-left:0;
-width:100%;
-height:100%;
-
-background-image:url("/photos/background.png");
-background-size:cover;
-
-transform:translateY(100%);
-transition:0.3s;
-
-z-index:2000;
-padding:20px;
-}
-
-.search-page.active{
-transform:translateY(0);
-}
-
-
-/* header */
-
-.search-header{
-display:flex;
-align-items:center;
-gap:10px;
-padding:10px 15px;
-}
-
-.search-full{
-flex:1;
-max-width:80%;
-padding:8px 12px;
-border-radius:10px;
-border:1px solid #999;
-background:#eee;
-font-size:14px;
-}
-
-.back-btn{
-font-size:22px;
-cursor:pointer;
-}
-
-/* recent */
-
-.recent-title{
-margin-top:20px;
-}
-
-
-.recent-item{
-display:flex;
-align-items:center;
-gap:12px;
-padding:12px 0;
-}
-
-.recent-avatar{
-width:40px;
-height:40px;
-border-radius:50%;
-}
-
-.remove{
-margin-left:auto;
-cursor:pointer;
-}
-
-.search-icon{
-font-size:20px;
-}
-
-/* chat bot */
-
-/* Floating Button */
-
-#chatbot-btn{
-    position: fixed;
-    bottom: 100px;
-    right: 20px;
-    width: 60px;
-    height: 60px;
-    background: #9D182B;
-    color: white;
+#topbar .bell {
     font-size: 28px;
+    color: #1F2937;
+    padding: 6px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.2);
+    cursor: pointer;
+    transition: all 0.2s ease-in-out;
+}
+
+#topbar .bell:active {
+    background: rgba(255, 255, 255, 0.4);
+}
+
+.bell-container {
+    position: relative;
+    cursor: pointer;
+}
+
+.notification-badge {
+    position: absolute;
+    top: -4px;
+    right: -4px;
+    background: #EF4444;
+    color: white;
+    font-size: 10px;
+    font-weight: 600;
+    padding: 2px 6px;
+    border-radius: 50%;
+    min-width: 18px;
+    text-align: center;
+}
+
+/* =========================================
+   SEARCH BAR
+   ========================================= */
+.search-container {
+    margin: 16px 20px 0;
+    width: calc(100% - 40px);
+}
+
+.search-input {
+    width: 100%;
+    padding: 12px 20px;
+    border-radius: 50px;
+    border: none;
+    outline: none;
+    background: #F3F4F6;
+    font-size: 16px; /* 16px prevents iOS Safari from auto-zooming */
+    color: #1F2937;
+    box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.search-input::placeholder {
+    color: #6B7280;
+}
+
+/* =========================================
+   CATEGORIES SCROLL
+   ========================================= */
+.category-title {
+    margin: 20px 20px 12px;
+    color: #1F2937;
+    font-size: 18px;
+    font-weight: 600;
+}
+
+.categories-scroll {
+    display: flex;
+    overflow-x: auto;
+    gap: 12px;
+    padding: 0 20px 8px;
+    scroll-behavior: smooth;
+    -webkit-overflow-scrolling: touch; /* Smooth mobile scrolling */
+}
+
+.categories-scroll::-webkit-scrollbar {
+    display: none;
+}
+
+.category {
+    flex: 0 0 auto;
+    padding: 10px 18px; /* Slightly larger tap area */
+    border: none;
+    border-radius: 50px;
+    background: #E5E7EB;
+    color: #6B7280;
+    cursor: pointer;
+    white-space: nowrap;
+    font-size: 14px;
+    font-weight: 500;
+    transition: all 0.2s ease-in-out;
+}
+
+.category:active {
+    transform: scale(0.98);
+}
+
+.category-title {
+    margin: 20px 20px 12px;
+    color: #1F2937;
+    font-size: 18px;
+    font-weight: 600;
+}
+
+.categories-scroll {
+    display: flex;
+    overflow-x: auto;
+    gap: 12px;
+    padding: 0 20px 8px;
+    scroll-behavior: smooth;
+    -webkit-overflow-scrolling: touch; /* Smooth mobile scrolling */
+}
+
+.categories-scroll::-webkit-scrollbar {
+    display: none;
+}
+
+.category {
+    flex: 0 0 auto;
+    padding: 10px 18px; /* Slightly larger tap area */
+    border: none;
+    border-radius: 50px;
+    background: #E5E7EB;
+    color: #6B7280;
+    cursor: pointer;
+    white-space: nowrap;
+    font-size: 14px;
+    font-weight: 500;
+    transition: all 0.2s ease-in-out;
+}
+
+.category:active {
+    transform: scale(0.98);
+}
+
+.category.active {
+    background: #7C3AED; /* Strong Royal Purple */
+    color: #FFFFFF; /* White text */
+    box-shadow: 0 2px 8px rgba(124, 58, 237, 0.4);
+    font-weight: 700;
+}
+
+
+/* =========================================
+   NOTES FEED
+   ========================================= */
+.notes-feed {
+    width: 100%;
+    max-width: 450px;
+    margin: 0 auto; /* Changed from 20px to 0 to connect it to the top bar */
+    padding: 16px 20px calc(100px + env(safe-area-inset-bottom)); 
+}
+
+.note-card {
+    background: #FFFFFF;
+    border-radius: 16px;
+    padding: 16px;
+    margin-bottom: 16px;
+    cursor: pointer;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+    transition: all 0.2s ease-in-out;
+    border: 1px solid #F3F4F6;
+}
+
+.note-card:active {
+    transform: scale(0.98);
+}
+
+.note-code {
+    font-size: 12px;
+    color: #6B7280;
+    font-weight: 500;
+}
+
+.note-title {
+    font-size: 16px;
+    font-weight: 600;
+    margin: 8px 0 4px;
+    color: #1F2937;
+}
+
+.note-desc {
+    font-size: 14px;
+    color: #6B7280;
+    line-height: 1.4;
+}
+
+.note-author {
+    display: flex;
+    align-items: center;
+    margin-top: 12px;
+}
+
+.author-pic {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    margin-right: 8px;
+    border: 1px solid #E5E7EB;
+    object-fit: cover;
+}
+
+/* =========================================
+   NOTE ACTIONS & COMMENTS
+   ========================================= */
+.note-actions {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-top: 16px;
+}
+
+/* --- VOTE BOX REDESIGN (Clean Mobile Style) --- */
+.vote-box {
+    display: flex;
+    align-items: center;
+    gap: 8px; 
+    background: transparent; 
+    border: none;
+    padding: 0;
+}
+
+.vote-count {
+    font-size: 14px;
+    font-weight: 700;
+    color: #1F2937; 
+    min-width: 24px;
+    text-align: center;
+}
+
+.vote-btn {
+    border: none;
+    background: transparent;
+    color: #1F2937; /* Black when not voted */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    padding: 6px;
+    border-radius: 50%;
+    /* Simplified transition just for the color swaps */
+    transition: color 0.2s ease, background 0.2s ease;
+}
+
+.vote-btn .material-icons {
+    font-size: 24px; 
+}
+
+/* =========================================
+   ACTIVE VOTE COLORS (Toggle these via JS)
+   ========================================= */
+
+/* When the user upvotes */
+.vote-btn.upvoted {
+    color: #10B981; /* Emerald Green */
+    background: #D1FAE5; /* Very light green background */
+}
+
+/* When the user downvotes */
+.vote-btn.downvoted {
+    color: #EF4444; /* Bright Red */
+    background: #FEE2E2; /* Very light red background */
+}
+
+/* --- COMMENT BUTTON (Do not delete - controls the chat bubble icon) --- */
+.comment-icon-btn {
+    border: none;
+    background: transparent;
+    color: #6B7280;
+    cursor: pointer;
+    padding: 8px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.2s ease;
+}
+
+.comment-icon-btn:active {
+    background: #E5E7EB;
+}
+
+/* --- COMMENT SECTION LAYOUT (Do not delete - handles hide/show) --- */
+.comment-section {
+    display: none; /* Hidden until clicked */
+    margin-top: 16px;
+    padding-top: 16px;
+    border-top: 1px solid #E5E7EB;
+}
+
+.comments-list {
+    max-height: 150px;
+    overflow-y: auto;
+    margin-bottom: 12px;
+}
+
+/* =========================================
+   NEW DESIGN FOR INPUT AND BUTTONS 
+   ========================================= */
+
+.comment-input-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 12px;
+    padding-top: 12px;
+    border-top: 1px solid #E5E7EB;
+}
+
+/* The Text Box */
+.comment-input {
+    flex: 1;
+    background: #F3F4F6;
+    border: 1px solid #E5E7EB;
+    padding: 10px 16px;
+    border-radius: 50px; /* Perfect pill shape */
+    font-size: 14px;
+    color: #1F2937;
+    outline: none;
+    transition: all 0.2s ease;
+    margin-bottom: 0; 
+}
+
+/* When the user clicks inside the text box to type */
+.comment-input:focus {
+    background: #FFFFFF;
+    border-color: #C4B5FD; /* Highlights with your pastel purple */
+    box-shadow: 0 0 0 3px rgba(196, 181, 253, 0.2); /* Soft glowing ring */
+}
+
+.comment-input::placeholder {
+    color: #9CA3AF;
+}
+
+/* The Post Button */
+.comment-btn {
+    background: #C4B5FD;
+    color: white;
+    border: none;
+    padding: 10px 18px;
+    border-radius: 50px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.2s ease, transform 0.2s ease;
+    box-shadow: 0 2px 6px rgba(196, 181, 253, 0.3);
+}
+
+/* Mobile tap effect */
+.comment-btn:active {
+    transform: scale(0.95);
+    background: #A78BFA; /* Slightly darker purple when pressed */
+}
+
+/* Makes individual comments look cleaner */
+.comment {
+    background: #F9FAFB;
+    padding: 10px 14px;
+    border-radius: 12px;
+    margin-bottom: 8px;
+    border: 1px solid #E5E7EB;
+}
+
+/* =========================================
+   MODALS (Post & Search)
+   ========================================= */
+.post-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.4);
+    display: none;
+    justify-content: center;
+    align-items: center;
+    z-index: 9999;
+    backdrop-filter: blur(4px);
+    padding: 20px; /* Ensures modal doesn't touch screen edges on small devices */
+}
+
+.modal-content {
+    background: #FFFFFF;
+    width: 100%;
+    max-width: 420px;
+    max-height: 85vh;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    border-radius: 16px;
+    padding: 20px;
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+    animation: modalPop 0.3s ease-out;
+}
+
+@keyframes modalPop {
+    from { transform: scale(0.95); opacity: 0; }
+    to { transform: scale(1); opacity: 1; }
+}
+
+.close-btn {
+    float: right;
+    font-size: 24px;
+    cursor: pointer;
+    color: #6B7280;
+    background: none;
+    border: none;
+    padding: 8px;
+    border-radius: 8px;
+}
+
+.note-preview-text {
+    background: #F9FAFB;
+    border-radius: 12px;
+    padding: 16px;
+    margin-bottom: 12px;
+    border: 1px solid #E5E7EB;
+    font-size: 14px;
+    line-height: 1.5;
+    color: #1F2937;
+    clear: both; /* Clears the floated close-btn */
+    
+    /* --- ADD THESE LINES --- */
+    overflow-wrap: break-word;
+    word-wrap: break-word;
+    word-break: break-word;
+    hyphens: auto;
+}
+
+.modal-text {
+    white-space: pre-line;
+    color: #1F2937;
+    line-height: 1.6;
+    
+    /* --- ADD THESE LINES --- */
+    overflow-wrap: break-word;
+    word-wrap: break-word;
+    word-break: break-word;
+    hyphens: auto;
+}
+
+.note-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 16px;
+    padding-top: 16px;
+    border-top: 1px solid #E5E7EB;
+}
+
+.fav-btn {
+    border: none;
+    background: none;
+    font-size: 22px;
+    cursor: pointer;
+    padding: 8px;
+    border-radius: 8px;
+}
+
+/* search full page */
+.search-page {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: #F8FAFC;
+    transform: translateY(100%);
+    transition: transform 0.3s ease-in-out;
+    z-index: 2000;
+    padding: env(safe-area-inset-top) 20px 20px;
+}
+
+.search-page.active {
+    transform: translateY(0);
+}
+
+.search-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 16px 0;
+}
+
+.search-full {
+    flex: 1;
+    padding: 12px 16px;
+    border-radius: 50px;
+    border: 1px solid #E5E7EB;
+    background: #FFFFFF;
+    font-size: 16px; /* Prevent iOS zoom */
+    outline: none;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.back-btn {
+    font-size: 24px;
+    cursor: pointer;
+    color: #6B7280;
+    padding: 8px;
+    border-radius: 50%;
+}
+
+.recent-title {
+    margin: 24px 0 16px;
+    color: #1F2937;
+    font-size: 16px;
+    font-weight: 600;
+}
+
+.recent-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 0;
+    border-bottom: 1px solid #E5E7EB;
+}
+
+.recent-avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    border: 1px solid #E5E7EB;
+    object-fit: cover;
+}
+
+.remove {
+    margin-left: auto;
+    cursor: pointer;
+    color: #6B7280;
+    padding: 8px;
+    border-radius: 4px;
+}
+
+.search-icon {
+    font-size: 20px;
+    color: #6B7280;
+}
+
+/* =========================================
+   CHATBOT
+   ========================================= */
+#chatbot-btn {
+    position: fixed;
+    bottom: calc(90px + env(safe-area-inset-bottom));
+    /* Locks it to the right side of the 450px container (50vw - 225px) + 20px padding */
+    right: max(20px, calc(50vw - 205px)); 
+    width: 56px;
+    height: 56px;
+    background: #C4B5FD;
+    color: white;
+    font-size: 24px;
     border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
     cursor: pointer;
-    box-shadow: 0 4px 10px rgba(0,0,0,0.3);
-    z-index: 10000;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    transition: all 0.2s ease-in-out;
+    z-index: 998;
 }
 
-/* Chat Modal */
+#chatbot-btn:active {
+    transform: scale(0.95);
+}
 
-#chatbot-modal{
+#chatbot-modal {
     position: fixed;
     bottom: 0;
     right: 0;
     width: 100%;
-    height: 85vh; /* not full screen */
-    max-width: 420px; /* mobile app width */
-    background: white;
-    border-radius: 20px 20px 0 0; /* rounded top */
+    height: 85vh;
+    max-width: 420px;
+    background: #FFFFFF;
+    border-radius: 20px 20px 0 0;
     display: none;
     flex-direction: column;
-    box-shadow: 0 -5px 20px rgba(0,0,0,0.3);
+    box-shadow: 0 -5px 20px rgba(0, 0, 0, 0.15);
     z-index: 10001;
+    overflow: hidden;
+    padding-bottom: env(safe-area-inset-bottom); /* iOS home indicator */
 }
 
-/* Header */
-
-.chat-header{
-    background: #9D182B;
+.chat-header {
+    background: #C4B5FD;
     color: white;
-    padding: 15px;
-
+    padding: 16px 20px;
     display: flex;
     justify-content: space-between;
     align-items: center;
-
-    font-size: 18px;
-    font-weight: bold;
-
-}.chat-header{
-    background: #9D182B;
-    color: white;
-    padding: 15px;
-
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-
-    font-size: 18px;
-    font-weight: bold;
+    font-size: 16px;
+    font-weight: 600;
 }
 
-#close-chat{
+#close-chat {
     background: none;
     border: none;
     color: white;
-    font-size: 16px;
+    font-size: 24px;
     cursor: pointer;
+    padding: 8px;
+    border-radius: 8px;
 }
 
-/* Body */
-
-.chat-body{
+.chat-body {
     flex: 1;
-    padding: 10px;
+    padding: 16px;
     overflow-y: auto;
-    background: #f5f5f5;
+    -webkit-overflow-scrolling: touch;
+    background: #F9FAFB;
 }
 
-.bot-msg{
-    background: #e0e0e0;
-    padding: 8px 12px;
-    border-radius: 10px;
-    margin-bottom: 10px;
+.bot-msg {
+    background: #FFFFFF;
+    padding: 12px 16px;
+    border-radius: 16px;
+    margin-bottom: 12px;
     width: fit-content;
+    max-width: 80%;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+    border: 1px solid #E5E7EB;
 }
 
-/* Footer */
-
-.chat-footer{
+.chat-footer {
     display: flex;
-    border-top: 1px solid #ddd;
+    border-top: 1px solid #E5E7EB;
+    background: #FFFFFF;
+    padding: 12px 16px;
 }
 
-#chat-input{
+#chat-input {
     flex: 1;
-    border: none;
-    padding: 10px;
+    border: 1px solid #E5E7EB;
+    padding: 12px 16px;
     outline: none;
+    border-radius: 50px;
+    background: #F9FAFB;
+    font-size: 16px; /* Prevent iOS zoom */
+    margin-right: 8px;
 }
 
-#send-btn{
-    background: #9D182B;
+#send-btn {
+    background: #C4B5FD;
     color: white;
     border: none;
-    padding: 0 15px;
+    padding: 0 20px;
+    border-radius: 50px;
     cursor: pointer;
+    font-size: 16px;
+    font-weight: 600;
 }
 
-/* Bottom Navigation */
-
-.bottom-nav{
+/* =========================================
+   BOTTOM NAVIGATION
+   ========================================= */
+.bottom-nav {
     position: fixed;
     bottom: 0;
-    left: 0;
-    width: 100%;
-
-    background: #fff;
-
+    background: #FFFFFF;
     display: flex;
     justify-content: space-around;
     align-items: center;
-
-    padding: 10px 0;
-
-    box-shadow: 0 -4px 10px rgba(0,0,0,0.1);
-
+    padding: 12px 0 calc(12px + env(safe-area-inset-bottom));
+    box-shadow: 0 -4px 12px rgba(0, 0, 0, 0.05);
     z-index: 999;
+    border-top: 1px solid #E5E7EB;
+    width: 100%;
+    max-width: 450px; 
+    left: 50%;
+    transform: translateX(-50%); 
 }
 
-/* Nav Items */
-
-.nav-item{
-    font-size: 22px;
+.nav-item {
+    font-size: 24px;
     text-decoration: none;
-    color: black;
-    opacity: 0.6;
+    color: #6B7280;
+    opacity: 0.7;
+    padding: 10px; /* Better tap target */
+    border-radius: 12px;
+    transition: all 0.2s ease-in-out;
 }
 
-/* Active Page */
-
-.nav-item.active{
+.nav-item.active {
     opacity: 1;
-    background: #f4c7c7;
-    padding: 6px 10px;
-    border-radius: 10px;
+    color: #C4B5FD; 
 }
 
-/* Center Add Button */
-
-.add-btn{
-    width: 50px;
-    height: 50px;
+.add-btn {
+    width: 44px;  
+    height: 44px;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 22px;
-    background: #9D182B;
+    font-size: 24px; 
+    background: #C4B5FD;
     color: white;
-    border-radius: 20%;
-    margin-top: -5px; /* float effect */
+    border-radius: 12px; 
+    margin-top: 0;
+    box-shadow: 0 2px 8px rgba(196, 181, 253, 0.4);
+    transition: all 0.2s ease-in-out;
 }
 
+.add-btn:active {
+    transform: scale(0.95);
+}
+
+/* --- OPEN FILE BUTTON --- */
+.open-file-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: #F3F4F6;
+    color: #1F2937 !important; /* Forces the text to be dark grey, not link-blue */
+    text-decoration: none !important; /* Removes the underline completely */
+    padding: 8px 16px;
+    border-radius: 50px; /* Gives it a nice pill shape */
+    font-size: 14px;
+    font-weight: 600;
+    transition: all 0.2s ease;
+    border: 1px solid #E5E7EB;
+    cursor: pointer;
+}
+
+/* Hover/Tap effect */
+.open-file-btn:active {
+    background: #E5E7EB;
+    transform: scale(0.95);
+}

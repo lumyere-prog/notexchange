@@ -1,69 +1,40 @@
 <!DOCTYPE html>
 <html>
-
 <head>
-<meta charset="UTF-8">
-<title>Notifications</title>
-<link rel="stylesheet" href="/css/notifications.css">
-<link rel="stylesheet" href="/css/global.css">
-
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta charset="UTF-8">
+    <title>Notifications</title>
+    <link rel="stylesheet" href="/css/notifications.css">
+    <link rel="stylesheet" href="/css/global.css">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
 </head>
+<body>
 
-<body style="background-image: url('/photos/background.png'); background-size: cover; background-position: center; height: 100vh; margin: 0;">
+    <div class="app-header">
+        <div class="app-title">Note Exchange</div>
+        <div class="bell-container">
+            <span class="material-icons bell">notifications</span>
+            <div class="badge" id="badgeCount"></div>
+        </div>
+    </div>
 
-<!-- APP HEADER -->
+    <div class="page-header">
+        <span class="material-icons back" onclick="goBack()">arrow_back</span>
+        <h2>Notifications</h2>
+    </div>
 
-<div class="app-header">
+    <div class="notifications-container" id="notificationsContainer"></div>
 
-<div class="app-title">Note Exchange</div>
+    <div class="modal" id="postModal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <h3 id="modalTitle"></h3>
+            <p id="modalContent"></p>
+        </div>
+    </div>
 
-<div class="bell-container">
-
-<div class="bell">🔔</div>
-
-<div class="badge" id="badgeCount"></div>
-
-</div>
-
-</div>
-
-
-<!-- PAGE HEADER -->
-
-<div class="page-header">
-
-<span class="back" onclick="goBack()">←</span>
-<h2>Notifications</h2>
-
-</div>
-
-
-<!-- SCROLLABLE CONTAINER -->
-
-<div class="notifications-container" id="notificationsContainer"></div>
-
-
-
-<!-- POST MODAL -->
-
-<div class="modal" id="postModal">
-
-<div class="modal-content">
-
-<span class="close">&times;</span>
-
-<h3 id="modalTitle"></h3>
-
-<p id="modalContent"></p>
-
-</div>
-
-</div>
-
-
-<script src="/js/notifications.js"></script>
-<script src="/js/nav.js"></script>
-<script type="module" src="/js/auth-state.js"></script>
+    <script src="/js/notifications.js"></script>
+    <script src="/js/nav.js"></script>
+    <script type="module" src="/js/auth-state.js"></script>
 </body>
 </html>

@@ -1,171 +1,119 @@
 const notifications = [
-
-{
-user:"Christine G. Aligata",
-action:"upvoted your post",
-time:"1h",
-unread:true,
-postTitle:"CC106 Application Development",
-postContent:"This lesson explains presentation tier, logic tier, and data tier."
-},
-
-{
-user:"Jennifer E. Cabutin",
-action:"commented on your post",
-quote:"This is very helpful. Thank you",
-time:"1h",
-unread:true,
-postTitle:"Application Development and Emerging Technologies",
-postContent:"Modern application development focuses on software design and security."
-},
-
-{
-user:"Janelle A. Caycob",
-action:"bookmarked your post",
-time:"21h",
-unread:false,
-postTitle:"Cloud Computing",
-postContent:"Cloud computing enables on-demand delivery of computing services."
-}
-
+    {
+        user: "Christine G. Aligata",
+        action: "upvoted your post",
+        time: "1h",
+        unread: true,
+        postTitle: "CC106 Application Development",
+        postContent: "This lesson explains presentation tier, logic tier, and data tier."
+    },
+    {
+        user: "Jennifer E. Cabutin",
+        action: "commented on your post",
+        quote: "This is very helpful. Thank you",
+        time: "1h",
+        unread: true,
+        postTitle: "Application Development and Emerging Technologies",
+        postContent: "Modern application development focuses on software design and security."
+    },
+    {
+        user: "Janelle A. Caycob",
+        action: "bookmarked your post",
+        time: "21h",
+        unread: false,
+        postTitle: "Cloud Computing",
+        postContent: "Cloud computing enables on-demand delivery of computing services."
+    }
 ];
-
-
 
 const container = document.getElementById("notificationsContainer");
 const badge = document.getElementById("badgeCount");
+const modal = document.getElementById("postModal");
 
+function loadNotifications() {
+    let unreadCount = 0;
 
+    notifications.forEach((n, index) => {
+        if (n.unread) unreadCount++;
 
-function loadNotifications(){
+        let div = document.createElement("div");
+        div.className = "notification";
 
-let unreadCount = 0;
+        if (n.unread) {
+            let dot = document.createElement("div");
+            dot.className = "unread-dot";
+            div.appendChild(dot);
+        }
 
-notifications.forEach((n,index)=>{
+        // The "See Post" button was removed to make it cleaner
+        div.innerHTML += `
+            <img class="avatar" src="/photos/profile.jpg" alt="Avatar">
+            <div class="notif-text">
+                <b>${n.user}</b> ${n.action}
+                ${n.quote ? `<div class="quote">"${n.quote}"</div>` : ""}
+                <div class="time">${n.time}</div>
+            </div>
+        `;
 
-if(n.unread) unreadCount++;
+        // Tapping the card marks it as read AND opens the post
+        div.onclick = () => {
+            markRead(index, div);
+            openPost(n);
+        };
 
-let div = document.createElement("div");
-div.className="notification";
+        container.appendChild(div);
+    });
 
-if(n.unread){
+    badge.innerText = unreadCount;
 
-let dot = document.createElement("div");
-dot.className="unread-dot";
-div.appendChild(dot);
-
+    if (unreadCount === 0) {
+        badge.style.display = "none";
+    }
 }
 
-div.innerHTML += `
+function markRead(index, element) {
+    notifications[index].unread = false;
 
-<img class="avatar">
+    let dot = element.querySelector(".unread-dot");
+    if (dot) {
+        dot.remove();
+    }
 
-<div class="notif-text">
+    updateBadge();
+}
 
-<b>${n.user}</b> ${n.action}
+function updateBadge() {
+    let count = notifications.filter(n => n.unread).length;
+    badge.innerText = count;
 
-${n.quote ? `<div class="quote">"${n.quote}"</div>`:""}
+    if (count === 0) {
+        badge.style.display = "none";
+    }
+}
 
-<div class="time">${n.time}</div>
+function openPost(n) {
+    document.getElementById("modalTitle").innerText = n.postTitle;
+    document.getElementById("modalContent").innerText = n.postContent;
+    
+    // Note: We use flex here to center it perfectly based on the new CSS
+    modal.style.display = "flex"; 
+}
 
-</div>
-
-<button class="see-btn">See Post</button>
-
-`;
-
-
-
-div.querySelector(".see-btn").onclick = (e)=>{
-e.stopPropagation();
-openPost(n,index);
+// Close Modal when clicking the X
+document.querySelector(".close").onclick = () => {
+    modal.style.display = "none";
 };
 
-
-
-div.onclick = ()=>{
-
-markRead(index,div);
-
+// Close Modal when clicking the dark background outside the content
+window.onclick = function(e) {
+    if (e.target === modal) {
+        modal.style.display = "none";
+    }
 };
 
-
-
-container.appendChild(div);
-
-});
-
-badge.innerText = unreadCount;
-
-if(unreadCount === 0){
-badge.style.display="none";
+function goBack() {
+    window.history.back();
 }
 
-}
-
-
-
-function markRead(index,element){
-
-notifications[index].unread=false;
-
-let dot = element.querySelector(".unread-dot");
-
-if(dot){
-dot.remove();
-}
-
-updateBadge();
-
-}
-
-
-
-function updateBadge(){
-
-let count = notifications.filter(n=>n.unread).length;
-
-badge.innerText = count;
-
-if(count===0){
-badge.style.display="none";
-}
-
-}
-
-
-
-function openPost(n){
-
-document.getElementById("modalTitle").innerText = n.postTitle;
-document.getElementById("modalContent").innerText = n.postContent;
-
-document.getElementById("postModal").style.display="block";
-
-}
-
-
-
-document.querySelector(".close").onclick = ()=>{
-
-document.getElementById("postModal").style.display="none";
-
-};
-
-
-
-window.onclick = function(e){
-
-if(e.target.classList.contains("modal")){
-document.getElementById("postModal").style.display="none";
-}
-
-};
-
-
-
+// Initialize the page
 loadNotifications();
-
-function goBack(){
-window.history.back();
-}
