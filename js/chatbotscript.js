@@ -1,6 +1,6 @@
-const user = JSON.parse(localStorage.getItem("user"));
 const API = 'http://localhost:3000';
-const userID = user.email;
+const user = JSON.parse(localStorage.getItem("user")) || {};
+const userID = user.email || "guest";
 
 // wait for DOM
 document.addEventListener("DOMContentLoaded", () => {
@@ -8,17 +8,18 @@ document.addEventListener("DOMContentLoaded", () => {
     const sendBtn = document.getElementById("send-btn");
     const input = document.getElementById("chat-input");
     const chatBody = document.getElementById("chat-body");
+
     const greetings = [
-    "yo! what’s up?",
-    "hello there!!! ready to study?",
-    "hey hey? need help with something?",
-    "sup? ask me anything",
-    "yo genius? what are we solving today?",
-    "wsp clanker! what’s the mission?",
-    "yooooo! drop your question",
-    "hello! let’s cook some answers",
-    "hey clanky!! I’m ready when you are",
-    "what’s good? how can I help?"
+        "yo! what’s up?",
+        "hello there!!! ready to study?",
+        "hey hey? need help with something?",
+        "sup? ask me anything",
+        "yo genius? what are we solving today?",
+        "wsp clanker! what’s the mission?",
+        "yooooo! drop your question",
+        "hello! let’s cook some answers",
+        "hey clanky!! I’m ready when you are",
+        "what’s good? how can I help?"
     ];
 
     if (!sendBtn || !input || !chatBody) {
@@ -28,15 +29,21 @@ document.addEventListener("DOMContentLoaded", () => {
 
     sendBtn.addEventListener("click", sendMessage);
 
+    // Enter key support
+    input.addEventListener("keypress", (e) => {
+        if (e.key === "Enter") sendMessage();
+    });
+
     function showRandomGreeting() {
-    const msg = greetings[Math.floor(Math.random() * greetings.length)];
+        const msg = greetings[Math.floor(Math.random() * greetings.length)];
 
-    const div = document.createElement("div");
-    div.className = "bot-msg";
-    div.textContent = msg;
+        const div = document.createElement("div");
+        div.className = "bot-msg";
+        div.textContent = msg;
 
-    chatBody.appendChild(div);
-}
+        chatBody.appendChild(div);
+    }
+
     showRandomGreeting();
 
     function addMessage(text, sender) {
@@ -44,68 +51,63 @@ document.addEventListener("DOMContentLoaded", () => {
 
         if (sender === "user") {
             div.style.textAlign = "right";
+            div.textContent = "You: " + text;
         } else {
             div.className = "bot-msg";
+            div.textContent = text;
         }
 
-        div.textContent = text;
         chatBody.appendChild(div);
-
         chatBody.scrollTop = chatBody.scrollHeight;
     }
 
     async function sendMessage() {
-    const prompt = input.value;
-    if (!prompt) return;
+        const prompt = input.value.trim();
+        if (!prompt) return;
 
-    addMessage("You: " + prompt, "user");
+        addMessage(prompt, "user");
+        input.value = "";
 
-    input.value = "";
+        // loading message (no ID needed anymore)
+        const loadingDiv = document.createElement("div");
+        loadingDiv.className = "bot-msg";
+        loadingDiv.textContent = "Thinking...";
+        chatBody.appendChild(loadingDiv);
 
-    // ⏳ CREATE LOADING MESSAGE
-    const loadingId = "loading-" + Date.now();
+        chatBody.scrollTop = chatBody.scrollHeight;
 
-    const loadingDiv = document.createElement("div");
-    loadingDiv.id = loadingId;
-    loadingDiv.className = "bot-msg";
-    loadingDiv.textContent = "Thinking...";
-    chatBody.appendChild(loadingDiv);
+        try {
+            const res = await fetch(`${API}/chatbot`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ prompt, userID })
+            });
 
-    chatBody.scrollTop = chatBody.scrollHeight;
+            const data = await res.json();
 
-    try {
-        const res = await fetch(`${API}/chatbot`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ prompt, userID })
-        });
+            loadingDiv.remove();
 
-        const data = await res.json();
+            if (data.reply) {
+                addMessage("Lumiere: " + cleanText(data.reply), "bot");
+            } else {
+                addMessage("Error: " + data.error, "bot");
+            }
 
-        // remove loading
-        document.getElementById(loadingId)?.remove();
-
-        if (data.reply) {
-            addMessage(
-                "Lumiere: " + cleanText(data.reply),
-                "bot"
-            );
-        } else {
-            addMessage("Error: " + data.error, "bot");
+        } catch (err) {
+            loadingDiv.remove();
+            addMessage("Server error 😭", "bot");
+            console.error(err);
         }
-
-    } catch (err) {
-        document.getElementById(loadingId)?.remove();
-        addMessage("Server error 😭", "bot");
     }
-}
-        function cleanText(text) {
-            return text
-                .replace(/\*/g, "")     // remove *
-                .replace(/_/g, "")      // optional cleanup
-                .trim();
-        }
-        function saveChat() {
+
+    function cleanText(text) {
+        return text
+            .replace(/\*/g, "")
+            .replace(/_/g, "")
+            .trim();
+    }
+
+    function saveChat(prompt) {
         const history = JSON.parse(localStorage.getItem(`chat_${userID}`)) || [];
 
         history.push({
@@ -115,5 +117,5 @@ document.addEventListener("DOMContentLoaded", () => {
 
         localStorage.setItem(`chat_${userID}`, JSON.stringify(history));
     }
-    
+
 });

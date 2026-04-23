@@ -1,4 +1,5 @@
 import { db } from "/firebase/firebase-client.js";
+import { addPoints } from "/js/points.js";
 import {
   collection,
   getDocs,
@@ -8,6 +9,8 @@ import {
   doc,
   updateDoc,
   increment,
+  runTransaction,
+  serverTimestamp,
   getDoc,
   orderBy,
   arrayUnion // 🔥 ADDED FOR COMMENTS
@@ -328,61 +331,91 @@ window.closeModal = closeModal;
 
 
 // VOTING (Reddit Style)
+let votingInProgress = false;
+
 async function vote(event, postId, value){
   event.stopPropagation();
 
+  if (votingInProgress) return; // 🚫 prevent spam click
+  votingInProgress = true;
+
   const user = JSON.parse(localStorage.getItem("user"));
-  if (!user) return alert("Login first");
-
-  const ref = doc(db, "posts", postId);
-  const snap = await getDoc(ref);
-
-  if (!snap.exists()) return;
-
-  const post = snap.data();
-
-  let userVotes = post.userVotes || {};
-  let currentVote = userVotes[user.uid] || 0;
-
-  let updates = {
-    userVotes: userVotes
-  };
-
-  // 🔥 REMOVE SAME VOTE
-  if (currentVote === value) {
-
-    delete userVotes[user.uid];
-
-    if (value === 1) {
-      updates.upvotes = increment(-1);
-    } else {
-      updates.downvotes = increment(-1);
-    }
-
-  } 
-  // 🔥 SWITCH VOTE
-  else {
-
-    userVotes[user.uid] = value;
-
-    if (value === 1) {
-      updates.upvotes = increment(1);
-
-      if (currentVote === -1) {
-        updates.downvotes = increment(-1);
-      }
-
-    } else {
-      updates.downvotes = increment(1);
-
-      if (currentVote === 1) {
-        updates.upvotes = increment(-1);
-      }
-    }
+  if (!user) {
+    votingInProgress = false;
+    return alert("Login first");
   }
 
-  await updateDoc(ref, updates);
+  const postRef = doc(db, "posts", postId);
+
+  try {
+
+    await runTransaction(db, async (transaction) => {
+
+      const snap = await transaction.get(postRef);
+      if (!snap.exists()) return;
+
+      const post = snap.data();
+
+      let userVotes = post.userVotes || {};
+      let voteRewards = post.voteRewards || {}; // 🔥 anti-farming
+      let currentVote = userVotes[user.uid] || 0;
+
+      let alreadyRewarded = voteRewards[user.uid] || false;
+      let givePoints = false;
+
+      let updates = {};
+
+      // 🔥 REMOVE SAME VOTE
+      if (currentVote === value) {
+
+        delete userVotes[user.uid];
+
+        if (value === 1) updates.upvotes = increment(-1);
+        else updates.downvotes = increment(-1);
+
+      } else {
+
+        userVotes[user.uid] = value;
+
+        // ✅ GIVE POINT ONLY ONCE PER POST
+        if (!alreadyRewarded) {
+          givePoints = true;
+          voteRewards[user.uid] = true;
+        }
+
+        if (value === 1) {
+          updates.upvotes = increment(1);
+          if (currentVote === -1) updates.downvotes = increment(-1);
+        }
+
+        if (value === -1) {
+          updates.downvotes = increment(1);
+          if (currentVote === 1) updates.upvotes = increment(-1);
+        }
+      }
+
+      updates.userVotes = userVotes;
+      updates.voteRewards = voteRewards;
+
+      transaction.update(postRef, updates);
+
+      // 💰 POINTS (handled separately to respect daily cap)
+      if (givePoints) {
+        await addPoints(user.uid, 1);
+      }
+
+    });
+
+    console.log("🔥 Vote updated");
+
+  } catch (err) {
+    console.error("Vote error:", err);
+  }
+
+  votingInProgress = false;
 }
+  
+
 
 
 /* =========================

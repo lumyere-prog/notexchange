@@ -1,4 +1,6 @@
 import { db, storage } from "/firebase/firebase-client.js";
+import { addPoints } from "/js/points.js";
+
 import {
   collection,
   addDoc,
@@ -7,10 +9,13 @@ import {
 
 import {
   ref,
-  uploadBytes,
+  uploadBytesResumable,
   getDownloadURL
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-storage.js";
 
+// ===============================
+// FILE NAME DISPLAY
+// ===============================
 document.addEventListener("DOMContentLoaded", () => {
 
   const fileInput = document.getElementById("fileInput");
@@ -18,68 +23,99 @@ document.addEventListener("DOMContentLoaded", () => {
 
   fileInput.addEventListener("change", () => {
     const file = fileInput.files[0];
-
-    if (file) {
-      fileNameText.textContent = file.name;
-    } else {
-      fileNameText.textContent = "";
-    }
+    fileNameText.textContent = file ? file.name : "";
   });
 
 });
 
-document.getElementById("postForm").addEventListener("submit", async (e) => {
+// ===============================
+// UPLOAD FORM
+// ===============================
+const form = document.getElementById("postForm");
+const uploadBtn = document.querySelector(".upload-btn");
+
+form.addEventListener("submit", async (e) => {
   e.preventDefault();
 
   const user = JSON.parse(localStorage.getItem("user"));
   const file = document.getElementById("fileInput").files[0];
 
-  if (!user?.uid) {
-    alert("Login first");
-    return;
-  }
-
-  if (!file) {
-    alert("Select a file first");
-    return;
-  }
+  if (!user?.uid) return alert("Login first");
+  if (!file) return alert("Select a file first");
 
   try {
     console.log("🔥 UPLOADING FILE...");
 
-    // 📁 CREATE STORAGE REF
+    // 🔒 DISABLE BUTTON
+    uploadBtn.disabled = true;
+    uploadBtn.innerText = "Uploading 0%";
+
+    // 📁 STORAGE REF
     const fileRef = ref(storage, `posts/${user.uid}/${Date.now()}_${file.name}`);
 
-    // 📤 UPLOAD FILE
-    await uploadBytes(fileRef, file);
+    // 🔥 RESUMABLE UPLOAD (for progress)
+    const uploadTask = uploadBytesResumable(fileRef, file);
 
-    // 🔗 GET DOWNLOAD URL
-    const fileURL = await getDownloadURL(fileRef);
+    uploadTask.on(
+      "state_changed",
 
-    console.log("🔥 FILE URL:", fileURL);
+      // 📊 PROGRESS
+      (snapshot) => {
+        const progress = Math.round(
+          (snapshot.bytesTransferred / snapshot.totalBytes) * 100
+        );
 
-    // 📝 SAVE POST WITH FILE LINK
-    const postData = {
-      title: document.getElementById("title").value,
-      subject: document.getElementById("subject").value,
-      description: document.getElementById("description").value,
-      fileURL: fileURL, // 🔥 THIS IS THE IMPORTANT PART
-      upvotes: 0,
-      downvotes: 0,
-      userID: user.uid,
-      username: user.username || user.name,
-      profilePic: user.profilePic || user.photo,
-      timestamp: serverTimestamp(),
-      userVotes: {}
-    };
+        uploadBtn.innerText = `Uploading ${progress}%`;
+      },
 
-    const refDoc = await addDoc(collection(db, "posts"), postData);
+      // ❌ ERROR
+      (error) => {
+        console.error("Upload error:", error);
+        uploadBtn.disabled = false;
+        uploadBtn.innerText = "Upload";
+      },
 
-    console.log("🔥 POST CREATED:", refDoc.id);
+      // ✅ COMPLETE
+      async () => {
+        const fileURL = await getDownloadURL(uploadTask.snapshot.ref);
 
-    alert("Upload complete!");
+        console.log("🔥 FILE URL:", fileURL);
+
+        // 📝 SAVE POST
+        const postData = {
+          title: document.getElementById("title").value,
+          subject: document.getElementById("subject").value,
+          description: document.getElementById("description").value,
+          fileURL: fileURL,
+          fileName: file.name,
+          upvotes: 0,
+          downvotes: 0,
+          userID: user.uid,
+          username: user.username || user.name,
+          profilePic: user.profilePic || user.photo,
+          timestamp: serverTimestamp(),
+          userVotes: {},
+          voteRewards: {} // 🔥 future-proof (anti farming)
+        };
+
+        const refDoc = await addDoc(collection(db, "posts"), postData);
+
+        console.log("🔥 POST CREATED:", refDoc.id);
+
+        // 💰 ADD POINTS (only after success)
+        await addPoints(user.uid, 10);
+
+        // 🔓 RESET BUTTON
+        uploadBtn.disabled = false;
+        uploadBtn.innerText = "Upload";
+
+        alert("Upload complete!");
+      }
+    );
 
   } catch (err) {
     console.error("Upload error:", err);
+    uploadBtn.disabled = false;
+    uploadBtn.innerText = "Upload";
   }
 });
