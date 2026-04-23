@@ -511,6 +511,111 @@ body {
     border-radius: 8px;
 }
 
+
+/* Overlay background */
+.pdf-modal {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    backdrop-filter: blur(6px);
+    justify-content: center;
+    align-items: center;
+    z-index: 9999;
+}
+
+/* Modal box (same style as your .modal-content) */
+.pdf-content {
+    background: #FFFFFF;
+    width: 100%;
+    max-width: 900px;
+    height: 85vh;
+    overflow: hidden;
+    border-radius: 16px;
+    padding: 16px;
+    margin-top: 100px;
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+    animation: modalPop 0.3s ease-out;
+    display: flex;
+    flex-direction: column;
+}
+
+/* animation */
+@keyframes modalPop {
+    from { transform: scale(0.95); opacity: 0; }
+    to { transform: scale(1); opacity: 1; }
+}
+
+/* header */
+.pdf-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-bottom: 10px;
+    border-bottom: 1px solid #E5E7EB;
+}
+
+/* title */
+#pdfTitle {
+    font-size: 16px;
+    font-weight: 600;
+    color: #111827;
+}
+
+/* close button (same vibe as your example) */
+.close-btn {
+    font-size: 24px;
+    cursor: pointer;
+    color: #6B7280;
+    background: none;
+    border: none;
+    padding: 8px;
+    border-radius: 8px;
+    transition: 0.2s;
+}
+
+.close-btn:hover {
+    background: #F3F4F6;
+}
+
+/* PDF viewer */
+#pdfFrame {
+    flex: 1;
+    width: 100%;
+    border: none;
+    border-radius: 12px;
+    margin-top: 10px;
+}
+
+/* action buttons */
+.pdf-actions {
+    display: flex;
+    gap: 10px;
+    margin-top: 10px;
+}
+
+.pdf-actions button {
+    flex: 1;
+    padding: 10px;
+    border: none;
+    border-radius: 10px;
+    background: #111827;
+    color: white;
+    cursor: pointer;
+    transition: 0.2s;
+}
+
+.pdf-actions button:hover {
+    background: #374151;
+}
+
+
+/*------------------------------
+/* --- SEARCH PAGE STYLES --- */
+/*-------------------------------
 /* search full page */
 .search-page {
     position: fixed;

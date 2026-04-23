@@ -158,8 +158,9 @@ function loadPostsRealtime() {
                     <span class="material-icons">chat_bubble_outline</span>
                 </button>
 
-                <a href="${post.fileURL}" target="_blank" class="open-file-btn" onclick="event.stopPropagation()">
-                  <span class="material-icons" style="font-size: 18px;">description</span> Open
+                <<button class="open-file-btn" onclick="openFileModal('${post.fileURL}', '${post.title}')">
+  <span class="material-icons" style="font-size: 18px;">description</span> Open
+</button>
                 </a>
             </div>
 
@@ -311,6 +312,74 @@ async function openPost(postId){
   // 5. Show the modal
   modal.style.display = "flex";
 }
+///////////////////////////////////////////////////////////////////////////////////////
+let selectedPDF = null;
+let activeFile = null;
+
+
+window.openFileModal = function(url, title) {
+  selectedPDF = { url, title };
+  activeFile = { url, title };
+
+  // update UI
+  document.getElementById("file-title").innerText =
+    "📄 " + (title || "Selected File");
+
+  document.getElementById("pdfFrame").src = url;
+  document.getElementById("pdfTitle").innerText = title || "PDF File";
+  document.getElementById("pdfModal").style.display = "block";
+};
+
+window.closeFileModal = function() {
+  document.getElementById("pdfModal").style.display = "none";
+  document.getElementById("pdfFrame").src = "";
+};
+
+window.clearFile = function () {
+  activeFile = null;
+
+  document.getElementById("file-title").innerText =
+    "💬 Please open a file";
+};
+
+window.getSummary = async function () {
+  if (!activeFile) return alert("No file selected");
+
+  const res = await fetch("http://localhost:3000/ai/summarize", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(activeFile)
+  });
+
+  const data = await res.json();
+
+  showMessage("🧠 Summary:\n\n" + data.summary);
+};
+
+window.getQuiz = async function () {
+  if (!activeFile) return alert("No file selected");
+
+  const res = await fetch("http://localhost:3000/ai/quiz", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(activeFile)
+  });
+
+  const data = await res.json();
+
+  showMessage("📝 Quiz:\n\n" + data.quiz);
+};
+function showMessage(text) {
+  const div = document.createElement("div");
+  div.className = "bot-msg";
+  div.innerText = text;
+
+  const chat = document.getElementById("chat-body");
+  chat.appendChild(div);
+
+  chat.scrollTop = chat.scrollHeight;
+}
+
 
 // CLOSE MODAL
 const modal = document.getElementById("postModal");

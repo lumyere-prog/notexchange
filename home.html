@@ -70,13 +70,42 @@
         </div>
     </div>
 
+        <div id="pdfModal" class="pdf-modal">
+  <div class="pdf-content">
+
+    <div class="pdf-header">
+      <span id="pdfTitle">File</span>
+      <button class="close-btn" onclick="closeFileModal()">×</button>
+    </div>
+
+    <iframe id="pdfFrame"></iframe>
+
+    <div class="pdf-actions">
+      <button onclick="summarizePDF()">🧠 Summarize</button>
+      <button onclick="generateQuiz()">📝 Quiz</button>
+    </div>
+
+  </div>
+</div>
+
     <div id="chatbot-btn">
         <span class="material-icons">chat</span>
     </div>
+    
 
     <div id="chatbot-modal" style="display:none;">
         <div class="chat-header">
             <span>Lumiere - Study Companion</span>
+            <div id="active-file-panel">
+        <div id="file-title">No file selected</div>
+
+        <div class="study-tabs">
+            <button onclick="clearFile()">✖ Remove File</button>
+            <button onclick="getSummary()">🧠 Summary</button>
+            <button onclick="getQuiz()">📝 Quiz</button>
+          
+        </div>
+        </div>
             <button id="close-chat" type="button">✖</button>
         </div>
         <div class="chat-body" id="chat-body"></div>

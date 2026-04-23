@@ -12,6 +12,7 @@ app.use('/chatbot', require('./chatbot'));
 app.use('/user', require('./user'));
 app.use('/posts', require('./posts'));
 app.use('/auth/google', require('./googleAuth'));
+app.use('/ai', require('./studyAI'));
 
 
 app.post("/chatbot", (req, res) => {
