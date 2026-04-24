@@ -111,6 +111,7 @@ function loadPostsRealtime() {
       }
 
       const card = document.createElement("div");
+    
       card.className = "note-card";
 
       card.addEventListener("click", () => {
@@ -131,7 +132,13 @@ function loadPostsRealtime() {
           </h3>
 
           <div class="note-author">
-            <img src="${post.profilePic || "/photos/profile.jpg"}" class="author-pic">
+            
+<img src="${
+    post.profilePic ||
+    (post.userId === user?.uid ? user.photo : null) ||
+    user?.photo ||
+    "/photos/profile.jpg"
+}" class="author-pic">
             <span>${post.username || "Unknown"}</span>
           </div>
 

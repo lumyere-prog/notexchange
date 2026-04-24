@@ -40,9 +40,20 @@ form.addEventListener("submit", async (e) => {
   const user = JSON.parse(localStorage.getItem("user"));
   const file = document.getElementById("fileInput").files[0];
 
-  if (!user?.uid) return alert("Login first");
-  if (!file) return alert("Select a file first");
+if (!user?.uid) return alert("Login first");
+if (!file) return alert("Select a file first");
 
+// 🔒 PDF ONLY VALIDATION
+if (file.type !== "application/pdf") {
+  alert("Only PDF files are allowed!");
+  return;
+}
+
+// (extra safety fallback)
+if (!file.name.toLowerCase().endsWith(".pdf")) {
+  alert("Only PDF files are allowed!");
+  return;
+}
   try {
     console.log("🔥 UPLOADING FILE...");
 
@@ -92,7 +103,6 @@ form.addEventListener("submit", async (e) => {
           downvotes: 0,
           userID: user.uid,
           username: user.username || user.name,
-          profilePic: user.profilePic || user.photo,
           timestamp: serverTimestamp(),
           userVotes: {},
           voteRewards: {} // 🔥 future-proof (anti farming)

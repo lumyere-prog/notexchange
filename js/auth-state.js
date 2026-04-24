@@ -10,19 +10,23 @@ onAuthStateChanged(auth, (user) => {
   currentUser = user;
 
   if (!user) {
-    // ❌ NOT LOGGED IN → redirect
     window.location.href = "login.html";
-  } else {
-    // ✅ LOGGED IN
-    console.log("Logged in as:", user.displayName);
-
-    localStorage.setItem("user", JSON.stringify({
-      uid: user.uid,
-      name: user.displayName,
-      email: user.email,
-      photo: user.photoURL
-    }));
+    return;
   }
+
+  console.log("Logged in as:", user.displayName);
+
+  // 🔥 PRIORITY SYSTEM:
+  // 1. Firestore (you should fetch separately)
+  // 2. Google Auth photo
+  // 3. fallback
+
+  localStorage.setItem("user", JSON.stringify({
+    uid: user.uid,
+    name: user.displayName,
+    email: user.email,
+    photo: user.photoURL // fallback only
+  }));
 });
 
 // 🔥 GET USER ANYWHERE

@@ -1,20 +1,34 @@
-import { db } from "/firebase/firebase-client.js";
-import { doc, getDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+import { db } from "/firebase/firebase-client.js"; 
+import { getDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+import { onSnapshot, doc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+import { addPoints } from "/js/points.js";
+import {
+  collection,
+  query,
+  limit,    
+  updateDoc,
+  increment,
+  runTransaction,
+  where,
+  serverTimestamp,
+  orderBy,
+  arrayUnion 
+} from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";   
 
-document.addEventListener("DOMContentLoaded", async () => {
+
+document.addEventListener("DOMContentLoaded", () => {
   const localUser = JSON.parse(localStorage.getItem("user"));
 
-  // 🚨 not logged in
   if (!localUser?.uid) {
     window.location.href = "login.html";
     return;
   }
 
-  try {
-    // 🔥 fetch fresh Firestore data
-    const userRef = doc(db, "user", localUser.uid);
-    const snap = await getDoc(userRef);
+  const userRef = doc(db, "user", localUser.uid);
 
+  
+  // 🔥 REAL-TIME LISTENER
+  onSnapshot(userRef, (snap) => {
     if (!snap.exists()) {
       console.log("User not found");
       return;
@@ -26,10 +40,11 @@ document.addEventListener("DOMContentLoaded", async () => {
     const nameEl = document.querySelector(".name");
     if (nameEl) nameEl.textContent = user.username || "No Name";
 
-    // 🧾 USERNAME (@handle style)
+    // 🧾 USERNAME
     const usernameEl = document.querySelector(".username");
     if (usernameEl) {
-      usernameEl.textContent = "@" + (user.username?.toLowerCase().replace(/\s/g, "") || "user");
+      usernameEl.textContent =
+        "@" + (user.username?.toLowerCase().replace(/\s/g, "") || "user");
     }
 
     // 🖼 PROFILE IMAGE
@@ -47,16 +62,12 @@ document.addEventListener("DOMContentLoaded", async () => {
       `;
     }
 
-    // ⭐ STATS (example)
+    // ⭐ STATS
     const stats = document.querySelectorAll(".stats div strong");
-
     if (stats.length >= 2) {
       stats[1].textContent = user.points || 0;
     }
-
-  } catch (err) {
-    console.error("Profile load error:", err);
-  }
+  });
 });
 function toggleMenu() {
   const menu = document.getElementById("dropdownMenu");
@@ -93,42 +104,148 @@ window.onclick = function(event) {
 // EDIT PROFILE: SLIDE ANIMATION LOGIC
 // =========================================
 
-window.openEditProfile = function() {
+// ===============================
+// OPEN EDIT PROFILE
+// ===============================
+
+
+window.openEditProfile = async function () {
     const modal = document.getElementById("editProfileModal");
-    if (modal) {
-        // This triggers the CSS 'transform: translateX(0)'
-        modal.classList.add("active");
+    const user = JSON.parse(localStorage.getItem("user"));
+
+    if (!user?.uid) return;
+
+    try {
+        const ref = doc(db, "user", user.uid);
+        const snap = await getDoc(ref);
+
+        if (!snap.exists()) return;
+
+        const data = snap.data();
+
+        // Fill inputs
+        document.getElementById("editBio").value = data.bio || "";
+        document.getElementById("editLink").value = data.link || "";
+
+        // Profile image
+        const img = document.getElementById("editProfileImage");
+        if (img) img.src = data.profilePic || "/photos/guest.jpg";
+
+    } catch (err) {
+        console.error("Load profile error:", err);
     }
 
-    // Close the dropdown menu automatically so it isn't open behind the modal
+    if (modal) modal.classList.add("active");
+
     const dropdown = document.getElementById("dropdownMenu");
-    if (dropdown) {
-        dropdown.style.display = "none";
+    if (dropdown) dropdown.style.display = "none";
+};
+
+import {
+    getStorage,
+    ref,
+    uploadBytes,
+    getDownloadURL
+} from "https://www.gstatic.com/firebasejs/10.7.1/firebase-storage.js";
+
+// ===============================
+// INIT STORAGE
+// ===============================
+const storage = getStorage();
+
+// ===============================
+// PROFILE PICTURE UPLOAD
+// ===============================
+window.handleProfilePicChange = async function (event) {
+    const file = event.target.files[0];
+    const user = JSON.parse(localStorage.getItem("user"));
+
+    if (!file || !user?.uid) return;
+
+    try {
+        // 📦 storage reference
+        const storageRef = ref(storage, `profilePictures/${user.uid}`);
+
+        // ⬆️ upload file
+        await uploadBytes(storageRef, file);
+
+        // 🔗 get download URL
+        const downloadURL = await getDownloadURL(storageRef);
+
+        // 🖼 update UI immediately
+        const img = document.getElementById("editProfileImage");
+        if (img) img.src = downloadURL;
+
+        // 💾 save to Firestore
+        const userRef = doc(db, "user", user.uid);
+        await updateDoc(userRef, {
+            profilePic: downloadURL
+        });
+
+        console.log("Profile picture updated successfully!");
+
+    } catch (err) {
+        console.error("Upload failed:", err);
     }
 };
 
-window.closeEditProfile = function() {
+// ===============================
+// BIND FILE INPUT EVENT
+// ===============================
+window.addEventListener("DOMContentLoaded", () => {
+    const input = document.getElementById("profilePicInput");
+
+    if (input) {
+        input.addEventListener("change", handleProfilePicChange);
+    }
+});
+// ===============================
+// CLOSE MODAL
+// ===============================
+window.closeEditProfile = function () {
     const modal = document.getElementById("editProfileModal");
-    if (modal) {
-        // This triggers the CSS 'transform: translateX(100%)' to slide it back out
-        modal.classList.remove("active");
+    if (modal) modal.classList.remove("active");
+};
+
+// ===============================
+// SAVE PROFILE
+// ===============================
+window.saveProfileChanges = async function () {
+    const user = JSON.parse(localStorage.getItem("user"));
+    if (!user?.uid) return;
+
+    const updatedData = {
+        bio: document.getElementById("editBio").value,
+        link: document.getElementById("editLink").value,
+    };
+
+    try {
+        const ref = doc(db, "user", user.uid);
+        await updateDoc(ref, updatedData);
+
+        console.log("Profile updated successfully");
+
+        window.closeEditProfile();
+
+    } catch (err) {
+        console.error("Save error:", err);
     }
 };
 
-window.saveProfileChanges = function() {
-    // Placeholder for your database logic
-    console.log("Profile changes saved to database.");
-    
-    // Smoothly slide back to the main profile page
-    window.closeEditProfile();
-};
+// ===============================
+// ADD INTEREST (temporary local UI only)
+// ===============================
+window.addNewInterest = function () {
+    const value = prompt("Enter new interest:");
+    if (!value) return;
 
-window.addNewInterest = function() {
-    // Placeholder logic for adding a new interest tag
-    const newInterest = prompt("What interest would you like to add?");
-    if (newInterest) {
-        console.log("New interest added: " + newInterest);
-    }
+    const container = document.getElementById("editInterestsContainer");
+
+    const tag = document.createElement("span");
+    tag.className = "interest-tag";
+    tag.innerHTML = `<span class="material-icons">star</span> ${value}`;
+
+    container.insertBefore(tag, container.querySelector(".add-interest"));
 };
 
 // =========================================
@@ -223,3 +340,23 @@ window.closeNotifications = function() {
         modal.classList.remove("active");
     }
 };
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+/* =========================
+   LOAD POSTS FROM FIRESTORE
+========================= */

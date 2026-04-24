@@ -185,44 +185,11 @@
     color: white;
     border-radius: 12px 12px 0 0;
 }
+/* =========================================
+   MODALS (Post & Search)
+   ========================================= */
 
-/* post */
-.profile-post {
-    margin-top: 16px;
-    background: #FFFFFF;
-    border-radius: 16px;
-    overflow: hidden;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
-    border: 1px solid #F3F4F6;
-    transition: all 0.2s ease-in-out;
-}
-
-.profile-post:active {
-    transform: scale(0.98);
-}
-
-.post-image {
-    height: 120px;
-    background: #F3F4F6;
-}
-
-.post-content {
-    padding: 16px;
-}
-
-.author {
-    font-size: 14px;
-    font-weight: 600;
-    color: #1F2937;
-    margin-bottom: 8px;
-}
-
-.desc {
-    font-size: 14px;
-    color: #6B7280;
-    line-height: 1.5;
-}
-
+   
 /* =========================================
    UNIVERSAL BOTTOM NAVIGATION
    ========================================= */
