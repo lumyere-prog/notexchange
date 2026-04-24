@@ -13,8 +13,14 @@ import {
   serverTimestamp,
   getDoc,
   orderBy,
-  arrayUnion // 🔥 ADDED FOR COMMENTS
+  arrayUnion 
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+/* =========================
+   STATE MEMORY
+========================= */
+// 🔥 THIS REMEMBERS WHICH COMMENT SECTIONS ARE OPEN!
+const openComments = new Set();
 
 /* =========================
    CATEGORY BUTTONS
@@ -55,9 +61,6 @@ function generateCategories(categoryList) {
       button.classList.add("active");
 
       console.log("Selected category:", category);
-
-      // 🔥 future filter
-      // loadPosts(category);
     });
 
     container.appendChild(button);
@@ -80,24 +83,21 @@ function loadPostsRealtime() {
   onSnapshot(q, (snapshot) => {
     container.innerHTML = "";
 
-    // 1. Get the current user so we know whose votes to check
     const currentUser = JSON.parse(localStorage.getItem("user"));
     const userId = currentUser ? currentUser.uid : null;
 
     snapshot.forEach(docSnap => {
       const post = docSnap.data();
 
-      // 2. Figure out if this specific user voted on this specific post
       let upClass = "";
       let downClass = "";
       
       if (userId && post.userVotes && post.userVotes[userId] === 1) {
-          upClass = "upvoted"; // Turns it Green
+          upClass = "upvoted"; 
       } else if (userId && post.userVotes && post.userVotes[userId] === -1) {
-          downClass = "downvoted"; // Turns it Red
+          downClass = "downvoted"; 
       }
 
-      // 3. Build the existing comments HTML
       let commentsHTML = "";
       if (post.comments && post.comments.length > 0) {
           post.comments.forEach(c => {
@@ -154,19 +154,18 @@ function loadPostsRealtime() {
             <div style="display: flex; align-items: center; gap: 4px;">
                 <button class="fav-btn" onclick="toggleFav(event, this)">🔖</button>
                 
-                <button class="comment-icon-btn" onclick="toggleComments(event, this)">
+                <button class="comment-icon-btn" onclick="toggleComments(event, this, '${docSnap.id}')">
                     <span class="material-icons">chat_bubble_outline</span>
                 </button>
 
-                <<button class="open-file-btn" onclick="openFileModal('${post.fileURL}', '${post.title}')">
-  <span class="material-icons" style="font-size: 18px;">description</span> Open
-</button>
-                </a>
+                <button class="open-file-btn" onclick="openFileModal('${post.fileURL}', '${post.title}')">
+                    <span class="material-icons" style="font-size: 18px;">description</span> Open
+                </button>
             </div>
 
           </div>
 
-          <div class="comment-section" onclick="event.stopPropagation()">
+          <div class="comment-section" style="display: ${openComments.has(docSnap.id) ? 'block' : 'none'};" onclick="event.stopPropagation()">
               <div class="comments-list">
                   ${commentsHTML}
               </div>
@@ -179,7 +178,6 @@ function loadPostsRealtime() {
         </div>
       `;
 
-      // 🔥 VOTE EVENTS (no inline onclick)
       const upBtn = card.querySelector(".upvote-btn");
       const downBtn = card.querySelector(".downvote-btn");
 
@@ -218,7 +216,6 @@ async function openPost(postId){
 
   const post = snap.data();
 
-  // 1. Check user votes for the Modal!
   const currentUser = JSON.parse(localStorage.getItem("user"));
   const userId = currentUser ? currentUser.uid : null;
 
@@ -231,7 +228,6 @@ async function openPost(postId){
       downClass = "downvoted";
   }
 
-  // 2. Build the existing comments HTML for the Modal
   let commentsHTML = "";
   if (post.comments && post.comments.length > 0) {
       post.comments.forEach(c => {
@@ -244,7 +240,6 @@ async function openPost(postId){
       });
   }
 
-  // 3. Build the HTML inside the Modal
   body.innerHTML = `
     <h3>${post.title}</h3>
 
@@ -271,18 +266,18 @@ async function openPost(postId){
       <div style="display: flex; align-items: center; gap: 4px;">
           <button class="fav-btn" onclick="toggleFav(event, this)">🔖</button>
           
-          <button class="comment-icon-btn" onclick="toggleComments(event, this)">
+          <button class="comment-icon-btn" onclick="toggleComments(event, this, '${postId}')">
               <span class="material-icons">chat_bubble_outline</span>
           </button>
 
-          <a href="${post.fileURL}" target="_blank" class="open-file-btn" onclick="event.stopPropagation()">
-            <span class="material-icons" style="font-size: 18px;">description</span> Open
-          </a>
+          <button class="open-file-btn" onclick="openFileModal('${post.fileURL}', '${post.title}')">
+              <span class="material-icons" style="font-size: 18px;">description</span> Open
+          </button>
       </div>
 
     </div>
 
-    <div class="comment-section" onclick="event.stopPropagation()">
+    <div class="comment-section" style="display: ${openComments.has(postId) ? 'block' : 'none'};" onclick="event.stopPropagation()">
         <div class="comments-list">
             ${commentsHTML}
         </div>
@@ -293,37 +288,31 @@ async function openPost(postId){
     </div>
   `;
 
-  // ==========================================
-  // 4. Hook up the Vote Buttons inside the Modal
-  // ==========================================
   const upBtn = body.querySelector(".upvote-btn");
   const downBtn = body.querySelector(".downvote-btn");
 
   upBtn.addEventListener("click", async (e) => {
       await vote(e, postId, 1);
-      openPost(postId); // Instantly reloads the modal to show the new color!
+      openPost(postId); 
   });
 
   downBtn.addEventListener("click", async (e) => {
       await vote(e, postId, -1);
-      openPost(postId); // Instantly reloads the modal to show the new color!
+      openPost(postId); 
   });
 
-  // 5. Show the modal
   modal.style.display = "flex";
 }
+
 ///////////////////////////////////////////////////////////////////////////////////////
 let selectedPDF = null;
 let activeFile = null;
-
 
 window.openFileModal = function(url, title) {
   selectedPDF = { url, title };
   activeFile = { url, title };
 
-  // update UI
-  document.getElementById("file-title").innerText =
-    "📄 " + (title || "Selected File");
+  document.getElementById("file-title").innerText = "📄 " + (title || "Selected File");
 
   document.getElementById("pdfFrame").src = url;
   document.getElementById("pdfTitle").innerText = title || "PDF File";
@@ -337,9 +326,7 @@ window.closeFileModal = function() {
 
 window.clearFile = function () {
   activeFile = null;
-
-  document.getElementById("file-title").innerText =
-    "💬 Please open a file";
+  document.getElementById("file-title").innerText = "💬 Please open a file";
 };
 
 window.getSummary = async function () {
@@ -352,7 +339,6 @@ window.getSummary = async function () {
   });
 
   const data = await res.json();
-
   showMessage("🧠 Summary:\n\n" + data.summary);
 };
 
@@ -366,9 +352,9 @@ window.getQuiz = async function () {
   });
 
   const data = await res.json();
-
   showMessage("📝 Quiz:\n\n" + data.quiz);
 };
+
 function showMessage(text) {
   const div = document.createElement("div");
   div.className = "bot-msg";
@@ -380,7 +366,6 @@ function showMessage(text) {
   chat.scrollTop = chat.scrollHeight;
 }
 
-
 // CLOSE MODAL
 const modal = document.getElementById("postModal");
 
@@ -388,14 +373,12 @@ function closeModal() {
   modal.style.display = "none";
 }
 
-// click outside modal content to close
 modal.addEventListener("click", (event) => {
   if (event.target === modal) {
     closeModal();
   }
 });
 
-// expose only if you're using onclick="closeModal()"
 window.closeModal = closeModal;
 
 
@@ -405,7 +388,7 @@ let votingInProgress = false;
 async function vote(event, postId, value){
   event.stopPropagation();
 
-  if (votingInProgress) return; // 🚫 prevent spam click
+  if (votingInProgress) return; 
   votingInProgress = true;
 
   const user = JSON.parse(localStorage.getItem("user"));
@@ -417,16 +400,14 @@ async function vote(event, postId, value){
   const postRef = doc(db, "posts", postId);
 
   try {
-
-    await runTransaction(db, async (transaction) => {
-
+   await runTransaction(db, async (transaction) => {
       const snap = await transaction.get(postRef);
       if (!snap.exists()) return;
 
       const post = snap.data();
 
       let userVotes = post.userVotes || {};
-      let voteRewards = post.voteRewards || {}; // 🔥 anti-farming
+      let voteRewards = post.voteRewards || {}; 
       let currentVote = userVotes[user.uid] || 0;
 
       let alreadyRewarded = voteRewards[user.uid] || false;
@@ -434,19 +415,13 @@ async function vote(event, postId, value){
 
       let updates = {};
 
-      // 🔥 REMOVE SAME VOTE
       if (currentVote === value) {
-
         delete userVotes[user.uid];
-
         if (value === 1) updates.upvotes = increment(-1);
         else updates.downvotes = increment(-1);
-
       } else {
-
         userVotes[user.uid] = value;
 
-        // ✅ GIVE POINT ONLY ONCE PER POST
         if (!alreadyRewarded) {
           givePoints = true;
           voteRewards[user.uid] = true;
@@ -468,39 +443,37 @@ async function vote(event, postId, value){
 
       transaction.update(postRef, updates);
 
-      // 💰 POINTS (handled separately to respect daily cap)
       if (givePoints) {
         await addPoints(user.uid, 1);
       }
-
     });
-
     console.log("🔥 Vote updated");
-
   } catch (err) {
     console.error("Vote error:", err);
   }
-
   votingInProgress = false;
 }
   
-
-
 
 /* =========================
    NEW COMMENT FUNCTIONS
 ========================= */
 
-// 1. Toggle visibility of the comment section
-function toggleComments(event, btn) {
+// 🔥 UPDATED to add/remove the post ID from memory!
+function toggleComments(event, btn, postId) {
     event.stopPropagation(); 
     
-    // Find the footer, then open the section right below it
     const footer = btn.closest('.note-footer');
     const commentSection = footer.nextElementSibling;
     
     if (commentSection && commentSection.classList.contains('comment-section')) {
-        commentSection.style.display = commentSection.style.display === "block" ? "none" : "block";
+        if (commentSection.style.display === "block" || commentSection.style.display === "") {
+            commentSection.style.display = "none";
+            if(postId) openComments.delete(postId); // Remove from memory
+        } else {
+            commentSection.style.display = "block";
+            if(postId) openComments.add(postId); // Add to memory
+        }
     }
 }
 
@@ -519,13 +492,16 @@ async function submitComment(event, postId, btn) {
     if (text === "") return;
 
     const newComment = {
-        username: user.username || "Anonymous", // Uses their real username!
+        username: user.username || "Anonymous", 
         text: text,
         timestamp: new Date().toISOString()
     };
 
     const postRef = doc(db, "posts", postId);
     try {
+        // 🔥 Ensure it stays open in memory before saving!
+        openComments.add(postId);
+
         await updateDoc(postRef, {
             comments: arrayUnion(newComment)
         });
@@ -533,7 +509,6 @@ async function submitComment(event, postId, btn) {
         input.value = ""; 
         console.log("Comment posted!");
 
-        // If inside modal, reload the modal to show the new comment!
         if (btn.closest('#modalBody')) {
             openPost(postId);
         }
@@ -543,7 +518,6 @@ async function submitComment(event, postId, btn) {
     }
 }
 
-// Expose functions globally
 window.toggleComments = toggleComments;
 window.submitComment = submitComment;
 
@@ -641,14 +615,12 @@ const sendBtn = document.getElementById("send-btn");
 const inputChat = document.getElementById("chat-input");
 const chatBody = document.getElementById("chat-body");
 
-// Open chat
 if (chatBtn) {
   chatBtn.addEventListener("click", () => {
       chatModal.style.display = "flex";
   });
 }
 
-// Close chat
 if (closeChat) {
   closeChat.addEventListener("click", () => {
       chatModal.style.display = "none";
@@ -664,17 +636,14 @@ const topArea = document.getElementById("topArea");
 window.addEventListener("scroll", () => {
     let scrollTop = window.pageYOffset || document.documentElement.scrollTop;
     
-    // Check exactly how tall the top bar is on the user's phone
     let topBarHeight = topArea.offsetHeight;
     
-    // Only hide if scrolling down AND past the entire height of the top bar
     if (scrollTop > lastScrollTop && scrollTop > topBarHeight) {
         topArea.classList.add("hide-on-scroll");
     } 
-    // If scrolling up, bring it back
     else if (scrollTop < lastScrollTop) {
         topArea.classList.remove("hide-on-scroll");
     }
     
-    lastScrollTop = scrollTop <= 0 ? 0 : scrollTop; // For Mobile or negative scrolling
+    lastScrollTop = scrollTop <= 0 ? 0 : scrollTop; 
 });

@@ -4,6 +4,7 @@ body{
     background-size: cover;
     background-position: center;
     background-repeat: no-repeat;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
 }
 
 /* container */
@@ -11,6 +12,7 @@ body{
     max-width:420px;
     margin:0 auto;
     padding:20px;
+    padding-bottom: 100px; /* Added slight padding so nav doesn't cover content */
 }
 
 /* header */
@@ -22,17 +24,7 @@ body{
 
 .upload-header h2{
     font-size:20px;
-    color:#F2BFC7;
-}
-
-.profile-pic{
-    width:45px;
-    height:45px;
-    border-radius:50%;
-}
-
-.notif-icon{
-    width:22px;
+    color:#111827; /* 1. CHANGED TO RED */
 }
 
 /* upload box */
@@ -57,7 +49,7 @@ body{
 .file-btn{
     display:inline-block;
     margin-top:15px;
-    background:#9D182B;
+    background:#111827; /* Matched to logo red */
     color:white;
     padding:10px 20px;
     border-radius:20px;
@@ -99,7 +91,7 @@ textarea{
 .upload-btn{
     width:100%;
     padding:12px;
-    background:#9D182B;
+    background:#111827; /* Matched to logo red */
     color:white;
     border:none;
     border-radius:25px;
@@ -123,19 +115,6 @@ textarea{
   transition: width 0.2s;
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
 /* footer */
 .chat-footer{
     display: flex;
@@ -150,63 +129,73 @@ textarea{
 }
 
 #send-btn{
-    background: #9D182B;
+    background: #DC2626; /* Matched to logo red */
     color: white;
     border: none;
     padding: 0 15px;
     cursor: pointer;
 }
 
-/* Bottom Navigation */
-
-.bottom-nav{
+/* =========================================
+   UNIVERSAL BOTTOM NAVIGATION (2. CHANGED NAVBAR)
+   ========================================= */
+.bottom-nav {
     position: fixed;
     bottom: 0;
     left: 0;
+    right: 0;
+    margin: 0 auto;
     width: 100%;
-
-    background: #fff;
-
+    max-width: 450px;
+    background: #FFFFFF;
     display: flex;
     justify-content: space-around;
     align-items: center;
-
-    padding: 10px 0;
-
-    box-shadow: 0 -4px 10px rgba(0,0,0,0.1);
-
+    padding: 12px 0 calc(12px + env(safe-area-inset-bottom));
+    box-shadow: 0 -4px 12px rgba(0, 0, 0, 0.05);
     z-index: 999;
+    border-top: 1px solid #E5E7EB;
 }
 
-/* Nav Items */
-
-.nav-item{
-    font-size: 22px;
+.nav-item {
+    font-size: 24px;
     text-decoration: none;
-    color: black;
-    opacity: 0.6;
-}
-
-/* Active Page */
-
-.nav-item.active{
-    opacity: 1;
-    background: #f4c7c7;
-    padding: 6px 10px;
-    border-radius: 10px;
-}
-
-/* Center Add Button */
-
-.add-btn{
-    width: 50px;
-    height: 50px;
+    color: #6B7280;
+    opacity: 0.7;
+    padding: 10px;
+    border-radius: 12px;
+    transition: all 0.2s ease-in-out;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 22px;
-    background: #9D182B;
+}
+
+.nav-item.active {
+    opacity: 1;
+    color: #111827; 
+}
+
+.add-btn {
+    width: 44px;  
+    height: 44px;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px; 
+    background: #DC2626; 
     color: white;
-    border-radius: 20%;
-    margin-top: -5px; /* float effect */
+    border-radius: 12px; 
+    margin-top: 0; 
+    box-shadow: 0 2px 8px rgba(220, 38, 38, 0.4);
+    transition: all 0.2s ease-in-out;
+}
+
+.add-btn:active {
+    transform: scale(0.95);
+    background: #991B1B;
+}
+
+.add-btn .material-icons {
+    color: #FFFFFF;
 }

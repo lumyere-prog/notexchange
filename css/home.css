@@ -15,17 +15,19 @@ body {
 }
 
 /* =========================================
-   TOP NAVIGATION AREA
+   TOP NAVIGATION AREA (WHITE THEME)
    ========================================= */
 .top-area {
     position: sticky;
     top: 0;
-    background: #C4B5FD;
+    background: #FFFFFF; 
     z-index: 1000;
     padding-top: calc(env(safe-area-inset-top) + 20px); 
     padding-bottom: 16px;
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
     transition: transform 0.3s ease-in-out; 
+    border-bottom: 1px solid #E5E7EB;
+    color: #1F2937;
 }
 
 .top-area.hide-on-scroll {
@@ -44,26 +46,26 @@ body {
     margin-bottom: 12px;
 }
 
-/* title */
-#topbar .sign {
-    color: #1F2937;
-    font-size: 24px;
-    font-weight: 700;
+/* Logo without the white pill background */
+.app-logo {
+    height: 36px; 
+    width: auto;
+    object-fit: contain; 
+    display: block;
 }
-
 
 #topbar .bell {
     font-size: 28px;
     color: #1F2937;
     padding: 6px;
     border-radius: 50%;
-    background: rgba(255, 255, 255, 0.2);
+    background: rgba(0, 0, 0, 0.05);
     cursor: pointer;
     transition: all 0.2s ease-in-out;
 }
 
 #topbar .bell:active {
-    background: rgba(255, 255, 255, 0.4);
+    background: rgba(0, 0, 0, 0.1);
 }
 
 .bell-container {
@@ -75,7 +77,7 @@ body {
     position: absolute;
     top: -4px;
     right: -4px;
-    background: #EF4444;
+    background: #DC2626; /* Logo Red accent */
     color: white;
     font-size: 10px;
     font-weight: 600;
@@ -100,7 +102,7 @@ body {
     border: none;
     outline: none;
     background: #F3F4F6;
-    font-size: 16px; /* 16px prevents iOS Safari from auto-zooming */
+    font-size: 16px; 
     color: #1F2937;
     box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.05);
 }
@@ -114,9 +116,9 @@ body {
    ========================================= */
 .category-title {
     margin: 20px 20px 12px;
-    color: #1F2937;
+    color: #111827;
     font-size: 18px;
-    font-weight: 600;
+    font-weight: 700;
 }
 
 .categories-scroll {
@@ -125,7 +127,7 @@ body {
     gap: 12px;
     padding: 0 20px 8px;
     scroll-behavior: smooth;
-    -webkit-overflow-scrolling: touch; /* Smooth mobile scrolling */
+    -webkit-overflow-scrolling: touch; 
 }
 
 .categories-scroll::-webkit-scrollbar {
@@ -134,48 +136,10 @@ body {
 
 .category {
     flex: 0 0 auto;
-    padding: 10px 18px; /* Slightly larger tap area */
+    padding: 10px 18px; 
     border: none;
     border-radius: 50px;
-    background: #E5E7EB;
-    color: #6B7280;
-    cursor: pointer;
-    white-space: nowrap;
-    font-size: 14px;
-    font-weight: 500;
-    transition: all 0.2s ease-in-out;
-}
-
-.category:active {
-    transform: scale(0.98);
-}
-
-.category-title {
-    margin: 20px 20px 12px;
-    color: #1F2937;
-    font-size: 18px;
-    font-weight: 600;
-}
-
-.categories-scroll {
-    display: flex;
-    overflow-x: auto;
-    gap: 12px;
-    padding: 0 20px 8px;
-    scroll-behavior: smooth;
-    -webkit-overflow-scrolling: touch; /* Smooth mobile scrolling */
-}
-
-.categories-scroll::-webkit-scrollbar {
-    display: none;
-}
-
-.category {
-    flex: 0 0 auto;
-    padding: 10px 18px; /* Slightly larger tap area */
-    border: none;
-    border-radius: 50px;
-    background: #E5E7EB;
+    background: #F3F4F6;
     color: #6B7280;
     cursor: pointer;
     white-space: nowrap;
@@ -189,12 +153,11 @@ body {
 }
 
 .category.active {
-    background: #7C3AED; /* Strong Royal Purple */
-    color: #FFFFFF; /* White text */
-    box-shadow: 0 2px 8px rgba(124, 58, 237, 0.4);
+    background: #111827; /* Pitch Black */
+    color: #FFFFFF; 
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
     font-weight: 700;
 }
-
 
 /* =========================================
    NOTES FEED
@@ -202,7 +165,7 @@ body {
 .notes-feed {
     width: 100%;
     max-width: 450px;
-    margin: 0 auto; /* Changed from 20px to 0 to connect it to the top bar */
+    margin: 0 auto; 
     padding: 16px 20px calc(100px + env(safe-area-inset-bottom)); 
 }
 
@@ -265,7 +228,6 @@ body {
     margin-top: 16px;
 }
 
-/* --- VOTE BOX REDESIGN (Clean Mobile Style) --- */
 .vote-box {
     display: flex;
     align-items: center;
@@ -286,14 +248,13 @@ body {
 .vote-btn {
     border: none;
     background: transparent;
-    color: #1F2937; /* Black when not voted */
+    color: #1F2937; 
     display: flex;
     align-items: center;
     justify-content: center;
     cursor: pointer;
     padding: 6px;
     border-radius: 50%;
-    /* Simplified transition just for the color swaps */
     transition: color 0.2s ease, background 0.2s ease;
 }
 
@@ -301,23 +262,16 @@ body {
     font-size: 24px; 
 }
 
-/* =========================================
-   ACTIVE VOTE COLORS (Toggle these via JS)
-   ========================================= */
-
-/* When the user upvotes */
 .vote-btn.upvoted {
-    color: #10B981; /* Emerald Green */
-    background: #D1FAE5; /* Very light green background */
+    color: #10B981; 
+    background: #D1FAE5; 
 }
 
-/* When the user downvotes */
 .vote-btn.downvoted {
-    color: #EF4444; /* Bright Red */
-    background: #FEE2E2; /* Very light red background */
+    color: #DC2626; 
+    background: #FEE2E2; 
 }
 
-/* --- COMMENT BUTTON (Do not delete - controls the chat bubble icon) --- */
 .comment-icon-btn {
     border: none;
     background: transparent;
@@ -335,9 +289,8 @@ body {
     background: #E5E7EB;
 }
 
-/* --- COMMENT SECTION LAYOUT (Do not delete - handles hide/show) --- */
 .comment-section {
-    display: none; /* Hidden until clicked */
+    display: none; 
     margin-top: 16px;
     padding-top: 16px;
     border-top: 1px solid #E5E7EB;
@@ -349,10 +302,6 @@ body {
     margin-bottom: 12px;
 }
 
-/* =========================================
-   NEW DESIGN FOR INPUT AND BUTTONS 
-   ========================================= */
-
 .comment-input-wrapper {
     display: flex;
     align-items: center;
@@ -362,13 +311,12 @@ body {
     border-top: 1px solid #E5E7EB;
 }
 
-/* The Text Box */
 .comment-input {
     flex: 1;
     background: #F3F4F6;
     border: 1px solid #E5E7EB;
     padding: 10px 16px;
-    border-radius: 50px; /* Perfect pill shape */
+    border-radius: 50px; 
     font-size: 14px;
     color: #1F2937;
     outline: none;
@@ -376,20 +324,18 @@ body {
     margin-bottom: 0; 
 }
 
-/* When the user clicks inside the text box to type */
 .comment-input:focus {
     background: #FFFFFF;
-    border-color: #C4B5FD; /* Highlights with your pastel purple */
-    box-shadow: 0 0 0 3px rgba(196, 181, 253, 0.2); /* Soft glowing ring */
+    border-color: #DC2626; 
+    box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.15); 
 }
 
 .comment-input::placeholder {
     color: #9CA3AF;
 }
 
-/* The Post Button */
 .comment-btn {
-    background: #C4B5FD;
+    background: #111827; 
     color: white;
     border: none;
     padding: 10px 18px;
@@ -397,17 +343,15 @@ body {
     font-size: 14px;
     font-weight: 600;
     cursor: pointer;
-    transition: background 0.2s ease, transform 0.2s ease;
-    box-shadow: 0 2px 6px rgba(196, 181, 253, 0.3);
+    transition: all 0.2s ease;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
 }
 
-/* Mobile tap effect */
 .comment-btn:active {
     transform: scale(0.95);
-    background: #A78BFA; /* Slightly darker purple when pressed */
+    background: #000000; 
 }
 
-/* Makes individual comments look cleaner */
 .comment {
     background: #F9FAFB;
     padding: 10px 14px;
@@ -431,7 +375,7 @@ body {
     align-items: center;
     z-index: 9999;
     backdrop-filter: blur(4px);
-    padding: 20px; /* Ensures modal doesn't touch screen edges on small devices */
+    padding: 20px; 
 }
 
 .modal-content {
@@ -456,11 +400,15 @@ body {
     float: right;
     font-size: 24px;
     cursor: pointer;
-    color: #6B7280;
+    color: #1F2937;
     background: none;
     border: none;
     padding: 8px;
     border-radius: 8px;
+}
+
+.close-btn:active {
+    color: #DC2626;
 }
 
 .note-preview-text {
@@ -472,9 +420,7 @@ body {
     font-size: 14px;
     line-height: 1.5;
     color: #1F2937;
-    clear: both; /* Clears the floated close-btn */
-    
-    /* --- ADD THESE LINES --- */
+    clear: both; 
     overflow-wrap: break-word;
     word-wrap: break-word;
     word-break: break-word;
@@ -485,8 +431,6 @@ body {
     white-space: pre-line;
     color: #1F2937;
     line-height: 1.6;
-    
-    /* --- ADD THESE LINES --- */
     overflow-wrap: break-word;
     word-wrap: break-word;
     word-break: break-word;
@@ -511,8 +455,15 @@ body {
     border-radius: 8px;
 }
 
+.fav-btn.saved {
+    background: #FEE2E2; 
+    color: #DC2626; 
+    box-shadow: 0 2px 8px rgba(220, 38, 38, 0.2);
+}
 
-/* Overlay background */
+/* =========================================
+   PDF MODAL
+   ========================================= */
 .pdf-modal {
     display: none;
     position: fixed;
@@ -527,7 +478,6 @@ body {
     z-index: 9999;
 }
 
-/* Modal box (same style as your .modal-content) */
 .pdf-content {
     background: #FFFFFF;
     width: 100%;
@@ -543,45 +493,26 @@ body {
     flex-direction: column;
 }
 
-/* animation */
-@keyframes modalPop {
-    from { transform: scale(0.95); opacity: 0; }
-    to { transform: scale(1); opacity: 1; }
-}
-
-/* header */
 .pdf-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding-bottom: 10px;
-    border-bottom: 1px solid #E5E7EB;
+    padding: 12px;
+    border-radius: 12px;
+    background: #111827; 
+    color: white;
 }
 
-/* title */
 #pdfTitle {
     font-size: 16px;
     font-weight: 600;
-    color: #111827;
+    color: #FFFFFF;
 }
 
-/* close button (same vibe as your example) */
-.close-btn {
-    font-size: 24px;
-    cursor: pointer;
-    color: #6B7280;
-    background: none;
-    border: none;
-    padding: 8px;
-    border-radius: 8px;
-    transition: 0.2s;
+.pdf-header .close-btn {
+    color: #FFFFFF;
 }
 
-.close-btn:hover {
-    background: #F3F4F6;
-}
-
-/* PDF viewer */
 #pdfFrame {
     flex: 1;
     width: 100%;
@@ -590,7 +521,6 @@ body {
     margin-top: 10px;
 }
 
-/* action buttons */
 .pdf-actions {
     display: flex;
     gap: 10px;
@@ -602,21 +532,20 @@ body {
     padding: 10px;
     border: none;
     border-radius: 10px;
-    background: #111827;
+    background: #DC2626; 
     color: white;
     cursor: pointer;
     transition: 0.2s;
+    font-weight: 600;
 }
 
-.pdf-actions button:hover {
-    background: #374151;
+.pdf-actions button:active {
+    background: #991B1B;
 }
 
-
-/*------------------------------
-/* --- SEARCH PAGE STYLES --- */
-/*-------------------------------
-/* search full page */
+/* =========================================
+   SEARCH PAGE
+   ========================================= */
 .search-page {
     position: fixed;
     top: 0;
@@ -647,9 +576,14 @@ body {
     border-radius: 50px;
     border: 1px solid #E5E7EB;
     background: #FFFFFF;
-    font-size: 16px; /* Prevent iOS zoom */
+    font-size: 16px; 
     outline: none;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+    color: #111827;
+}
+
+.search-full:focus {
+    border-color: #111827;
 }
 
 .back-btn {
@@ -702,25 +636,25 @@ body {
 #chatbot-btn {
     position: fixed;
     bottom: calc(90px + env(safe-area-inset-bottom));
-    /* Locks it to the right side of the 450px container (50vw - 225px) + 20px padding */
     right: max(20px, calc(50vw - 205px)); 
     width: 56px;
     height: 56px;
-    background: #C4B5FD;
-    color: white;
+    background: #111827;
+    color: #FFFFFF;
     font-size: 24px;
     border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
     cursor: pointer;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
     transition: all 0.2s ease-in-out;
     z-index: 998;
 }
 
 #chatbot-btn:active {
     transform: scale(0.95);
+    background: #374151;
 }
 
 #chatbot-modal {
@@ -737,11 +671,11 @@ body {
     box-shadow: 0 -5px 20px rgba(0, 0, 0, 0.15);
     z-index: 10001;
     overflow: hidden;
-    padding-bottom: env(safe-area-inset-bottom); /* iOS home indicator */
+    padding-bottom: env(safe-area-inset-bottom); 
 }
 
 .chat-header {
-    background: #C4B5FD;
+    background: #111827;
     color: white;
     padding: 16px 20px;
     display: flex;
@@ -757,6 +691,13 @@ body {
     color: white;
     font-size: 24px;
     cursor: pointer;
+    padding: 8px;
+    border-radius: 8px;
+}
+
+#active-file-panel {
+    background: #1F2937;
+    border: 1px solid #374151;
     padding: 8px;
     border-radius: 8px;
 }
@@ -794,12 +735,12 @@ body {
     outline: none;
     border-radius: 50px;
     background: #F9FAFB;
-    font-size: 16px; /* Prevent iOS zoom */
+    font-size: 16px; 
     margin-right: 8px;
 }
 
 #send-btn {
-    background: #C4B5FD;
+    background: #DC2626;
     color: white;
     border: none;
     padding: 0 20px;
@@ -809,12 +750,42 @@ body {
     font-weight: 600;
 }
 
+#send-btn:active {
+    background: #991B1B;
+}
+
+.open-file-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: #F3F4F6;
+    color: #1F2937;
+    text-decoration: none; 
+    padding: 8px 16px;
+    border-radius: 50px; 
+    font-size: 14px;
+    font-weight: 600;
+    transition: all 0.2s ease;
+    border: 1px solid #E5E7EB;
+    cursor: pointer;
+}
+
+.open-file-btn:active {
+    background: #E5E7EB;
+    transform: scale(0.95);
+}
+
 /* =========================================
-   BOTTOM NAVIGATION
+   UNIVERSAL BOTTOM NAVIGATION 
    ========================================= */
 .bottom-nav {
     position: fixed;
     bottom: 0;
+    left: 0;
+    right: 0;
+    margin: 0 auto;
+    width: 100%;
+    max-width: 450px;
     background: #FFFFFF;
     display: flex;
     justify-content: space-around;
@@ -823,10 +794,6 @@ body {
     box-shadow: 0 -4px 12px rgba(0, 0, 0, 0.05);
     z-index: 999;
     border-top: 1px solid #E5E7EB;
-    width: 100%;
-    max-width: 450px; 
-    left: 50%;
-    transform: translateX(-50%); 
 }
 
 .nav-item {
@@ -834,54 +801,107 @@ body {
     text-decoration: none;
     color: #6B7280;
     opacity: 0.7;
-    padding: 10px; /* Better tap target */
+    padding: 10px;
     border-radius: 12px;
     transition: all 0.2s ease-in-out;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 .nav-item.active {
     opacity: 1;
-    color: #C4B5FD; 
+    color: #111827; 
 }
 
 .add-btn {
     width: 44px;  
     height: 44px;
+    padding: 0;
     display: flex;
     align-items: center;
     justify-content: center;
     font-size: 24px; 
-    background: #C4B5FD;
+    background: #DC2626; 
     color: white;
     border-radius: 12px; 
-    margin-top: 0;
-    box-shadow: 0 2px 8px rgba(196, 181, 253, 0.4);
+    margin-top: 0; 
+    box-shadow: 0 2px 8px rgba(220, 38, 38, 0.4);
     transition: all 0.2s ease-in-out;
 }
 
 .add-btn:active {
     transform: scale(0.95);
+    background: #991B1B;
 }
 
-/* --- OPEN FILE BUTTON --- */
-.open-file-btn {
-    display: inline-flex;
+.add-btn .material-icons {
+    color: #FFFFFF;
+}
+
+/* =========================================
+   CHATBOT: CLEAN LAYOUT & COMPACT FILE PANEL
+   ========================================= */
+
+/* Safely convert modal to flexbox ONLY when your JS opens it */
+#chatbot-modal[style*="block"], 
+#chatbot-modal[style*="flex"] {
+    display: flex !important;
+    flex-direction: column !important;
+}
+
+/* Forces the chat body to fill the entire empty space */
+.chat-body {
+    flex: 1 1 auto; 
+    min-height: 0px; 
+    padding: 16px;
+    overflow-y: auto;
+    background: #F9FAFB;
+}
+
+/* Ultra-compact active file panel (Title & Button on ONE line) */
+#active-file-panel {
+    background: #1F2937;
+    border-bottom: 1px solid #374151;
+    padding: 8px 16px; /* Super thin padding */
+    margin: 0;
+    border-radius: 0; 
+    display: flex;
     align-items: center;
-    gap: 6px;
-    background: #F3F4F6;
-    color: #1F2937 !important; /* Forces the text to be dark grey, not link-blue */
-    text-decoration: none !important; /* Removes the underline completely */
-    padding: 8px 16px;
-    border-radius: 50px; /* Gives it a nice pill shape */
-    font-size: 14px;
-    font-weight: 600;
-    transition: all 0.2s ease;
-    border: 1px solid #E5E7EB;
-    cursor: pointer;
+    justify-content: space-between; /* Pushes title left, button right */
+    gap: 12px;
 }
 
-/* Hover/Tap effect */
-.open-file-btn:active {
-    background: #E5E7EB;
+#file-title {
+    color: #D1D5DB; /* Light gray text */
+    font-size: 13px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis; /* Adds '...' if the file name is too long */
+}
+
+/* =========================================
+   CHATBOT: REMOVE FILE BUTTON (Compact)
+   ========================================= */
+#removeFileBtn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    background: #FEE2E2; 
+    color: #DC2626; 
+    border: 1px solid #FCA5A5; 
+    padding: 4px 10px; /* Tiny pill shape */
+    border-radius: 50px; 
+    font-size: 11px; /* Smaller font */
+    font-weight: 600;
+    cursor: pointer;
+    white-space: nowrap; 
+    flex-shrink: 0; /* Prevents button from being squished by long titles */
+    transition: all 0.2s ease;
+}
+
+#removeFileBtn:active {
+    background: #FCA5A5;
     transform: scale(0.95);
 }

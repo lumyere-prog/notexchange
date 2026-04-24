@@ -15,7 +15,7 @@
     <div class="top-area" id="topArea">
         <div id="topbar">
             <div class="header-row">
-                <h2 class="sign">NoteXchange</h2>
+                <img src="/photos/logo.png" alt="NoteXchange Logo" class="app-logo">
 
                 <div class="bell-container" onclick="window.location.href='notifications.html'">
                     <span class="material-icons bell">notifications</span>
@@ -96,19 +96,16 @@
     <div id="chatbot-modal" style="display:none;">
         <div class="chat-header">
             <span>Lumiere - Study Companion</span>
-            <div id="active-file-panel">
-        <div id="file-title">No file selected</div>
-
-        <div class="study-tabs">
-            <button onclick="clearFile()">✖ Remove File</button>
-            <button onclick="getSummary()">🧠 Summary</button>
-            <button onclick="getQuiz()">📝 Quiz</button>
-          
-        </div>
-        </div>
             <button id="close-chat" type="button">✖</button>
         </div>
+        
+        <div id="active-file-panel">
+            <div id="file-title">No file selected</div>
+            <button id="removeFileBtn" onclick="clearFile()">✖ Remove File</button>
+        </div>
+
         <div class="chat-body" id="chat-body"></div>
+        
         <div class="chat-footer">
             <input type="text" id="chat-input" placeholder="Write your message..." autocomplete="off">
             <button id="send-btn" type="button">➤</button>

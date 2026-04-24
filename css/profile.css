@@ -3,6 +3,7 @@
     max-width: 420px;
     margin: 0 auto;
     padding: 20px;
+    padding-bottom: 100px;
 }
 
 /* header */
@@ -11,12 +12,14 @@
     justify-content: space-between;
     align-items: center;
     margin-bottom: 20px;
+    padding-top: env(safe-area-inset-top);
 }
 
-.logo {
-    color: #1F2937;
-    font-size: 20px;
-    font-weight: 600;
+.app-logo {
+    height: 36px; 
+    width: auto;
+    object-fit: contain; 
+    display: block;
 }
 
 /* menu */
@@ -33,7 +36,7 @@
     transition: all 0.2s ease-in-out;
 }
 
-.menu-btn:hover {
+.menu-btn:active {
     background: #F3F4F6;
     color: #1F2937;
 }
@@ -69,21 +72,20 @@
 .logout-btn {
     width: 100%;
     padding: 12px;
-    background: #C4B5FD;
+    background: #DC2626;
     color: white;
     border: none;
     border-radius: 50px;
     margin-top: 12px;
     font-size: 14px;
-    font-weight: 500;
+    font-weight: 600;
     cursor: pointer;
     transition: all 0.2s ease-in-out;
 }
 
-.logout-btn:hover {
-    background: #A78BFA;
+.logout-btn:active {
+    background: #111827;
     transform: translateY(-1px);
-    box-shadow: 0 4px 12px rgba(196, 181, 253, 0.3);
 }
 
 /* profile info */
@@ -104,6 +106,7 @@
     height: 80px;
     border-radius: 50%;
     border: 2px solid #E5E7EB;
+    object-fit: cover;
 }
 
 .name {
@@ -178,7 +181,7 @@
 }
 
 .tabs .active {
-    background: #C4B5FD;
+    background: #111827; 
     color: white;
     border-radius: 12px 12px 0 0;
 }
@@ -194,9 +197,8 @@
     transition: all 0.2s ease-in-out;
 }
 
-.profile-post:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
+.profile-post:active {
+    transform: scale(0.98);
 }
 
 .post-image {
@@ -221,17 +223,22 @@
     line-height: 1.5;
 }
 
-/* Bottom Navigation */
+/* =========================================
+   UNIVERSAL BOTTOM NAVIGATION
+   ========================================= */
 .bottom-nav {
     position: fixed;
     bottom: 0;
     left: 0;
+    right: 0;
+    margin: 0 auto;
     width: 100%;
+    max-width: 450px;
     background: #FFFFFF;
     display: flex;
     justify-content: space-around;
     align-items: center;
-    padding: 12px 0;
+    padding: 12px 0 calc(12px + env(safe-area-inset-bottom));
     box-shadow: 0 -4px 12px rgba(0, 0, 0, 0.05);
     z-index: 999;
     border-top: 1px solid #E5E7EB;
@@ -242,35 +249,546 @@
     text-decoration: none;
     color: #6B7280;
     opacity: 0.7;
-    padding: 8px;
+    padding: 10px;
     border-radius: 12px;
     transition: all 0.2s ease-in-out;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 .nav-item.active {
     opacity: 1;
-    background: #C4B5FD;
-    color: white;
-    box-shadow: 0 2px 8px rgba(196, 181, 253, 0.3);
+    color: #111827; 
 }
 
 .add-btn {
-    width: 56px;
-    height: 56px;
+    width: 44px;  
+    height: 44px;
+    padding: 0;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 24px;
-    background: #C4B5FD;
+    font-size: 24px; 
+    background: #DC2626; 
     color: white;
-    border-radius: 50%;
-    margin-top: -8px;
-    box-shadow: 0 4px 12px rgba(196, 181, 253, 0.3);
+    border-radius: 12px; 
+    margin-top: 0; 
+    box-shadow: 0 2px 8px rgba(220, 38, 38, 0.4);
     transition: all 0.2s ease-in-out;
 }
 
-.add-btn:hover {
-    background: #A78BFA;
-    transform: scale(1.05);
-    box-shadow: 0 6px 20px rgba(196, 181, 253, 0.4);
+.add-btn:active {
+    transform: scale(0.95);
+    background: #991B1B;
+}
+
+.add-btn .material-icons {
+    color: #FFFFFF;
+}
+
+/* Protect the menu title from acting like a button */
+.dropdown .menu-title {
+    cursor: default !important; /* Standard arrow cursor, not a pointing hand */
+    color: #9CA3AF !important; /* Lighter grey so it looks like a label */
+    font-weight: 700 !important;
+    text-transform: uppercase;
+    font-size: 12px !important;
+    letter-spacing: 1px;
+}
+
+.dropdown .menu-title:hover {
+    background: transparent !important; /* Removes the grey hover highlight */
+}
+
+/* =========================================
+   FULL SCREEN MODAL (Right-to-Left Slide)
+   ========================================= */
+.full-screen-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: #FFFFFF;
+    z-index: 2000; /* Ensures it stays above your bottom nav */
+    display: flex;
+    flex-direction: column;
+    
+    /* This keeps it hidden 100% to the right by default */
+    transform: translateX(100%); 
+    transition: transform 0.3s ease-in-out;
+}
+
+/* This class will be added by JS to trigger the slide */
+.full-screen-modal.active {
+    transform: translateX(0);
+}
+
+/* Header for the Modal */
+.settings-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: calc(env(safe-area-inset-top) + 16px) 20px 16px;
+    border-bottom: 1px solid #E5E7EB;
+}
+
+.back-arrow {
+    font-size: 24px;
+    cursor: pointer;
+    color: #1F2937;
+}
+
+.save-text {
+    font-size: 16px;
+    font-weight: 700;
+    color: #DC2626; /* Your Logo Red */
+    cursor: pointer;
+}
+
+/* Modal Body Content */
+.edit-profile-content {
+    flex: 1;
+    overflow-y: auto;
+    padding: 30px 20px;
+}
+
+/* Profile Photo Styling */
+.edit-photo-section {
+    text-align: center;
+    margin-bottom: 32px;
+}
+
+.edit-profile-img {
+    width: 100px;
+    height: 100px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 2px solid #F3F4F6;
+    margin-bottom: 10px;
+}
+
+.change-photo-text {
+    color: #DC2626;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+/* Form Styling (Minimalist Lines) */
+.edit-form .input-group {
+    margin-bottom: 28px;
+}
+
+.edit-form label {
+    display: block;
+    font-size: 13px;
+    font-weight: 700;
+    color: #9CA3AF; /* Lighter label text */
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 4px;
+}
+
+.edit-form input {
+    width: 100%;
+    border: none;
+    border-bottom: 1px solid #E5E7EB;
+    padding: 10px 0;
+    font-size: 16px;
+    color: #1F2937;
+    outline: none;
+    background: transparent;
+    transition: border-color 0.2s;
+}
+
+.edit-form input:focus {
+    border-bottom-color: #111827; /* Darkens when active */
+}
+
+/* Link input with icon */
+.input-with-icon {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    border-bottom: 1px solid #E5E7EB;
+}
+
+.input-with-icon input {
+    border-bottom: none;
+}
+
+.input-with-icon .material-icons {
+    color: #6B7280;
+    font-size: 20px;
+}
+
+/* Interest Tag Pills */
+.interests-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-top: 10px;
+}
+
+.interest-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: #F3F4F6;
+    color: #1F2937;
+    padding: 8px 14px;
+    border-radius: 50px;
+    font-size: 13px;
+    font-weight: 600;
+}
+
+.interest-tag .material-icons {
+    font-size: 16px;
+    color: #6B7280;
+}
+
+.add-interest {
+    background: #FEE2E2;
+    color: #DC2626;
+    cursor: pointer;
+}
+
+.add-interest .material-icons {
+    color: #DC2626;
+}
+
+/* =========================================
+   SETTINGS LIST STYLING
+   ========================================= */
+.settings-content-body {
+    flex: 1;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+}
+
+.settings-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.settings-row {
+    background: #F9F7F2; /* Cream/Off-white from your image */
+    padding: 18px 20px;
+    border-radius: 12px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    cursor: pointer;
+    font-weight: 600;
+    color: #000;
+    transition: background 0.2s;
+}
+
+.settings-row:active {
+    background: #F0EEE9;
+}
+
+.settings-row .material-icons {
+    color: #9CA3AF;
+}
+
+/* =========================================
+   LEGAL PDF MODAL (Slide Up Animation)
+   ========================================= */
+.slide-up-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5); /* Dim the background */
+    z-index: 3000;
+    display: flex;
+    align-items: flex-end; /* Align to bottom */
+    visibility: hidden; /* Hidden by default */
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.slide-up-modal.active {
+    visibility: visible;
+    opacity: 1;
+}
+
+.legal-content {
+    background: #FFFFFF;
+    width: 100%;
+    height: 85vh; /* Covers most of the screen from the bottom */
+    border-radius: 20px 20px 0 0;
+    display: flex;
+    flex-direction: column;
+    transform: translateY(100%); /* Start off-screen at bottom */
+    transition: transform 0.4s cubic-bezier(0.25, 1, 0.5, 1);
+}
+
+.slide-up-modal.active .legal-content {
+    transform: translateY(0); /* Slide up to view */
+}
+
+.legal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16px 20px;
+    background: #111827; /* Dark header like your Home PDF viewer */
+    color: white;
+    border-radius: 20px 20px 0 0;
+}
+
+#legalTitle {
+    font-weight: 600;
+    font-size: 16px;
+}
+
+.close-legal-btn {
+    background: none;
+    border: none;
+    color: white;
+    font-size: 28px;
+    cursor: pointer;
+    line-height: 1;
+}
+
+.pdf-viewer-container {
+    flex: 1;
+    overflow: hidden;
+}
+
+#legalPdfFrame {
+    border: none;
+}
+
+/* =========================================
+   FIXED PERSONAL INFO (No Leak + Better Calendar)
+   ========================================= */
+.header-title-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.header-title-wrapper .material-icons {
+    font-size: 24px;
+}
+
+.personal-info-content {
+    flex: 1;
+    padding: 20px;
+    background: #FFFFFF;
+    overflow-y: auto;
+}
+
+.info-card {
+    background: #F9F7F2; 
+    border-radius: 15px;
+    padding: 20px;
+    margin-bottom: 20px;
+}
+
+.card-title {
+    font-size: 16px;
+    font-weight: 700;
+    margin-bottom: 16px;
+    color: #000;
+}
+
+.field-group {
+    margin-bottom: 16px;
+}
+
+.field-group label {
+    display: block;
+    font-size: 13px;
+    font-weight: 700;
+    margin-bottom: 8px;
+    color: #4B5563;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+/* FIXES THE LEAK: box-sizing ensures padding stays INSIDE the width */
+.field-group input {
+    width: 100%;
+    box-sizing: border-box; 
+    background: #FFFFFF;
+    border: 1px solid transparent; /* Added for subtle design */
+    padding: 12px;
+    border-radius: 8px;
+    font-size: 14px;
+    color: #1F2937;
+    outline: none;
+    transition: all 0.2s ease;
+}
+
+.field-group input:focus {
+    border-color: #3D1010; /* Maroon border on focus */
+}
+
+/* DESIGNED CALENDAR WRAPPER */
+.calendar-input-wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+    background: #FFFFFF;
+    border-radius: 8px;
+    width: 100%;
+    box-sizing: border-box;
+    padding-left: 12px;
+    border: 1px solid transparent;
+    transition: all 0.2s ease;
+}
+
+.calendar-input-wrapper:focus-within {
+    border-color: #3D1010;
+}
+
+.calendar-input-wrapper .material-icons {
+    font-size: 20px;
+    color: #3D1010; /* Maroon icon to match button */
+}
+
+.calendar-input-wrapper input[type="date"] {
+    background: transparent;
+    border: none;
+    padding: 12px 8px;
+    width: 100%;
+    cursor: pointer;
+    font-family: inherit;
+}
+
+/* HIDES DEFAULT BROWSER ICON: Makes it look custom */
+input[type="date"]::-webkit-calendar-picker-indicator {
+    background: transparent;
+    bottom: 0;
+    color: transparent;
+    cursor: pointer;
+    height: auto;
+    left: 0;
+    position: absolute;
+    right: 0;
+    top: 0;
+    width: auto;
+}
+
+/* EDIT BUTTON */
+.edit-info-btn {
+    width: 100%;
+    max-width: 200px;
+    display: block;
+    margin: 20px auto;
+    padding: 14px;
+    background: #3D1010; 
+    color: white;
+    border: none;
+    border-radius: 12px;
+    font-weight: 700;
+    font-size: 16px;
+    cursor: pointer;
+    transition: transform 0.2s, background 0.2s;
+}
+
+.edit-info-btn:active {
+    transform: scale(0.96);
+    background: #2D0C0C;
+}
+
+/* =========================================
+   NOTIFICATIONS STYLING (Switch & Rows)
+   ========================================= */
+.notifications-content {
+    flex: 1;
+    padding: 20px;
+    background: #FFFFFF;
+    overflow-y: auto;
+}
+
+.notif-section {
+    margin-bottom: 30px;
+}
+
+.notif-category {
+    font-size: 14px;
+    font-weight: 700;
+    color: #000;
+    margin-bottom: 15px;
+    letter-spacing: 0.5px;
+}
+
+.notif-row {
+    background: #F9F7F2; /* Cream from image */
+    padding: 16px 20px;
+    margin-bottom: 2px; /* Small gap between rows in same section */
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+/* Rounded corners for the first and last row in a section */
+.notif-row:first-of-type { border-radius: 12px 12px 0 0; }
+.notif-row:last-of-type { border-radius: 0 0 12px 12px; }
+.notif-row:only-of-type { border-radius: 12px; }
+
+.notif-title {
+    font-size: 15px;
+    font-weight: 600;
+    color: #1F2937;
+    margin: 0;
+}
+
+.notif-sub {
+    font-size: 11px;
+    color: #6B7280;
+    margin: 2px 0 0 0;
+}
+
+/* THE SWITCH (Toggle) */
+.switch {
+    position: relative;
+    display: inline-block;
+    width: 44px;
+    height: 24px;
+}
+
+.switch input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background-color: #E5E7EB;
+    transition: .4s;
+    border-radius: 34px;
+}
+
+.slider:before {
+    position: absolute;
+    content: "";
+    height: 18px;
+    width: 18px;
+    left: 3px;
+    bottom: 3px;
+    background-color: white;
+    transition: .4s;
+    border-radius: 50%;
+}
+
+input:checked + .slider {
+    background-color: #3D1010; /* Maroon from your design */
+}
+
+input:checked + .slider:before {
+    transform: translateX(20px);
 }
