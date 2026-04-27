@@ -55,6 +55,7 @@ function syncAllSaveButtons() {
     });
 }
 
+
 /* =========================
    CATEGORY BUTTONS
 ========================= */
@@ -128,7 +129,7 @@ function loadPostsRealtime() {
           <p class="note-code">${post.subject || ""}</p>
           <h3 class="note-title">${post.title || "Untitled"}</h3>
           <div class="note-author">
-<img src="${post.profilePic || (post.userId === currentUser?.uid ? currentUser.photo : null) || currentUser?.photo || "/photos/profile.jpg"}" class="author-pic">
+          <img src="${post.profilePic || "/photos/profile.jpg"}" class="author-pic">  
             <span>${post.username || "Unknown"}</span>
           </div>
 
@@ -142,8 +143,9 @@ function loadPostsRealtime() {
             <div style="display: flex; align-items: center; gap: 4px;">
                 <button class="fav-btn" data-postid="${docSnap.id}" onclick="toggleFav(event, this, '${docSnap.id}')">🔖</button>
                 <button class="comment-icon-btn" onclick="toggleComments(event, this, '${docSnap.id}')"><span class="material-icons">chat_bubble_outline</span></button>
-                <button class="open-file-btn" onclick="openFileModal('${post.fileURL}', '${post.title}')"><span class="material-icons" style="font-size: 18px;">description</span> Open</button>
-            </div>
+                  <button class="open-file-btn" onclick="openFileModal('${post.fileURL}', '${post.title}', '${post.fileName}')"><span class="material-icons" style="font-size: 18px;">description</span> Open</button>
+              </div>
+              
           </div>
 
           <div class="comment-section" style="display: ${openComments.has(docSnap.id) ? 'block' : 'none'};" onclick="event.stopPropagation()">
@@ -162,7 +164,10 @@ function loadPostsRealtime() {
       card.querySelector(".downvote-btn").addEventListener("click", (e) => {
         e.stopPropagation(); vote(e, docSnap.id, -1);
       });
-
+      card.dataset.title = post.title || "";
+card.dataset.desc = post.description || "";
+card.dataset.subject = post.subject || "";
+card.dataset.user = post.username || "";
       container.appendChild(card);
     });
 
@@ -280,13 +285,28 @@ window.toggleFav = toggleFav;
 // OTHER FUNCTIONS (Files, Voting, Comments, etc.)
 let selectedPDF = null;
 let activeFile = null;
-window.openFileModal = function(url, title) {
+window.openFileModal = function(url, title, fileName) {
   selectedPDF = { url, title };
   activeFile = { url, title };
+
   document.getElementById("file-title").innerText = "📄 " + (title || "Selected File");
   document.getElementById("pdfFrame").src = url;
   document.getElementById("pdfTitle").innerText = title || "PDF File";
   document.getElementById("pdfModal").style.display = "block";
+
+  // 🔥 TOOLTIP MESSAGE (no extra function needed)
+  const tooltip = document.getElementById("globalTooltip");
+
+  const name = fileName || title || "This file";
+
+  tooltip.innerText = `${name} is saved in Lumiere. Try the chatbot for summaries or quizzes.`;
+  tooltip.classList.add("show");
+
+  clearTimeout(tooltip._timeout);
+
+  tooltip._timeout = setTimeout(() => {
+    tooltip.classList.remove("show");
+  }, 3500);
 };
 
 window.closeFileModal = function() {
@@ -425,28 +445,163 @@ function updateNotificationCount(count){
   badge.style.display = count === 0 ? "none" : "block";
 }
 
+const searchInput = document.getElementById("searchInput");
+const results = document.getElementById("searchResults");
+
+/* =========================
+   RECENT SEARCHES
+   ========================= */
+
 let recentSearches = [
-  { type:"user", name:"Christine Aligata", username:"@tintintin", avatar:"/photos/profile.jpg" },
-  { type:"search", text:"Christine Aligata" },
-  { type:"search", text:"Database" }
+  { type: "user", name: "User", username: "@User", avatar: "/photos/Guest.jpg" },
+  { type: "search", text: "Database" }
 ];
 
-function loadRecentSearches(){
+function loadRecentSearches() {
   const container = document.getElementById("recentList");
   if (!container) return;
+
   container.innerHTML = "";
-  recentSearches.forEach((item,index)=>{
-    let div = document.createElement("div");
-    div.className="recent-item";
-    if(item.type === "user"){
-      div.innerHTML = `<img src="${item.avatar}" class="recent-avatar"><div><div class="recent-name">${item.name}</div><div class="recent-sub">${item.username}</div></div><span class="remove" onclick="removeSearch(${index})">✕</span>`;
+
+  recentSearches.forEach((item, index) => {
+    const div = document.createElement("div");
+    div.className = "recent-item";
+
+    if (item.type === "user") {
+      div.innerHTML = `
+        <img src="${item.avatar}" class="recent-avatar">
+        <div>
+          <div class="recent-name">${item.name}</div>
+          <div class="recent-sub">${item.username}</div>
+        </div>
+        <span class="remove" onclick="removeSearch(${index})">✕</span>
+      `;
     } else {
-      div.innerHTML = `<span class="search-icon">🔍</span><span>${item.text}</span><span class="remove" onclick="removeSearch(${index})">✕</span>`;
+      div.innerHTML = `
+        <span class="search-icon">🔍</span>
+        <span>${item.text}</span>
+        <span class="remove" onclick="removeSearch(${index})">✕</span>
+      `;
     }
+
     container.appendChild(div);
   });
 }
 
+/* =========================
+   SEARCH LOGIC (FIXED)
+   ========================= */
+
+if (searchInput) {
+  const results = document.getElementById("searchResults");
+
+  searchInput.addEventListener("input", function () {
+    const query = this.value.toLowerCase().trim();
+    const cards = document.querySelectorAll("#notesFeed .note-card");
+
+    results.innerHTML = "";
+
+    if (!query) {
+      cards.forEach(c => (c.style.display = ""));
+      return;
+    }
+
+    const tokens = query.split(" ").filter(Boolean);
+
+    let scored = [];
+
+    cards.forEach(card => {
+      const title = (card.dataset.title || "").toLowerCase();
+      const desc = (card.dataset.desc || "").toLowerCase();
+      const subject = (card.dataset.subject || "").toLowerCase();
+      const user = (card.dataset.user || "").toLowerCase();
+
+      let score = 0;
+
+      // normalize helper
+      const fields = { title, desc, subject, user };
+
+      // EXACT MATCH (highest priority)
+      if (subject === query) score += 200;
+      if (title === query) score += 180;
+
+      // PREFIX MATCH (feels like autocomplete)
+      if (subject.startsWith(query)) score += 120;
+      if (title.startsWith(query)) score += 100;
+
+      // TOKEN MATCH (social media style)
+      tokens.forEach(t => {
+        if (subject.includes(t)) score += 60;
+        if (title.includes(t)) score += 50;
+        if (user.includes(t)) score += 30;
+        if (desc.includes(t)) score += 10;
+      });
+
+      // FULL TEXT MATCH BONUS
+      if (
+        subject.includes(query) ||
+        title.includes(query) ||
+        user.includes(query) ||
+        desc.includes(query)
+      ) {
+        score += 20;
+      }
+
+      if (score > 0) {
+        scored.push({ card, score });
+      }
+    });
+
+    // sort best match first (THIS is what makes it "social media-like")
+    scored.sort((a, b) => b.score - a.score);
+
+    if (scored.length === 0) {
+      results.innerHTML = `<div style="padding:10px;color:#888;">No results found</div>`;
+      return;
+    }
+
+    // render results
+    scored.forEach(({ card }) => {
+      const clone = card.cloneNode(true);
+      clone.style.display = "block";
+      results.appendChild(clone);
+    });
+  });
+
+
+
+
+  document.addEventListener("DOMContentLoaded", () => {
+  const trigger = document.getElementById("searchInputTrigger");
+
+  if (trigger) {
+    trigger.addEventListener("click", () => {
+      document.getElementById("searchPage").classList.add("active");
+      loadRecentSearches();
+      history.pushState({ page: "search" }, "", "#search");
+    });
+  }
+});
+
+  /* =========================
+     SAVE RECENT SEARCH
+     ========================= */
+  searchInput.addEventListener("change", function () {
+    const val = this.value.trim();
+    if (val) {
+      recentSearches.unshift({ type: "search", text: val });
+      loadRecentSearches();
+    }
+  });
+}
+
+/* =========================
+   END SEARCH CONTROLLER
+   ========================= */
+function removeSearch(index) {
+  recentSearches.splice(index, 1);
+  loadRecentSearches();
+}
 function openSearch(){
   document.getElementById("searchPage").classList.add("active");
   loadRecentSearches();
@@ -458,6 +613,10 @@ window.addEventListener("popstate", function(){
   let searchPage = document.getElementById("searchPage");
   if(searchPage && searchPage.classList.contains("active")) searchPage.classList.remove("active");
 });
+window.openSearch = openSearch;
+window.closeSearch = closeSearch;
+window.goBack = goBack;
+window.removeSearch = removeSearch;
 
 const chatBtn = document.getElementById("chatbot-btn");
 const chatModal = document.getElementById("chatbot-modal");

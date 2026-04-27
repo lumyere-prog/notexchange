@@ -54,8 +54,17 @@ if (!file.name.toLowerCase().endsWith(".pdf")) {
   alert("Only PDF files are allowed!");
   return;
 }
+
+// 📦 FILE SIZE LIMIT (10MB)
+const MAX_SIZE = 10 * 1024 * 1024;
+
+if (file.size > MAX_SIZE) {
+  alert("File is too large! Max size is 10MB.");
+  return;
+}
   try {
     console.log("🔥 UPLOADING FILE...");
+
 
     // 🔒 DISABLE BUTTON
     uploadBtn.disabled = true;
@@ -99,6 +108,7 @@ if (!file.name.toLowerCase().endsWith(".pdf")) {
           description: document.getElementById("description").value,
           fileURL: fileURL,
           fileName: file.name,
+          profilePic: user.profilePic || user.photo || "",
           upvotes: 0,
           downvotes: 0,
           userID: user.uid,

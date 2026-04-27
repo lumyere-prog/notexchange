@@ -52,6 +52,22 @@ document.addEventListener("DOMContentLoaded", () => {
     if (imgEl) {
       imgEl.src = user.profilePic || "/photos/profile.jpg";
     }
+    const photoSection = document.querySelector(".edit-photo-section");
+
+let tooltipTimeout;
+
+photoSection.addEventListener("click", () => {
+    // reset timer if clicking repeatedly
+    clearTimeout(tooltipTimeout);
+
+    // show tooltip
+    photoSection.classList.add("show-tooltip");
+
+    // auto hide after 1s
+    tooltipTimeout = setTimeout(() => {
+        photoSection.classList.remove("show-tooltip");
+    }, 1000);
+});
 
     // 📝 BIO
     const bioEl = document.querySelector(".bio");

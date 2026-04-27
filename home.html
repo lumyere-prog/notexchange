@@ -25,8 +25,14 @@
             </div>
 
         <div class="search-container">
-            <input type="text" placeholder="Search for notes..." class="search-input" onclick="openSearch()" readonly>
-        </div>
+    <input 
+        type="text" 
+        id="searchInputTrigger"
+        placeholder="Search for notes..." 
+        class="search-input"
+        readonly
+    >
+</div>
 
         <div class="categories-section">
             <h3 class="category-title">Categories</h3>
@@ -53,15 +59,32 @@
         </a>
     </div>
 
-    <div id="searchPage" class="search-page">
-        <div class="search-header">
-            <span class="back-btn" onclick="closeSearch()">←</span>
-            <input type="text" placeholder="Search for notes" class="search-full">
-        </div>
-        <h3 class="recent-title">Recent</h3>
-        <div class="recent-list" id="recentList">
-            </div>
-    </div>
+    
+<div id="searchPage" class="search-page">
+
+  <div class="search-header">
+    <span class="back-btn" onclick="closeSearch()">←</span>
+
+    <input 
+      type="text" 
+      id="searchInput"
+      placeholder="Search for notes, users..." 
+      class="search-full"
+      autocomplete="off"
+    >
+  </div>
+
+  <div class="search-body">
+
+    <h3 class="recent-title">Recent</h3>
+    <div class="recent-list" id="recentList"></div>
+
+    <h3 class="recent-title">Results</h3>
+    <div id="searchResults"></div>
+
+  </div>
+
+</div>
 
     <div id="postModal" class="post-modal">
         <div class="modal-content">
@@ -87,7 +110,7 @@
 
   </div>
 </div>
-
+    <div id="globalTooltip" class="global-tooltip"></div>
     <div id="chatbot-btn">
         <span class="material-icons">chat</span>
     </div>

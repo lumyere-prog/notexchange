@@ -360,6 +360,33 @@ body {
     border: 1px solid #E5E7EB;
 }
 
+
+
+
+
+
+.global-tooltip {
+    position: fixed;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+
+    background: #111827;
+    color: #fff;
+    padding: 10px 16px;
+    border-radius: 10px;
+    font-size: 13px;
+
+    opacity: 0;
+    pointer-events: none;
+    transition: 0.3s;
+
+    z-index: 9999;
+}
+
+.global-tooltip.show {
+    opacity: 1;
+}
 /* =========================================
    MODALS (Post & Search)
    ========================================= */
@@ -551,12 +578,46 @@ body {
     top: 0;
     left: 0;
     width: 100%;
-    height: 100%;
+    height: 100dvh; /* use dvh instead of % */
+
     background: #F8FAFC;
+
     transform: translateY(100%);
     transition: transform 0.3s ease-in-out;
     z-index: 2000;
+
     padding: env(safe-area-inset-top) 20px 20px;
+
+    display: flex;              /* 🔥 REQUIRED */
+    flex-direction: column;     /* 🔥 REQUIRED */
+
+    overflow: hidden;           /* prevents page-level scroll */
+}
+.search-results-empty {
+    text-align: center;
+    color: #9CA3AF;
+    padding: 20px;
+}
+
+
+.search-body {
+    flex: 1;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    padding-bottom: 80px;
+}
+
+/* IMPORTANT: allow results container to grow */
+#searchResults {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    padding-bottom: 20px;
+}
+
+/* optional: make cards behave properly in search */
+#searchResults .note-card {
+    width: 100%;
 }
 
 .search-page.active {
