@@ -19,12 +19,15 @@
     </div>
 
     <div class="page-header">
-        <span class="material-icons back" onclick="goBack()">arrow_back</span>
-        <h2>Notifications</h2>
-    </div>
+<span class="material-icons back" onclick="goBack()">arrow_back</span> <h2>Notifications</h2> </div>
+      
 
     <div class="notifications-container" id="notificationsContainer"></div>
-
+    <div class="notifications-container" id="notificationsContainer">
+    <p id="emptyState" style="display:none; text-align:center; opacity:0.6; margin-top:20px;">
+        No notifications yet
+    </p>
+</div>
     <div class="modal" id="postModal">
         <div class="modal-content">
             <span class="close">&times;</span>
@@ -33,8 +36,8 @@
         </div>
     </div>
 
-    <script src="/js/notifications.js"></script>
-    <script src="/js/nav.js"></script>
     <script type="module" src="/js/auth-state.js"></script>
+<script type="module" src="/js/notifications.js"></script>
+<script src="/js/nav.js"></script>
 </body>
 </html>

@@ -1,119 +1,147 @@
-const notifications = [
-    {
-        user: "Christine G. Aligata",
-        action: "upvoted your post",
-        time: "1h",
-        unread: true,
-        postTitle: "CC106 Application Development",
-        postContent: "This lesson explains presentation tier, logic tier, and data tier."
-    },
-    {
-        user: "Jennifer E. Cabutin",
-        action: "commented on your post",
-        quote: "This is very helpful. Thank you",
-        time: "1h",
-        unread: true,
-        postTitle: "Application Development and Emerging Technologies",
-        postContent: "Modern application development focuses on software design and security."
-    },
-    {
-        user: "Janelle A. Caycob",
-        action: "bookmarked your post",
-        time: "21h",
-        unread: false,
-        postTitle: "Cloud Computing",
-        postContent: "Cloud computing enables on-demand delivery of computing services."
-    }
-];
+import { db } from "/firebase/firebase-client.js";
+import {
+  collection,
+  query,
+  orderBy,
+  onSnapshot,
+  doc,
+  updateDoc
+} from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
+/* =========================
+   GLOBAL ELEMENTS
+========================= */
 const container = document.getElementById("notificationsContainer");
 const badge = document.getElementById("badgeCount");
 const modal = document.getElementById("postModal");
 
+/* =========================
+   GET CURRENT USER
+========================= */
+const user = JSON.parse(localStorage.getItem("user"));
+
+if (!user) {
+  alert("Not logged in");
+}
+
+/* =========================
+   LOAD NOTIFICATIONS (REALTIME)
+========================= */
 function loadNotifications() {
+  const q = query(
+    collection(db, "user", user.uid, "notifications"),
+    orderBy("createdAt", "desc")
+  );
+
+  onSnapshot(q, (snapshot) => {
+    container.innerHTML = "";
+
+    const emptyState = document.getElementById("emptyState");
+
+if (snapshot.empty) {
+  emptyState.style.display = "block";
+} else {
+  emptyState.style.display = "none";
+}
+
+
     let unreadCount = 0;
 
-    notifications.forEach((n, index) => {
-        if (n.unread) unreadCount++;
+    snapshot.forEach((docSnap) => {
+      const n = docSnap.data();
 
-        let div = document.createElement("div");
-        div.className = "notification";
+      if (!n.read) unreadCount++;
 
-        if (n.unread) {
-            let dot = document.createElement("div");
-            dot.className = "unread-dot";
-            div.appendChild(dot);
-        }
+      let div = document.createElement("div");
+      div.className = "notification";
 
-        // The "See Post" button was removed to make it cleaner
-        div.innerHTML += `
-            <img class="avatar" src="/photos/profile.jpg" alt="Avatar">
-            <div class="notif-text">
-                <b>${n.user}</b> ${n.action}
-                ${n.quote ? `<div class="quote">"${n.quote}"</div>` : ""}
-                <div class="time">${n.time}</div>
-            </div>
-        `;
+      // 🔴 unread dot
+      if (!n.read) {
+        let dot = document.createElement("div");
+        dot.className = "unread-dot";
+        div.appendChild(dot);
+      }
 
-        // Tapping the card marks it as read AND opens the post
-        div.onclick = () => {
-            markRead(index, div);
-            openPost(n);
-        };
+      // 🧠 ACTION TEXT
+      let actionText = "";
+      if (n.type === "upvote") actionText = "upvoted your post";
+      else if (n.type === "downvote") actionText = "downvoted your post";
+      else if (n.type === "comment") actionText = "commented on your post";
 
-        container.appendChild(div);
+      div.innerHTML += `
+        <img class="avatar" src="${n.fromProfilePic || "/photos/profile.jpg"}">
+        <div class="notif-text">
+          <b>${n.fromUsername || "Unknown"}</b> ${actionText}
+          <div class="time">${formatTime(n.createdAt)}</div>
+        </div>
+      `;
+
+      // 🔥 CLICK ACTION
+      div.onclick = async () => {
+        await markRead(docSnap.id);
+        openPostFromNotif(n.postId);
+      };
+
+      container.appendChild(div);
     });
 
     badge.innerText = unreadCount;
-
-    if (unreadCount === 0) {
-        badge.style.display = "none";
-    }
+    badge.style.display = unreadCount > 0 ? "block" : "none";
+  });
 }
 
-function markRead(index, element) {
-    notifications[index].unread = false;
-
-    let dot = element.querySelector(".unread-dot");
-    if (dot) {
-        dot.remove();
-    }
-
-    updateBadge();
+/* =========================
+   MARK AS READ
+========================= */
+async function markRead(notifId) {
+  const ref = doc(db, "users", user.uid, "notifications", notifId);
+  await updateDoc(ref, { read: true });
 }
 
-function updateBadge() {
-    let count = notifications.filter(n => n.unread).length;
-    badge.innerText = count;
+/* =========================
+   OPEN POST
+========================= */
+function openPostFromNotif(postId) {
+  // OPTION 1: redirect
+  window.location.href = `/home.html?post=${postId}`;
 
-    if (count === 0) {
-        badge.style.display = "none";
-    }
+  // OPTION 2 (if using modal):
+  // openPost(postId);
 }
 
-function openPost(n) {
-    document.getElementById("modalTitle").innerText = n.postTitle;
-    document.getElementById("modalContent").innerText = n.postContent;
-    
-    // Note: We use flex here to center it perfectly based on the new CSS
-    modal.style.display = "flex"; 
+/* =========================
+   TIME FORMAT
+========================= */
+function formatTime(timestamp) {
+  if (!timestamp) return "";
+
+  const date = timestamp.toDate();
+  const now = new Date();
+  const diff = (now - date) / 1000;
+
+  if (diff < 60) return "Just now";
+  if (diff < 3600) return Math.floor(diff / 60) + "m";
+  if (diff < 86400) return Math.floor(diff / 3600) + "h";
+
+  return Math.floor(diff / 86400) + "d";
 }
 
-// Close Modal when clicking the X
+/* =========================
+   MODAL CLOSE (KEEP YOUR UI)
+========================= */
 document.querySelector(".close").onclick = () => {
+  modal.style.display = "none";
+};
+
+window.onclick = function (e) {
+  if (e.target === modal) {
     modal.style.display = "none";
+  }
 };
-
-// Close Modal when clicking the dark background outside the content
-window.onclick = function(e) {
-    if (e.target === modal) {
-        modal.style.display = "none";
-    }
+window.goBack = function () {
+  window.history.back();
 };
-
-function goBack() {
-    window.history.back();
-}
-
-// Initialize the page
+/* =========================
+   INIT
+========================= */
 loadNotifications();

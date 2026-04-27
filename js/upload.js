@@ -111,7 +111,7 @@ if (file.size > MAX_SIZE) {
           profilePic: user.profilePic || user.photo || "",
           upvotes: 0,
           downvotes: 0,
-          userID: user.uid,
+          userId: user.uid,
           username: user.username || user.name,
           timestamp: serverTimestamp(),
           userVotes: {},

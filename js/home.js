@@ -1,4 +1,5 @@
 import { db } from "/firebase/firebase-client.js";
+import { sendNotification } from "/js/notificationManager.js";
 import { addPoints } from "/js/points.js";
 import {
   collection,
@@ -143,7 +144,15 @@ function loadPostsRealtime() {
             <div style="display: flex; align-items: center; gap: 4px;">
                 <button class="fav-btn" data-postid="${docSnap.id}" onclick="toggleFav(event, this, '${docSnap.id}')">🔖</button>
                 <button class="comment-icon-btn" onclick="toggleComments(event, this, '${docSnap.id}')"><span class="material-icons">chat_bubble_outline</span></button>
-                  <button class="open-file-btn" onclick="openFileModal('${post.fileURL}', '${post.title}', '${post.fileName}')"><span class="material-icons" style="font-size: 18px;">description</span> Open</button>
+                  <button class="open-file-btn"
+  onclick="openFileModal(
+    '${post.fileURL}',
+    '${post.title}',
+    '${post.fileName || "Unknown File"}'
+  )">
+  <span class="material-icons" style="font-size: 18px;">description</span>
+  Open
+</button>
               </div>
               
           </div>
@@ -158,12 +167,47 @@ function loadPostsRealtime() {
         </div>
       `;
 
-      card.querySelector(".upvote-btn").addEventListener("click", (e) => {
-        e.stopPropagation(); vote(e, docSnap.id, 1);
-      });
-      card.querySelector(".downvote-btn").addEventListener("click", (e) => {
-        e.stopPropagation(); vote(e, docSnap.id, -1);
-      });
+      const user = JSON.parse(localStorage.getItem("user"));
+
+card.querySelector(".upvote-btn").addEventListener("click", async (e) => {
+  e.stopPropagation();
+
+  await vote(e, docSnap.id, 1);
+
+  await sendNotification({
+    post: {
+      id: docSnap.id,
+      title: post.title || "Untitled",
+      userId: post.userId
+    },
+    currentUser: {
+      uid: user?.uid,
+      name: user?.name,
+      photo: user?.photo
+    },
+    type: "upvote"
+  });
+});
+
+card.querySelector(".downvote-btn").addEventListener("click", async (e) => {
+  e.stopPropagation();
+
+  await vote(e, docSnap.id, -1);
+
+  await sendNotification({
+    post: {
+      id: docSnap.id,
+      title: post.title || "Untitled",
+      userId: post.userId
+    },
+    currentUser: {
+      uid: user?.uid,
+      name: user?.name,
+      photo: user?.photo
+    },
+    type: "downvote"
+  });
+});
       card.dataset.title = post.title || "";
 card.dataset.desc = post.description || "";
 card.dataset.subject = post.subject || "";
@@ -177,6 +221,21 @@ card.dataset.user = post.username || "";
 }
 
 loadPostsRealtime();
+
+window.activeFile = null;
+window.selectedPDF = null;
+
+
+function openFileModal(fileURL, title, fileName) {
+  currentFile = {
+    fileURL,
+    title,
+    fileName
+  };
+
+  // existing code below (DO NOT REMOVE)
+  document.getElementById("fileModal").classList.add("active");
+}
 
 // OPEN MODAL POST
 async function openPost(postId){
@@ -231,15 +290,54 @@ async function openPost(postId){
         </div>
     </div>
   `;
+   const user = JSON.parse(localStorage.getItem("user"));
 
-  body.querySelector(".upvote-btn").addEventListener("click", async (e) => {
-      await vote(e, postId, 1); openPost(postId); 
-  });
-  body.querySelector(".downvote-btn").addEventListener("click", async (e) => {
-      await vote(e, postId, -1); openPost(postId); 
+body.querySelector(".upvote-btn").addEventListener("click", async (e) => {
+  e.stopPropagation();
+
+  await vote(e, postId, 1);
+
+  await sendNotification({
+    post: {
+      id: postId,
+      title: post.title || "Untitled",
+      userId: post.userId
+    },
+    currentUser: {
+      uid: user?.uid,
+      name: user?.name,
+      photo: user?.photo
+    },
+    type: "upvote"
   });
 
-  modal.style.display = "flex";
+  // refresh modal content properly
+  await openPost(postId);
+});
+
+body.querySelector(".downvote-btn").addEventListener("click", async (e) => {
+  e.stopPropagation();
+
+  await vote(e, postId, -1);
+
+  await sendNotification({
+    post: {
+      id: postId,
+      title: post.title || "Untitled",
+      userId: post.userId
+    },
+    currentUser: {
+      uid: user?.uid,
+      name: user?.name,
+      photo: user?.photo
+    },
+    type: "downvote"
+  });
+
+  await openPost(postId);
+});
+
+modal.style.display = "flex";
   
   // 🔥 Sync button immediately after opening modal
   syncAllSaveButtons();
@@ -282,17 +380,16 @@ async function toggleFav(event, btn, postId) {
 }
 window.toggleFav = toggleFav;
 
-// OTHER FUNCTIONS (Files, Voting, Comments, etc.)
-let selectedPDF = null;
-let activeFile = null;
 window.openFileModal = function(url, title, fileName) {
-  selectedPDF = { url, title };
-  activeFile = { url, title };
+  selectedPDF = { url, title, fileName };
+  activeFile = { url, title, fileName };
 
   document.getElementById("file-title").innerText = "📄 " + (title || "Selected File");
   document.getElementById("pdfFrame").src = url;
   document.getElementById("pdfTitle").innerText = title || "PDF File";
   document.getElementById("pdfModal").style.display = "block";
+
+  console.log("FILE SELECTED:", activeFile);
 
   // 🔥 TOOLTIP MESSAGE (no extra function needed)
   const tooltip = document.getElementById("globalTooltip");
@@ -416,27 +513,59 @@ function toggleComments(event, btn, postId) {
 window.toggleComments = toggleComments;
 
 async function submitComment(event, postId, btn) {
-    event.stopPropagation();
-    const user = JSON.parse(localStorage.getItem("user"));
-    if (!user) return alert("You must be logged in to comment!");
+  event.stopPropagation();
 
-    const input = btn.previousElementSibling;
-    const text = input.value.trim();
-    if (text === "") return;
+  const user = JSON.parse(localStorage.getItem("user"));
+  if (!user) return alert("You must be logged in to comment!");
 
-    const newComment = {
-        username: user.username || "Anonymous", 
-        text: text,
-        timestamp: new Date().toISOString()
-    };
-    const postRef = doc(db, "posts", postId);
-    try {
-        openComments.add(postId);
-        await updateDoc(postRef, { comments: arrayUnion(newComment) });
-        input.value = ""; 
-        if (btn.closest('#modalBody')) openPost(postId);
-    } catch (error) { console.error("Error posting comment:", error); }
+  const input = btn.previousElementSibling;
+  const text = input.value.trim();
+  if (text === "") return;
+
+  const newComment = {
+    username: user.username || user.name || "Anonymous",
+    text: text,
+    timestamp: new Date().toISOString()
+  };
+
+  const postRef = doc(db, "posts", postId);
+
+  try {
+    openComments.add(postId);
+
+    await updateDoc(postRef, {
+      comments: arrayUnion(newComment)
+    });
+
+    input.value = "";
+
+    // 🔥 GET POST DATA (IMPORTANT)
+    const snap = await getDoc(postRef);
+    const post = snap.data();
+
+    // 🔥 SEND NOTIFICATION
+    await sendNotification({
+      post: {
+        id: postId,
+        title: post.title || "Untitled",
+        userId: post.userId
+      },
+      currentUser: {
+        uid: user.uid,
+        name: user.name,
+        photo: user.photo
+      },
+      type: "comment"
+    });
+
+    // refresh modal if needed
+    if (btn.closest('#modalBody')) openPost(postId);
+
+  } catch (error) {
+    console.error("Error posting comment:", error);
+  }
 }
+
 window.submitComment = submitComment;
 
 function updateNotificationCount(count){

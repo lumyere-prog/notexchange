@@ -97,6 +97,7 @@ body {
 
 /* NOTIFICATION CARDS */
 .notification {
+    transition: background 0.2s ease;
     display: flex;
     align-items: flex-start;
     gap: 12px;
@@ -109,6 +110,10 @@ body {
     border: 1px solid #F3F4F6;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.02);
     transition: background 0.1s ease, transform 0.1s ease;
+}
+
+.notification:hover {
+  background: rgba(0,0,0,0.05);
 }
 
 .notification:active {
