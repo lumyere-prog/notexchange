@@ -6,6 +6,7 @@ import {
   getDocs,
   query,
   limit,
+  where,
   onSnapshot,
   doc,
   updateDoc,
@@ -16,7 +17,7 @@ import {
   getDoc,
   orderBy,
   arrayUnion,
-  arrayRemove 
+  arrayRemove
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
 /* =========================
@@ -122,6 +123,7 @@ function loadPostsRealtime() {
 
       const card = document.createElement("div");
       card.className = "note-card";
+      card.dataset.postid = docSnap.id;
       card.addEventListener("click", () => openPost(docSnap.id));
 
       card.innerHTML = `
@@ -238,7 +240,8 @@ function openFileModal(fileURL, title, fileName) {
 }
 
 // OPEN MODAL POST
-async function openPost(postId){
+async function openPost(postId, showComments = false){
+  if (showComments) openComments.add(postId);
   const modal = document.getElementById("postModal");
   const body = document.getElementById("modalBody");
 
@@ -341,6 +344,14 @@ modal.style.display = "flex";
   
   // 🔥 Sync button immediately after opening modal
   syncAllSaveButtons();
+
+  // If opened with showComments, focus the comment input
+  if (showComments) {
+    setTimeout(() => {
+      const input = body.querySelector('.comment-input');
+      if (input) input.focus();
+    }, 100); // Small delay to ensure modal is rendered
+  }
 }
 
 // TOGGLE FAVORITE 
@@ -576,15 +587,24 @@ function updateNotificationCount(count){
 
 const searchInput = document.getElementById("searchInput");
 const results = document.getElementById("searchResults");
+const SEARCH_HISTORY_KEY = "noteXchangeSearchHistory";
 
 /* =========================
    RECENT SEARCHES
    ========================= */
 
-let recentSearches = [
-  { type: "user", name: "User", username: "@User", avatar: "/photos/Guest.jpg" },
-  { type: "search", text: "Database" }
-];
+let recentSearches = JSON.parse(localStorage.getItem(SEARCH_HISTORY_KEY)) || [];
+
+function saveSearchQuery(value) {
+  const text = value.trim();
+  if (!text) return;
+  const normalized = text.toLowerCase();
+  recentSearches = recentSearches.filter(item => item.text.toLowerCase() !== normalized);
+  recentSearches.unshift({ text });
+  if (recentSearches.length > 12) recentSearches.length = 12;
+  localStorage.setItem(SEARCH_HISTORY_KEY, JSON.stringify(recentSearches));
+  loadRecentSearches();
+}
 
 function loadRecentSearches() {
   const container = document.getElementById("recentList");
@@ -592,34 +612,28 @@ function loadRecentSearches() {
 
   container.innerHTML = "";
 
+  if (recentSearches.length === 0) {
+    container.innerHTML = `<div style="padding:14px;color:#9CA3AF;">No recent searches yet.</div>`;
+    return;
+  }
+
   recentSearches.forEach((item, index) => {
     const div = document.createElement("div");
     div.className = "recent-item";
-
-    if (item.type === "user") {
-      div.innerHTML = `
-        <img src="${item.avatar}" class="recent-avatar">
-        <div>
-          <div class="recent-name">${item.name}</div>
-          <div class="recent-sub">${item.username}</div>
-        </div>
-        <span class="remove" onclick="removeSearch(${index})">✕</span>
-      `;
-    } else {
-      div.innerHTML = `
-        <span class="search-icon">🔍</span>
-        <span>${item.text}</span>
-        <span class="remove" onclick="removeSearch(${index})">✕</span>
-      `;
-    }
-
+    div.innerHTML = `
+      <span class="material-icons search-icon">search</span>
+      <span>${item.text}</span>
+      <span class="remove" onclick="event.stopPropagation(); removeSearch(${index})">✕</span>
+    `;
+    div.addEventListener("click", () => {
+      if (searchInput) {
+        searchInput.value = item.text;
+        searchInput.dispatchEvent(new Event("input", { bubbles: true }));
+      }
+    });
     container.appendChild(div);
   });
 }
-
-/* =========================
-   SEARCH LOGIC (FIXED)
-   ========================= */
 
 if (searchInput) {
   const results = document.getElementById("searchResults");
@@ -693,7 +707,53 @@ if (searchInput) {
     scored.forEach(({ card }) => {
       const clone = card.cloneNode(true);
       clone.style.display = "block";
+      
+      // Hide inline comment sections in search results since we use modal
+      const commentSection = clone.querySelector('.comment-section');
+      if (commentSection) commentSection.style.display = 'none';
+      
       results.appendChild(clone);
+
+      const postId = clone.dataset.postid;
+      if (postId) {
+        clone.addEventListener("click", () => openPost(postId));
+
+        const commentBtn = clone.querySelector(".comment-icon-btn");
+        if (commentBtn) {
+          commentBtn.removeAttribute('onclick'); // Remove inline onclick to prevent inline toggle
+          commentBtn.addEventListener("click", (e) => {
+            e.stopPropagation();
+            openPost(postId, true);
+          });
+        }
+
+        const upBtn = clone.querySelector(".upvote-btn");
+        if (upBtn) {
+          upBtn.addEventListener("click", async (e) => {
+            e.stopPropagation();
+            await vote(e, postId, 1);
+            // Refresh the search results to show updated vote counts
+            searchInput.dispatchEvent(new Event("input", { bubbles: true }));
+          });
+        }
+
+        const downBtn = clone.querySelector(".downvote-btn");
+        if (downBtn) {
+          downBtn.addEventListener("click", async (e) => {
+            e.stopPropagation();
+            await vote(e, postId, -1);
+            // Refresh the search results to show updated vote counts
+            searchInput.dispatchEvent(new Event("input", { bubbles: true }));
+          });
+        }
+
+        const openBtn = clone.querySelector(".open-file-btn");
+        if (openBtn) {
+          openBtn.addEventListener("click", (e) => {
+            e.stopPropagation();
+          });
+        }
+      }
     });
   });
 
@@ -715,12 +775,15 @@ if (searchInput) {
   /* =========================
      SAVE RECENT SEARCH
      ========================= */
-  searchInput.addEventListener("change", function () {
-    const val = this.value.trim();
-    if (val) {
-      recentSearches.unshift({ type: "search", text: val });
-      loadRecentSearches();
+  searchInput.addEventListener("keydown", function (event) {
+    if (event.key === "Enter") {
+      event.preventDefault();
+      saveSearchQuery(this.value);
     }
+  });
+
+  searchInput.addEventListener("change", function () {
+    saveSearchQuery(this.value);
   });
 }
 
@@ -729,6 +792,7 @@ if (searchInput) {
    ========================= */
 function removeSearch(index) {
   recentSearches.splice(index, 1);
+  localStorage.setItem(SEARCH_HISTORY_KEY, JSON.stringify(recentSearches));
   loadRecentSearches();
 }
 function openSearch(){
@@ -764,3 +828,35 @@ if (topArea) {
         lastScrollTop = scrollTop <= 0 ? 0 : scrollTop; 
     });
 }
+
+/* =========================
+   BELL COUNTER SYNC
+========================= */
+function syncBellCounter() {
+    try {
+        const badge = document.getElementById("notificationCount");
+        if (!badge || !currentUser) return;
+
+        // 🔥 NO "s" here!
+        const q = query(
+            collection(db, "user", currentUser.uid, "notifications"),
+            where("read", "==", false)
+        );
+
+        onSnapshot(q, (snapshot) => {
+            const unreadCount = snapshot.size;
+            console.log("Unread notifications found:", unreadCount);
+            
+            badge.innerText = unreadCount;
+            badge.style.display = unreadCount > 0 ? "inline-block" : "none";
+        }, (error) => {
+            console.error("🔥 Snapshot error:", error);
+        });
+
+    } catch (error) {
+        console.error("🔥 syncBellCounter crashed:", error);
+    }
+}
+
+// Start the listener
+syncBellCounter();

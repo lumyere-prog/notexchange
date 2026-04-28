@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NoteXchange - Admin Dashboard</title>
+    <link rel="stylesheet" href="css/admin.css">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+</head>
+<body>
+
+<div class="admin-container">
+
+    <aside class="sidebar">
+        <div class="sidebar-header">
+            <span class="material-icons" style="color: #DC2626; font-size: 28px;">admin_panel_settings</span>
+            <h2>AdminX</h2>
+        </div>
+
+        <nav>
+            <a class="nav-link active" data-target="dashboard-section">
+                <span class="material-icons">dashboard</span> Dashboard
+            </a>
+            <a class="nav-link" data-target="notes-section">
+                <span class="material-icons">description</span> Manage Notes
+            </a>
+            <a class="nav-link" data-target="users-section">
+                <span class="material-icons">people</span> Users
+            </a>
+        </nav>
+    </aside>
+
+    <main class="main">
+
+        <div class="topbar">
+            <div class="search-box">
+                <span class="material-icons search-icon">search</span>
+                <input type="text" placeholder="Search notes, users, or IDs...">
+            </div>
+            <div class="profile-container">
+                <span class="material-icons bell-icon">notifications</span>
+                <div class="admin-avatar">A</div>
+            </div>
+        </div>
+
+        <section id="dashboard-section" class="section active">
+            <div class="page-header">
+                <h2>Dashboard Overview</h2>
+                <p>Welcome back, Admin. Here is what's happening today.</p>
+            </div>
+
+            <div class="cards">
+                <div class="card">
+                    <div class="card-icon" style="background: #E0E7FF; color: #4F46E5;"><span class="material-icons">library_books</span></div>
+                    <div class="card-info">
+                        <h3>120</h3>
+                        <p>Total Notes</p>
+                    </div>
+                </div>
+                <div class="card">
+                    <div class="card-icon" style="background: #FEF3C7; color: #D97706;"><span class="material-icons">hourglass_empty</span></div>
+                    <div class="card-info">
+                        <h3>15</h3>
+                        <p>Pending Review</p>
+                    </div>
+                </div>
+                <div class="card">
+                    <div class="card-icon" style="background: #D1FAE5; color: #10B981;"><span class="material-icons">check_circle</span></div>
+                    <div class="card-info">
+                        <h3>90</h3>
+                        <p>Approved</p>
+                    </div>
+                </div>
+                <div class="card">
+                    <div class="card-icon" style="background: #FEE2E2; color: #DC2626;"><span class="material-icons">cancel</span></div>
+                    <div class="card-info">
+                        <h3>15</h3>
+                        <p>Rejected</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="dashboard-bottom">
+                <div class="dashboard-card">
+                    <h3>Recent Activity</h3>
+                    <ul class="activity-list">
+                        <li><span class="material-icons activity-icon upload">upload_file</span> <b>Juan</b> uploaded "Application Development"</li>
+                        <li><span class="material-icons activity-icon warn">gavel</span> <b>Maria Santos</b> was suspended</li>
+                        <li><span class="material-icons activity-icon success">verified</span> Note approved by <b>System Admin</b></li>
+                    </ul>
+                </div>
+
+                <div class="dashboard-card">
+                    <h3>Quick Actions</h3>
+                    <div class="quick-actions-grid">
+                        <button onclick="goToSection('notes-section')"><span class="material-icons">rule</span> Review Pending Notes</button>
+                        <button onclick="goToSection('users-section')"><span class="material-icons">manage_accounts</span> Manage Flagged Users</button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="notes-section" class="section">
+            <div class="page-header">
+                <h2>Manage Notes</h2>
+                <p>Review, approve, or reject user uploads.</p>
+            </div>
+
+            <div class="filters">
+                <button class="active">All</button>
+                <button>Pending</button>
+                <button>Approved</button>
+                <button>Rejected</button>
+            </div>
+
+            <div class="table-container">
+                <table class="admin-table">
+                    <thead>
+                        <tr>
+                            <th>Document Title</th>
+                            <th>Category</th>
+                            <th>Uploader</th>
+                            <th>Status</th>
+                            <th style="text-align: right;">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><b>Application Development</b></td>
+                            <td><span class="category-pill">CC106</span></td>
+                            <td>Jennifer Cabutin</td>
+                            <td><span class="status pending">Pending</span></td>
+                            <td class="action-cells">
+                                <button class="btn-icon approve" title="Approve"><span class="material-icons">check</span></button>
+                                <button class="btn-icon reject" title="Reject"><span class="material-icons">close</span></button>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <section id="users-section" class="section">
+            <div class="page-header">
+                <h2>User Management</h2>
+                <p>Monitor user accounts, history, and status.</p>
+            </div>
+
+            <div class="filters">
+                <button class="active" data-filter="all">All Users</button>
+                <button data-filter="active">Active</button>
+                <button data-filter="suspended">Suspended</button>
+            </div>
+
+            <div class="table-container">
+                <table class="admin-table">
+                    <thead>
+                        <tr>
+                            <th>User Name</th>
+                            <th>Email Address</th>
+                            <th>Status</th>
+                            <th style="text-align: right;">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="user-table">
+                        <tr data-status="active">
+                            <td><b>Juan Dela Cruz</b></td>
+                            <td>juan@email.com</td>
+                            <td><span class="status active">Active</span></td>
+                            <td class="action-cells">
+                                <button class="btn-pill view-user">View Profile</button>
+                                <button class="btn-pill suspend-user action-danger">Suspend</button>
+                            </td>
+                        </tr>
+                        <tr data-status="suspended">
+                            <td><b>Maria Santos</b></td>
+                            <td>maria@email.com</td>
+                            <td><span class="status suspended">Suspended</span></td>
+                            <td class="action-cells">
+                                <button class="btn-pill view-user">View Profile</button>
+                                <button class="btn-pill activate-user action-success">Activate</button>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+    </main>
+</div>
+
+<div id="overlay"></div>
+
+<div id="action-modal" class="premium-modal">
+    <div class="modal-header-icon" id="modal-header-icon">
+        <span class="material-icons">info</span>
+    </div>
+    <h3 id="modal-title">Action</h3>
+    <p id="modal-text">Are you sure you want to proceed?</p>
+
+    <textarea id="suspend-reason" class="premium-input" placeholder="Enter reason for suspension..." style="display:none;"></textarea>
+
+    <div class="modal-actions">
+        <button id="cancel-btn" class="btn-secondary">Cancel</button>
+        <button id="confirm-btn" class="btn-primary">Confirm</button>
+    </div>
+</div>
+
+<div id="view-modal" class="premium-modal huge-modal">
+    <div class="view-header">
+        <h3>Document Preview</h3>
+        <span class="material-icons close-icon" id="close-view">close</span>
+    </div>
+    <div class="view-body">
+        <iframe src="" id="pdf-viewer"></iframe>
+    </div>
+    <div class="view-actions">
+        <button class="btn-secondary reject">Reject Note</button>
+        <button class="btn-primary approve">Approve Note</button>
+    </div>
+</div>
+
+<div id="user-modal" class="side-panel">
+    <div class="panel-header">
+        <span class="material-icons" id="close-user" style="cursor: pointer;">arrow_forward_ios</span>
+        <h3>User Profile</h3>
+    </div>
+
+    <div class="panel-profile">
+        <div class="user-avatar-large">JD</div>
+        <h3 id="user-name">Name</h3>
+        <p id="user-meta" class="user-meta"></p>
+        <div class="points-badge"><span class="material-icons">stars</span> <b id="user-points">0</b> Points</div>
+    </div>
+
+    <div class="panel-section">
+        <h4>Account Status Action</h4>
+        <textarea id="profile-reason" class="premium-input" placeholder="Enter reason to modify status..."></textarea>
+        <button id="suspend-from-profile" class="btn-primary action-danger" style="width: 100%; margin-top: 10px;">Suspend User</button>
+    </div>
+
+    <div class="panel-section" style="flex: 1; overflow-y: auto;">
+        <h4>Recent Uploads</h4>
+        <div id="user-history">
+            </div>
+    </div>
+</div>
+
+<script src="/js/admin.js"></script>
+</body>
+</html>

@@ -135,7 +135,7 @@ function renderCard(postId, post, container) {
 
           <div style="display: flex; align-items: center; gap: 8px;">
               <button onclick="toggleFav(event, this, '${postId}')" style="background:none; border:none; cursor:pointer; display:flex; align-items:center; justify-content:center; width:32px; height:32px; ${pinStyle}">📌</button>
-              <button onclick="toggleComments(event, this, '${postId}')" style="background:none; border:none; cursor:pointer; color: #6B7280; display:flex; padding:6px;"><span class="material-icons" style="font-size:20px;">chat_bubble_outline</span></button>
+              <button onclick="openSavedModal('${postId}', true)" style="background:none; border:none; cursor:pointer; color: #6B7280; display:flex; padding:6px;"><span class="material-icons" style="font-size:20px;">chat_bubble_outline</span></button>
               <button onclick="openFileModal('${post.fileURL}', '${post.title}')" style="background: white; color: #111827; border: 1px solid #E5E7EB; padding: 8px 16px; border-radius: 50px; font-weight: 800; cursor: pointer; display: flex; align-items: center; gap: 4px; font-size: 13px;">
                   <span class="material-icons" style="font-size: 18px;">description</span> Open
               </button>
@@ -150,7 +150,7 @@ function renderCard(postId, post, container) {
 /* =========================
    MODAL LOGIC
 ========================= */
-async function openSavedModal(postId){
+async function openSavedModal(postId, showComments = false){
     const modal = document.getElementById("postModal");
     const body = document.getElementById("modalBody");
 
@@ -182,6 +182,11 @@ async function openSavedModal(postId){
     const upStyle = userVote === 1 ? `background: #DCFCE7; color: #10B981; border-radius: 50%;` : `color: #6B7280;`;
     const downStyle = userVote === -1 ? `background: #FEE2E2; color: #EF4444; border-radius: 50%;` : `color: #6B7280;`;
     const pinStyle = isSaved ? `background: ${PIN_BG}; color: #DC2626; border-radius: 8px; padding: 6px;` : `color: #6B7280;`;
+
+    // Handle comment visibility
+    if (showComments) {
+        openComments.add(postId);
+    }
 
     let commentsHTML = (post.comments || []).map(c => `
         <div class="comment" style="background: #F9FAFB; padding: 12px; border-radius: 8px; margin-bottom: 8px;">
@@ -291,6 +296,7 @@ async function vote(event, postId, value){
     } catch (err) { console.error(err); }
     votingInProgress = false;
 }
+window.vote = vote;
 
 window.toggleComments = function(event, btn, postId) {
     event.stopPropagation(); 
@@ -339,3 +345,5 @@ window.openFileModal = function(url, title) {
     }
     pdfModal.style.display = "block";
 };
+
+window.openSavedModal = openSavedModal;
