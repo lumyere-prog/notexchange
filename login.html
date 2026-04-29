@@ -22,110 +22,13 @@
     <h2 id="form-title">Welcome</h2>
     <p class="subtitle">Continue with Google to get started</p>
 
-    <!-- SIGN UP -->
-    <div id="signup-form" class="form active">
-
-    <input type="text" placeholder="Username">
-    <input type="email" placeholder="Email Address">
-    <input type="password" placeholder="Password">
-    <input type="password" placeholder="Confirm Password">
-
-    <label class="checkbox">
-        <input type="checkbox">
-        Agree with Terms and Conditions
-    </label>
-
-    <button class="main-btn">Sign Up</button>
-
-    </div>
-
-    <!-- SIGN IN -->
-    <div id="signin-form" class="form">
-
-    <input type="email" placeholder="Email Address">
-    <input type="password" placeholder="Password">
-
-    <div class="forgot">
-        Forgot Password?
-    </div>
-
-    <button class="main-btn">Sign In</button>
-
-    </div>
-
-    <!-- Divider -->
-    <div class="divider">or</div>
-
     <!-- Google -->
     <script src="https://accounts.google.com/gsi/client" async defer></script>
 
-   <button id="googleLogin" class="google-btn">
-  <img src="https://developers.google.com/identity/images/g-logo.png" />
-  <span>Continue with Google</span>
-</button>
-
-<div class="g_id_signin"></div>
-
-    <!-- Toggle -->
-    <p class="switch-text">
-    <span id="switch-text">Already have an account?</span>
-    <span id="switch-btn">Sign In</span>
-    </p>
-
-</div>
-<div id="forgot-overlay">
-    <div id="forgot-modal">
-
-        <div class="fp-content"> <!-- 🔥 ADD THIS WRAPPER -->
-
-            <!-- BACK BUTTON -->
-            <div class="fp-header">
-                <span class="fp-back">←</span>
-            </div>
-
-            <!-- LOGO -->
-            <img src="/photos/title.png" class="fp-logo">
-
-            <!-- STEP 1 -->
-            <div id="email-step" class="fp-step active">
-
-                <h3>Forgot Password</h3>
-                <p>Please enter your email to reset the password</p>
-
-                <label class="fp-label">Your Email</label>
-                <input type="email" placeholder="Enter your Email" class="fp-input">
-
-                <button id="send-code-btn" class="main-btn">Reset Password</button>
-
-                <p class="fp-alt">Sign In</p>
-
-            </div>
-
-            <!-- STEP 2 -->
-            <div id="otp-step" class="fp-step">
-
-                <h3>Check your email</h3>
-                <p>We sent a reset link to your email</p>
-
-                <div class="otp-box">
-                    <input maxlength="1">
-                    <input maxlength="1">
-                    <input maxlength="1">
-                    <input maxlength="1">
-                </div>
-
-                <button class="main-btn">Verify Code</button>
-
-                <p class="fp-alt">
-                    Haven’t got the email yet?
-                    <span class="resend">Resend email</span>
-                </p>
-
-            </div>
-
-        </div> <!-- 🔥 END WRAPPER -->
-
-    </div>
+    <button id="googleLogin" class="google-btn">
+      <img src="https://developers.google.com/identity/images/g-logo.png" />
+      <span>Continue with Google</span>
+    </button>
 
 </div>
 <script type="module" src="js/login.js"></script>

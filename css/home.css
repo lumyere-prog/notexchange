@@ -1,3 +1,5 @@
+@import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700;900&display=swap');
+
 /* =========================================
    GLOBAL RESET & MOBILE DEFAULTS
    ========================================= */
@@ -10,7 +12,7 @@
 body {
     -webkit-text-size-adjust: 100%;
     -webkit-tap-highlight-color: transparent;
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    font-family: 'Roboto', sans-serif;
     background: #F8FAFC;
 }
 
@@ -91,8 +93,8 @@ body {
    SEARCH BAR
    ========================================= */
 .search-container {
-    margin: 16px 20px 0;
-    width: calc(100% - 40px);
+    margin: 16px 16px 0;
+    width: calc(100% - 32px);
 }
 
 .search-input {
@@ -125,7 +127,7 @@ body {
     display: flex;
     overflow-x: auto;
     gap: 12px;
-    padding: 0 20px 8px;
+    padding: 0 16px 8px;
     scroll-behavior: smooth;
     -webkit-overflow-scrolling: touch; 
 }
@@ -163,10 +165,10 @@ body {
    NOTES FEED
    ========================================= */
 .notes-feed {
-    width: 100%;
+    width: min(100%, 450px);
     max-width: 450px;
     margin: 0 auto; 
-    padding: 16px 20px calc(100px + env(safe-area-inset-bottom)); 
+    padding: 16px 16px calc(100px + env(safe-area-inset-bottom)); 
 }
 
 .note-card {
@@ -466,11 +468,43 @@ body {
 
 .note-footer {
     display: flex;
+    flex-wrap: wrap;
     justify-content: space-between;
     align-items: center;
+    gap: 12px;
     margin-top: 16px;
     padding-top: 16px;
     border-top: 1px solid #E5E7EB;
+}
+
+.note-footer > div {
+    min-width: 0;
+}
+
+.note-footer > div:last-child {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+    justify-content: flex-end;
+    min-width: 0;
+}
+
+.vote-box {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+    justify-content: flex-start;
+}
+
+.vote-count {
+    font-size: 14px;
+    font-weight: 700;
+    color: #1F2937;
+    min-width: 34px;
+    text-align: center;
+    white-space: nowrap;
 }
 
 .fav-btn {

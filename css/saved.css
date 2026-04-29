@@ -1,4 +1,6 @@
-﻿/* HEADER */
+﻿@import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700;900&display=swap');
+
+/* HEADER */
 .saved-header {
     padding: 20px;
     padding-top: calc(20px + env(safe-area-inset-top));
@@ -18,11 +20,13 @@
 
 /* FEED CONTAINER (Removed Grid, now Vertical List) */
 .saved-grid {
+    width: min(100%, 450px);
+    max-width: 450px;
+    margin: 0 auto;
     display: flex;
     flex-direction: column;
     gap: 16px;
-    padding: 20px;
-    padding-bottom: 120px; /* Space for bottom nav */
+    padding: 20px 16px 120px;
 }
 
 /* THE CARD DESIGN (Matching Home.html) */
