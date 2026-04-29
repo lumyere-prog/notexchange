@@ -12,7 +12,7 @@ document.querySelector(".logout-btn").addEventListener("click", async () => {
       const userRef = doc(db, "user", user.uid);
 
       await updateDoc(userRef, {
-        status: "Offline"
+        state: "Offline"
       });
 
       console.log("👋 User set to Offline");

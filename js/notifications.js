@@ -68,9 +68,18 @@ if (snapshot.empty) {
 
       // 🧠 ACTION TEXT
       let actionText = "";
-      if (n.type === "upvote") actionText = "upvoted your post";
-      else if (n.type === "downvote") actionText = "downvoted your post";
-      else if (n.type === "comment") actionText = "commented on your post";
+
+        if (n.type === "upvote") actionText = "upvoted your post";
+        else if (n.type === "downvote") actionText = "downvoted your post";
+        else if (n.type === "comment") actionText = "commented on your post";
+
+        else if (n.type === "approve") actionText = "approved your post";
+        else if (n.type === "reject") actionText = "rejected your post";
+
+        else if (n.type === "suspend") actionText = "suspended your account";
+        else if (n.type === "unsuspend") actionText = "restored your account";
+
+        else if (n.type === "archive") actionText = "archived your post";
 
       div.innerHTML += `
         <img class="avatar" src="${n.fromProfilePic || "/photos/profile.jpg"}">
@@ -82,9 +91,17 @@ if (snapshot.empty) {
 
       // 🔥 CLICK ACTION
       div.onclick = async () => {
-        await markRead(docSnap.id);
-        openPostFromNotif(n.postId, n.type, n.fromUsername); 
-      };
+    await markRead(docSnap.id);
+
+    if (n.type === "suspend" || n.type === "unsuspend") {
+        alert(n.type === "suspend"
+            ? "Your account has been suspended."
+            : "Your account is now active again.");
+        return;
+    }
+
+    openPostFromNotif(n.postId, n.type, n.fromUsername);
+};
 
       container.appendChild(div);
     });
@@ -142,6 +159,39 @@ async function openPostFromNotif(postId, notifType, fromUsername) {
           <span class="material-icons" style="font-size: 14px;">chat_bubble</span> ${name} commented on your post
       </div>`;
   }
+  if (notifType === "approve") {
+    contextBadge = `
+    <div style="color: #10B981; font-size: 12px; font-weight: bold; margin-bottom: 12px;">
+        ✅ Your post was approved
+    </div>`;
+}
+
+if (notifType === "reject") {
+    contextBadge = `
+    <div style="color: #EF4444; font-size: 12px; font-weight: bold; margin-bottom: 12px;">
+        ❌ Your post was rejected
+    </div>`;
+}
+
+if (notifType === "suspend") {
+    contextBadge = `
+    <div style="color: #DC2626; font-size: 12px; font-weight: bold; margin-bottom: 12px;">
+        🚫 Your account has been suspended
+    </div>`;
+}
+
+if (notifType === "unsuspend") {
+    contextBadge = `
+    <div style="color: #10B981; font-size: 12px; font-weight: bold; margin-bottom: 12px;">
+        🔓 Your account is active again
+    </div>`;
+}
+  if (notifType === "archive") {
+    contextBadge = `
+    <div style="color: #6B7280; font-size: 12px; font-weight: bold; margin-bottom: 12px;">
+        📦 Your post was archived
+    </div>`;
+}
 
   // 2. Build the comments HTML if it's a comment notification
   let commentsHTML = "";

@@ -34,7 +34,7 @@ loginBtn.addEventListener("click", async () => {
     if (snap.exists()) {
       // ✅ EXISTING USER → just update status
       await updateDoc(userRef, {
-        status: "Active",
+        state: "Active",
         lastLogin: serverTimestamp()
       });
 
@@ -48,7 +48,7 @@ loginBtn.addEventListener("click", async () => {
         profilePic: user.photoURL,
         createdAt: serverTimestamp(),
         lastLogin: serverTimestamp(),
-        status: "Active",
+        state: "Active",
         points: 0,
         bio: "",
         interest: ""

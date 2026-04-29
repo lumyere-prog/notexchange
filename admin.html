@@ -107,7 +107,10 @@
             </div>
             <button id="refresh-notes-btn" class="btn-secondary">
     <span class="material-icons">refresh</span></button>
-
+                <div id="global-loader" class="global-loader hidden">
+    <div class="spinner"></div>
+    <p>Processing...</p>
+</div>
             <div class="filters">
                 <button class="active">All</button>
                 <button>Pending</button>
@@ -143,10 +146,11 @@
             </div>
 
             <div class="filters">
-                <button class="active" data-filter="all">All Users</button>
-                <button data-filter="active">Active</button>
-                <button data-filter="suspended">Suspended</button>
-            </div>
+    <button class="active" data-filter="all">All Users</button>
+    <button data-filter="active">Active</button>
+    <button data-filter="offline">Offline</button>
+    <button data-filter="suspended">Suspended</button>
+</div>
 
             <div class="table-container">
                 <table class="admin-table">
@@ -159,25 +163,8 @@
                         </tr>
                     </thead>
                     <tbody id="user-table">
-                        <tr data-status="active">
-                            <td><b>Juan Dela Cruz</b></td>
-                            <td>juan@email.com</td>
-                            <td><span class="status active">Active</span></td>
-                            <td class="action-cells">
-                                <button class="btn-pill view-user">View Profile</button>
-                                <button class="btn-pill suspend-user action-danger">Suspend</button>
-                            </td>
-                        </tr>
-                        <tr data-status="suspended">
-                            <td><b>Maria Santos</b></td>
-                            <td>maria@email.com</td>
-                            <td><span class="status suspended">Suspended</span></td>
-                            <td class="action-cells">
-                                <button class="btn-pill view-user">View Profile</button>
-                                <button class="btn-pill activate-user action-success">Activate</button>
-                            </td>
-                        </tr>
-                    </tbody>
+    <!-- USERS WILL BE RENDERED FROM FIRESTORE -->
+</tbody>
                 </table>
             </div>
         </section>
@@ -187,20 +174,33 @@
 <div id="overlay"></div>
 
 <div id="action-modal" class="premium-modal">
+    
     <div class="modal-header-icon" id="modal-header-icon">
         <span class="material-icons">info</span>
     </div>
-    <h3 id="modal-title">Action</h3>
-    <p id="modal-text">Are you sure you want to proceed?</p>
 
-    <textarea id="suspend-reason" class="premium-input" placeholder="Enter reason for suspension..." style="display:none;"></textarea>
+    <h3 id="modal-title">Action</h3>
+
+    <p id="modal-text">
+        Are you sure you want to proceed?
+    </p>
+
+    <!-- 🔥 Suspension Reason -->
+    <div id="suspend-wrapper" style="display:none;">
+        <label style="font-size: 13px; opacity: 0.7;">Reason</label>
+        <textarea 
+            id="suspend-reason" 
+            class="premium-input" 
+            placeholder="Enter reason for suspension..."
+        ></textarea>
+    </div>
 
     <div class="modal-actions">
         <button id="cancel-btn" class="btn-secondary">Cancel</button>
         <button id="confirm-btn" class="btn-primary">Confirm</button>
     </div>
-</div>
 
+</div>
 <div id="view-modal" class="premium-modal huge-modal">
     <div class="view-header">
         <h3>Document Preview</h3>

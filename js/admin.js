@@ -52,6 +52,7 @@ const noteFilters = document.querySelectorAll("#notes-section .filters button");
 
 let currentAction = "";
 let currentRow = null;
+let isProcessingAction = false;
 
 
 
@@ -126,46 +127,27 @@ let currentRow = null;
 // =============================
 document.addEventListener("click", (e) => {
 
+    const row = e.target.closest("tr");
+    if (!row) return;
+
     // =============================
-    // APPROVE BUTTON CLICK
+    // APPROVE
     // =============================
     if (e.target.closest(".approve") && !e.target.closest(".view-actions")) {
         e.stopPropagation();
 
-        currentAction = "approve";
-        currentRow = e.target.closest("tr");
-
-        // UI MODAL SETUP
-        modalTitle.textContent = "Approve Document?";
-        modalText.textContent = "This note will be visible to all users.";
-        suspendReason.style.display = "none";
-
-        modalHeaderIcon.innerHTML = `<span class="material-icons">check_circle</span>`;
-        modalHeaderIcon.style.background = "#D1FAE5";
-        modalHeaderIcon.style.color = "#10B981";
-
-        openActionModal();
+        currentRow = row;
+        openActionModal("approve"); // ✅ FIXED
     }
 
     // =============================
-    // REJECT BUTTON CLICK
+    // REJECT
     // =============================
     if (e.target.closest(".reject") && !e.target.closest(".view-actions")) {
         e.stopPropagation();
 
-        currentAction = "reject";
-        currentRow = e.target.closest("tr");
-
-        // UI MODAL SETUP
-        modalTitle.textContent = "Reject Document?";
-        modalText.textContent = "This will move the post to rejected archive.";
-        suspendReason.style.display = "none";
-
-        modalHeaderIcon.innerHTML = `<span class="material-icons">cancel</span>`;
-        modalHeaderIcon.style.background = "#FEE2E2";
-        modalHeaderIcon.style.color = "#DC2626";
-
-        openActionModal();
+        currentRow = row;
+        openActionModal("reject"); // ✅ FIXED
     }
 });
 
@@ -224,185 +206,295 @@ if (noteRow && !e.target.closest(".action-cells")) {
 
 
     // ================= USERS =================
-
-   // ================= USERS =================
+// ================= USERS =================
 
 // VIEW USER HISTORY
 if (e.target.classList.contains("view-user")) {
+
     const row = e.target.closest("tr");
     currentRow = row;
 
     const name = row.children[0].textContent;
     const email = row.children[1].textContent;
-    const status = row.getAttribute("data-status");
-    const userId = row.getAttribute("data-userid"); // REQUIRED
 
+    // 🔥 STATE SYSTEM (active / offline / suspended)
+    const state = row.dataset.state || "offline";
+    const userId = row.dataset.userid;
+window.currentUserId = userId; // 🔥 STORE GLOBAL
+
+    if (!userId) {
+        console.error("Missing userId on row");
+        return;
+    }
+
+    // =============================
     // PROFILE
+    // =============================
     document.getElementById("user-name").textContent = name;
+
     document.getElementById("user-meta").textContent =
-        email + " • " + status.charAt(0).toUpperCase() + status.slice(1);
+        `${email} • ${state.charAt(0).toUpperCase() + state.slice(1)}`;
 
-    document.getElementById("user-points").textContent = Math.floor(Math.random() * 300);
+    document.getElementById("user-points").textContent =
+        Math.floor(Math.random() * 300);
 
-    // Avatar initials
-    let initials = name.split(" ").map(n => n[0]).join("").substring(0, 2);
+    // =============================
+    // AVATAR INITIALS
+    // =============================
+    let initials = name
+        .split(" ")
+        .map(n => n[0])
+        .join("")
+        .substring(0, 2);
+
     document.querySelector(".user-avatar-large").textContent = initials;
 
     document.getElementById("profile-reason").value = "";
 
-    // HISTORY (REAL DATA)
+    // =============================
+    // HISTORY LOADING
+    // =============================
     userHistory.innerHTML = `<div class="loading-history">Loading posts...</div>`;
 
-try {
-    const postsRef = collection(db, "posts");
-    const pendingRef = collection(db, "pendingPosts");
-    const rejectedRef = collection(db, "rejectedPosts"); // 🔥 ADD THIS
+    try {
 
-    const approvedQuery = query(postsRef, where("userId", "==", userId));
-    const pendingQuery = query(pendingRef, where("userId", "==", userId));
-    const rejectedQuery = query(rejectedRef, where("userId", "==", userId)); // 🔥 ADD THIS
+        const postsRef = collection(db, "posts");
+        const pendingRef = collection(db, "pendingPosts");
+        const rejectedRef = collection(db, "rejectedPosts");
 
-    const [approvedSnap, pendingSnap, rejectedSnap] = await Promise.all([
-        getDocs(approvedQuery),
-        getDocs(pendingQuery),
-        getDocs(rejectedQuery)
-    ]);
+        const approvedQuery = query(postsRef, where("userId", "==", userId));
+        const pendingQuery = query(pendingRef, where("userId", "==", userId));
+        const rejectedQuery = query(rejectedRef, where("userId", "==", userId));
 
-    let html = "";
+        const [approvedSnap, pendingSnap, rejectedSnap] = await Promise.all([
+            getDocs(approvedQuery),
+            getDocs(pendingQuery),
+            getDocs(rejectedQuery)
+        ]);
 
-    // =============================
-    // APPROVED POSTS
-    // =============================
-    approvedSnap.forEach(docSnap => {
-        const post = docSnap.data();
+        let html = "";
 
-        html += `
-        <div class="post-card">
-            <div class="post-top">
-                <h4>${post.title}</h4>
-                <span class="status approved">Approved</span>
-            </div>
+        // =============================
+        // APPROVED
+        // =============================
+        approvedSnap.forEach(docSnap => {
+            const post = docSnap.data();
 
-            <div class="post-preview">${post.description}</div>
+            html += `
+            <div class="post-card">
+                <div class="post-top">
+                    <h4>${post.title}</h4>
+                    <span class="status approved">Approved</span>
+                </div>
 
-            <div class="post-details">
-                <p><strong>Category:</strong> ${post.subject}</p>
-                <p><strong>Date:</strong> ${
-                    post.timestamp?.seconds
-                        ? new Date(post.timestamp.seconds * 1000).toLocaleDateString()
-                        : "N/A"
-                }</p>
-                <button class="view-note-btn">Preview Document</button>
-            </div>
-        </div>
-        `;
-    });
+                <div class="post-preview">${post.description}</div>
 
-    // =============================
-    // PENDING POSTS
-    // =============================
-    pendingSnap.forEach(docSnap => {
-        const post = docSnap.data();
+                <div class="post-details">
+                    <p><strong>Category:</strong> ${post.subject}</p>
+                    <p><strong>Date:</strong> ${
+                        post.timestamp?.seconds
+                            ? new Date(post.timestamp.seconds * 1000).toLocaleDateString()
+                            : "N/A"
+                    }</p>
+                    <button class="view-note-btn">Preview Document</button>
+                </div>
+            </div>`;
+        });
 
-        html += `
-        <div class="post-card">
-            <div class="post-top">
-                <h4>${post.title}</h4>
-                <span class="status pending">Pending</span>
-            </div>
+        // =============================
+        // PENDING
+        // =============================
+        pendingSnap.forEach(docSnap => {
+            const post = docSnap.data();
 
-            <div class="post-preview">${post.description}</div>
+            html += `
+            <div class="post-card">
+                <div class="post-top">
+                    <h4>${post.title}</h4>
+                    <span class="status pending">Pending</span>
+                </div>
 
-            <div class="post-details">
-                <p><strong>Category:</strong> ${post.subject}</p>
-                <p><strong>Date:</strong> ${
-                    post.timestamp?.seconds
-                        ? new Date(post.timestamp.seconds * 1000).toLocaleDateString()
-                        : "N/A"
-                }</p>
-                <button class="view-note-btn">Preview Document</button>
-            </div>
-        </div>
-        `;
-    });
+                <div class="post-preview">${post.description}</div>
 
-    // =============================
-    // REJECTED POSTS 🔥 NEW
-    // =============================
-    rejectedSnap.forEach(docSnap => {
-        const post = docSnap.data();
+                <div class="post-details">
+                    <p><strong>Category:</strong> ${post.subject}</p>
+                    <p><strong>Date:</strong> ${
+                        post.timestamp?.seconds
+                            ? new Date(post.timestamp.seconds * 1000).toLocaleDateString()
+                            : "N/A"
+                    }</p>
+                    <button class="view-note-btn">Preview Document</button>
+                </div>
+            </div>`;
+        });
 
-        html += `
-        <div class="post-card">
-            <div class="post-top">
-                <h4>${post.title}</h4>
-                <span class="status rejected">Rejected</span>
-            </div>
+        // =============================
+        // REJECTED
+        // =============================
+        rejectedSnap.forEach(docSnap => {
+            const post = docSnap.data();
 
-            <div class="post-preview">${post.description}</div>
+            html += `
+            <div class="post-card">
+                <div class="post-top">
+                    <h4>${post.title}</h4>
+                    <span class="status rejected">Rejected</span>
+                </div>
 
-            <div class="post-details">
-                <p><strong>Category:</strong> ${post.subject}</p>
-                <p><strong>Date:</strong> ${
-                    post.timestamp?.seconds
-                        ? new Date(post.timestamp.seconds * 1000).toLocaleDateString()
-                        : "N/A"
-                }</p>
-                <button class="view-note-btn">Preview Document</button>
-            </div>
-        </div>
-        `;
-    });
+                <div class="post-preview">${post.description}</div>
 
-    userHistory.innerHTML = html || `<p>No posts yet.</p>`;
+                <div class="post-details">
+                    <p><strong>Category:</strong> ${post.subject}</p>
+                    <p><strong>Date:</strong> ${
+                        post.timestamp?.seconds
+                            ? new Date(post.timestamp.seconds * 1000).toLocaleDateString()
+                            : "N/A"
+                    }</p>
+                    <button class="view-note-btn">Preview Document</button>
+                </div>
+            </div>`;
+        });
 
-} catch (err) {
-    console.error("Error loading user history:", err);
-    userHistory.innerHTML = `<p>Error loading posts.</p>`;
+        userHistory.innerHTML = html || `<p>No posts yet.</p>`;
+
+    } catch (err) {
+        console.error("Error loading user history:", err);
+        userHistory.innerHTML = `<p>Error loading posts.</p>`;
+    }
+
+    userModal.classList.add("active");
+    overlay.style.display = "block";
 }
 
-userModal.classList.add("active");
-overlay.style.display = "block";
-}
 
-
+// =============================
 // EXPAND POST CARD
+// =============================
 const card = e.target.closest(".post-card");
 if (card && !e.target.classList.contains("view-note-btn")) {
     card.classList.toggle("active");
 }
 
-    // SUSPEND USER
-    if (e.target.classList.contains("suspend-user")) {
-        e.stopPropagation();
-        currentAction = "suspend";
-        currentRow = e.target.closest("tr");
 
-        modalTitle.textContent = "Suspend User?";
-        modalText.textContent = "They will lose access to upload and comment.";
-        suspendReason.style.display = "block";
+// =============================
+// SUSPEND USER (OPEN MODAL ONLY)
+// =============================
+if (e.target.classList.contains("suspend-user")) {
 
-        modalHeaderIcon.innerHTML = `<span class="material-icons">gavel</span>`;
-        modalHeaderIcon.style.background = "#FEE2E2";
-        modalHeaderIcon.style.color = "#DC2626";
+    e.stopPropagation();
 
-        openActionModal();
+    currentAction = "suspend";
+    currentRow = e.target.closest("tr");
+
+    modalTitle.textContent = "Suspend User?";
+    modalText.textContent = "They will lose access to upload and comment.";
+    suspendReason.style.display = "block";
+
+    modalHeaderIcon.innerHTML = `<span class="material-icons">gavel</span>`;
+    modalHeaderIcon.style.background = "#FEE2E2";
+    modalHeaderIcon.style.color = "#DC2626";
+
+    
+}
+// =============================
+// ACTIVATE USER (FIRESTORE FIXED)
+// =============================
+if (e.target.classList.contains("activate-user")) {
+
+    const row = e.target.closest("tr");
+    const userId = row.dataset.userid;
+
+    if (!userId) {
+        console.error("Missing userId");
+        return;
     }
 
-    // ACTIVATE USER
-    if (e.target.classList.contains("activate-user")) {
-        const row = e.target.closest("tr");
-        const status = row.querySelector(".status");
-        
-        status.textContent = "Active";
-        status.className = "status active";
+    try {
+        const userRef = doc(db, "user", userId);
+
+        await updateDoc(userRef, {
+              alreadyProcessed: true,
+            state: "active"
+        });
+s
+        // UI update
+        row.querySelector(".status").textContent = "Active";
+        row.querySelector(".status").className = "status active";
 
         e.target.textContent = "Suspend";
         e.target.className = "btn-pill suspend-user action-danger";
 
-        row.setAttribute("data-status", "active");
+        row.dataset.state = "active";
+
+        console.log("✅ User activated");
+
+    } catch (err) {
+        console.error("Activate failed:", err);
     }
+}
 });
+
+
+
+
+
+
+
+function loadUsers() {
+    console.log("🔥 loadUsers triggered");
+    const tbody = document.getElementById("user-table");
+    if (!tbody) return;
+
+    const usersRef = collection(db, "user");
+
+    onSnapshot(usersRef, (snap) => {
+
+        tbody.innerHTML = "";
+
+        snap.forEach(docSnap => {
+
+            const user = docSnap.data();
+
+            const tr = document.createElement("tr");
+
+            tr.dataset.userid = docSnap.id;
+            tr.dataset.state = user.state || "offline";
+
+            const state = user.state || "offline";
+
+            tr.innerHTML = `
+                <td><b>${user.username || "Unknown"}</b></td>
+                <td>${user.email || "No email"}</td>
+
+                <td>
+                    <span class="status ${state}">
+                        ${state.charAt(0).toUpperCase() + state.slice(1)}
+                    </span>
+                </td>
+
+                <td class="action-cells">
+
+                    <button class="btn-pill view-user">
+                        View Profile
+                    </button>
+
+                    ${
+                        state === "suspended"
+                            ? `<button class="btn-pill activate-user action-success">Activate</button>`
+                            : `<button class="btn-pill suspend-user action-danger">Suspend</button>`
+                    }
+
+                </td>
+            `;
+
+            tbody.appendChild(tr);
+        });
+    });
+}
+
+
+
+
 
 
 
@@ -430,8 +522,18 @@ function refreshNotesTable() {
 
 
 
+const loader = document.getElementById("global-loader");
 
+function showLoader(text = "Processing...") {
+    if (!loader) return;
+    loader.querySelector("p").innerText = text;
+    loader.classList.remove("hidden");
+}
 
+function hideLoader() {
+    if (!loader) return;
+    loader.classList.add("hidden");     
+}
 
 document.getElementById("pendingTableBody").addEventListener("click", async (e) => {
 
@@ -449,7 +551,7 @@ document.getElementById("pendingTableBody").addEventListener("click", async (e) 
     if (e.target.closest(".approve")) {
         currentRow = row;
         currentAction = "approve";
-        openActionModal();
+        openActionModal("approve");
     }
 
     // =============================
@@ -458,13 +560,15 @@ document.getElementById("pendingTableBody").addEventListener("click", async (e) 
     if (e.target.closest(".reject")) {
         currentRow = row;
         currentAction = "reject";
-        openActionModal();
+        openActionModal("reject");
     }
 
     // =============================
     // RETURN (REJECTED → PENDING)
     // =============================
     if (e.target.closest(".return") && status === "rejected") {
+
+        showLoader("Restoring post...");
 
         try {
             const postRef = doc(db, "rejectedPosts", postId);
@@ -480,17 +584,23 @@ document.getElementById("pendingTableBody").addEventListener("click", async (e) 
 
             await deleteDoc(postRef);
 
-            console.log("🔁 Returned from rejected → pending");
+            console.log("🔁 Returned → pending");
+
+            loadPendingTable();
 
         } catch (err) {
             console.error("Return failed:", err);
+        } finally {
+            hideLoader();
         }
     }
 
     // =============================
-    // RETURN (ARCHIVED → PENDING) 🔥 NEW
+    // RETURN (ARCHIVED → PENDING)
     // =============================
     if (e.target.closest(".return") && status === "archived") {
+
+        showLoader("Restoring from archive...");
 
         try {
             const postRef = doc(db, "archivedPosts", postId);
@@ -507,17 +617,23 @@ document.getElementById("pendingTableBody").addEventListener("click", async (e) 
 
             await deleteDoc(postRef);
 
-            console.log("🔁 Returned from archive → pending");
+            console.log("🔁 Archive → pending");
+
+            loadPendingTable();
 
         } catch (err) {
             console.error("Archive return failed:", err);
+        } finally {
+            hideLoader();
         }
     }
 
     // =============================
-    // ARCHIVE (approved + rejected)
+    // ARCHIVE
     // =============================
     if (e.target.closest(".archive")) {
+
+        showLoader("Archiving post...");
 
         const collectionMap = {
             approved: "posts",
@@ -526,7 +642,10 @@ document.getElementById("pendingTableBody").addEventListener("click", async (e) 
 
         const col = collectionMap[status];
 
-        if (!col) return;
+        if (!col) {
+            hideLoader();
+            return;
+        }
 
         try {
             const postRef = doc(db, col, postId);
@@ -543,15 +662,19 @@ document.getElementById("pendingTableBody").addEventListener("click", async (e) 
 
             await deleteDoc(postRef);
 
-            console.log("📦 Archived post");
+            console.log("📦 Archived");
+
+            loadPendingTable();
 
         } catch (err) {
             console.error("Archive failed:", err);
+        } finally {
+            hideLoader();
         }
     }
 
     // =============================
-    // EDIT (approved only)
+    // EDIT
     // =============================
     if (e.target.closest(".edit")) {
 
@@ -741,76 +864,58 @@ function loadRecentActivity() {
 
 
 
+async function confirmAction(row, action) {
 
+    const postId = row?.dataset?.id;
+    const status = row?.dataset?.status;
 
+    if (!postId) return null;
 
-
-async function confirmAction() {
-
-    const postId = currentRow?.dataset?.id;
-    const status = currentRow?.dataset?.status;
-
-    if (!postId) {
-        console.error("Missing postId");
-        return null;
-    }
-
-    // =============================
-    // PICK SOURCE COLLECTION
-    // =============================
     let sourceCollection = "pendingPosts";
 
     if (status === "approved") sourceCollection = "posts";
     if (status === "rejected") sourceCollection = "rejectedPosts";
+    if (status === "archived") sourceCollection = "archivedPosts";
 
     const ref = doc(db, sourceCollection, postId);
     const snap = await getDoc(ref);
 
-    if (!snap.exists()) {
-        console.error("Not found");
-        return null;
-    }
+    if (!snap.exists()) return null;
 
     const data = snap.data();
+
 
     // =============================
     // APPROVE
     // =============================
-    if (currentAction === "approve") {
-
+    if (action === "approve") {
         await addDoc(collection(db, "posts"), {
             ...data,
-            approvedAt: serverTimestamp()
+            approvedAt: serverTimestamp(),
+            alreadyProcessed: true
         });
 
         await deleteDoc(ref);
-
-        console.log("✅ Approved");
     }
 
     // =============================
     // REJECT
     // =============================
-    if (currentAction === "reject") {
-
+    if (action === "reject") {
         await addDoc(collection(db, "rejectedPosts"), {
             ...data,
-            rejectedAt: serverTimestamp()
+            rejectedAt: serverTimestamp(),
+            alreadyProcessed: true
         });
 
         await deleteDoc(ref);
-
-        console.log("❌ Rejected");
     }
 
-    // =============================
-    // RETURN DATA FOR NOTIFICATIONS
-    // =============================
     return {
         id: postId,
         ...data
     };
-}
+}   
 
 
 
@@ -828,64 +933,134 @@ const currentUser = {
 };
 
 // ================== MODAL FUNCTIONS ==================
-function openActionModal(){
+function openActionModal(action) {
+
+    if (!action) {
+        console.error("❌ openActionModal missing action");
+        return;
+    }
+
+    currentAction = action; // ✅ ONLY HERE
+
+    const wrapper = document.getElementById("suspend-wrapper");
+    const reasonInput = document.getElementById("suspend-reason");
+
+    reasonInput.value = "";
+    wrapper.style.display = "none";
+
+    if (action === "approve") {
+        modalTitle.textContent = "Approve Post?";
+        modalText.textContent = "This will make the post visible.";
+
+        modalHeaderIcon.innerHTML = `<span class="material-icons">check_circle</span>`;
+        modalHeaderIcon.style.background = "#DCFCE7";
+        modalHeaderIcon.style.color = "#16A34A";
+    }
+
+    if (action === "reject") {
+        modalTitle.textContent = "Reject Post?";
+        modalText.textContent = "This will move it to rejected.";
+
+        modalHeaderIcon.innerHTML = `<span class="material-icons">cancel</span>`;
+        modalHeaderIcon.style.background = "#FEE2E2";
+        modalHeaderIcon.style.color = "#DC2626";
+    }
+
+    if (action === "suspend") {
+        modalTitle.textContent = "Suspend User?";
+        modalText.textContent = "User will lose posting access.";
+
+        wrapper.style.display = "block";
+
+        modalHeaderIcon.innerHTML = `<span class="material-icons">gavel</span>`;
+        modalHeaderIcon.style.background = "#FEF3C7";
+        modalHeaderIcon.style.color = "#D97706";
+    }
+
     actionModal.style.display = "block";
     overlay.style.display = "block";
 }
 
+
+
+
 // ================== CONFIRM ACTION BUTTON ==================
 confirmBtn.addEventListener("click", async () => {
 
-    if (!currentRow || !currentAction) return;
+    const row = currentRow;
+    const action = currentAction;
 
-    const statusCell = currentRow.querySelector(".status");
+    if (!row || !action) {
+        console.error("❌ Missing state:", { row, action });
+        return;
+    }
+
+    // 🔒 prevent double click spam
+    if (isProcessingAction) {
+        console.warn("⚠️ Already processing...");
+        return;
+    }
+
+    isProcessingAction = true;
+    confirmBtn.disabled = true;
+    confirmBtn.textContent = "Processing...";
+
+    // optional loader sync (if you use it)
+    showLoader?.("Processing...");
+
+    const statusCell = row.querySelector(".status");
 
     try {
 
-        // =============================
-        // RUN FIRESTORE ACTION FIRST
-        // =============================
-        const postData = await confirmAction(); 
-        // 👆 IMPORTANT: make confirmAction RETURN postData (we fix below)
+        let postData = null;
+        const isPostAction = ["approve", "reject"].includes(action);
 
         // =============================
-        // UI UPDATE
+        // APPROVE / REJECT
         // =============================
-        if (currentAction === "approve") {
-            statusCell.textContent = "Approved";
-            statusCell.className = "status approved";
+        if (isPostAction) {
+
+            postData = await confirmAction(row, action);
+
+            if (!postData) {
+                console.error("❌ confirmAction returned null");
+                return;
+            }
+
+            if (action === "approve") {
+                statusCell.textContent = "Approved";
+                statusCell.className = "status approved";
+            }
+
+            if (action === "reject") {
+                statusCell.textContent = "Rejected";
+                statusCell.className = "status rejected";
+            }
+
+            // =============================
+            // NOTIFICATION
+            // =============================
+            if (postData?.userId) {
+                await sendNotification({
+                    post: {
+                        id: postData.id,
+                        userId: postData.userId,
+                        title: postData.title
+                    },
+                    currentUser: {
+                        uid: "admin",
+                        name: "Admin",
+                        photo: "/photos/admin.png"
+                    },
+                    type: action
+                });
+            }
         }
 
-        if (currentAction === "reject") {
-            statusCell.textContent = "Rejected";
-            statusCell.className = "status rejected";
-        }
-
         // =============================
-        // SEND NOTIFICATION TO USER
+        // SUSPEND USER
         // =============================
-        if (postData) {
-await sendNotification({
-    post: {
-        id: currentRow.dataset.id,
-        userId: postData.userId,
-        title: postData.title
-    },
-
-    currentUser: {
-        uid: "admin",
-        name: "Admin",
-        photo: "/photos/admin.png"
-    },
-
-    type: currentAction
-});
-        }
-
-        // =============================
-        // SUSPEND (FUTURE USER SYSTEM)
-        // =============================
-        else if (currentAction === "suspend") {
+        if (action === "suspend") {
 
             const reason = suspendReason.value;
 
@@ -894,52 +1069,54 @@ await sendNotification({
                 return;
             }
 
-            // UI only (future feature)
+            const userId = row.dataset.userid;
+
+            if (!userId) {
+                console.error("❌ Missing userId on row");
+                return;
+            }
+
             statusCell.textContent = "Suspended";
             statusCell.className = "status suspended";
 
-            const btn = currentRow.querySelector(".suspend-user, .activate-user");
+            const btn = row.querySelector(".suspend-user, .activate-user");
             if (btn) {
                 btn.textContent = "Activate";
                 btn.className = "btn-pill activate-user action-success";
             }
 
-            currentRow.setAttribute("data-status", "suspended");
+            row.setAttribute("data-state", "suspended");
 
-            console.log("Suspend reason:", reason);
+            await addDoc(collection(db, "user", userId, "notifications"), {
+                type: "suspended",
+                fromUserId: "admin",
+                fromUsername: "Admin",
+                fromProfilePic: "/photos/admin.png",
+                read: false,
+                message: reason,
+                createdAt: serverTimestamp()
+            });
         }
 
         // =============================
-        // CLOSE MODAL AFTER SUCCESS
+        // CLOSE MODAL
         // =============================
         closeAll();
 
     } catch (err) {
         console.error("❌ Action failed:", err);
+    } finally {
+        currentAction = null;
+        currentRow = null;  
+        // 🔥 ALWAYS RESET (THIS FIXES YOUR BUG)
+        isProcessingAction = false;
+        confirmBtn.disabled = false;
+        confirmBtn.textContent = "Confirm";
+
+        hideLoader?.();
+
+        
     }
-});
-
-document.getElementById("suspend-from-profile").addEventListener("click", () => {
-    if (!currentRow) return alert("No user selected");
-
-    const reason = document.getElementById("profile-reason").value;
-    if (!reason.trim()) return alert("Please enter a reason");
-
-    const statusCell = currentRow.querySelector(".status");
-
-    statusCell.textContent = "Suspended";
-    statusCell.className = "status suspended";
-
-    const btn = currentRow.querySelector(".suspend-user, .activate-user");
-    if(btn) {
-        btn.textContent = "Activate";
-        btn.className = "btn-pill activate-user action-success";
-    }
-
-    currentRow.setAttribute("data-status", "suspended");
-    console.log("Suspend reason:", reason);
-
-    closeAll();
 });
 
 // CLOSE MODALS
@@ -990,16 +1167,22 @@ function applyNoteFilter() {
 userFilters.forEach(btn => {
     btn.addEventListener("click", () => {
 
-        // remove active state
+        // =============================
+        // ACTIVE BUTTON UI
+        // =============================
         userFilters.forEach(b => b.classList.remove("active"));
         btn.classList.add("active");
 
         const filter = btn.dataset.filter.toLowerCase();
 
         document.querySelectorAll("#users-section tbody tr").forEach(row => {
-            const status = (row.getAttribute("data-status") || "").toLowerCase();
 
-            const show = (filter === "all" || status === filter);
+            const state = (row.dataset.state || "").toLowerCase();
+
+            const show =
+                filter === "all" ||
+                state === filter;
+
             row.style.display = show ? "" : "none";
         });
     });
@@ -1028,6 +1211,11 @@ function goToSection(sectionId){
     document.getElementById(sectionId).classList.add("active");
     document.querySelector(`[data-target="${sectionId}"]`).classList.add("active");
 }
+
+
+
+
 applyNoteFilter();  
 loadPendingTable();
 loadRecentActivity();
+loadUsers();
