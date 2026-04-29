@@ -119,8 +119,6 @@ document.addEventListener("click", async function (e) {
 // =============================
 // GLOBAL STATE (you already have these probably)
 // =============================
-let currentAction = null;
-let currentRow = null;
 
 // =============================
 // CLICK HANDLER (APPROVE / REJECT BUTTONS)
@@ -381,20 +379,31 @@ if (card && !e.target.classList.contains("view-note-btn")) {
 // =============================
 if (e.target.classList.contains("suspend-user")) {
 
+    e.preventDefault();
     e.stopPropagation();
+    console.log("CONFIRM STATE:", {
+    action: currentAction,
+    row: currentRow,
+    reason: suspendReason?.value
+});
+    const row = e.target.closest("tr");
+    if (!row) return;
 
+    currentRow = row;
     currentAction = "suspend";
-    currentRow = e.target.closest("tr");
+
+    console.log("🔥 SUSPEND CLICK:", currentAction, currentRow);
 
     modalTitle.textContent = "Suspend User?";
     modalText.textContent = "They will lose access to upload and comment.";
+
     suspendReason.style.display = "block";
 
     modalHeaderIcon.innerHTML = `<span class="material-icons">gavel</span>`;
     modalHeaderIcon.style.background = "#FEE2E2";
     modalHeaderIcon.style.color = "#DC2626";
 
-    
+    openActionModal("suspend");
 }
 // =============================
 // ACTIVATE USER (FIRESTORE FIXED)
@@ -402,7 +411,7 @@ if (e.target.classList.contains("suspend-user")) {
 if (e.target.classList.contains("activate-user")) {
 
     const row = e.target.closest("tr");
-    const userId = row.dataset.userid;
+    const userId = row?.dataset?.userid;
 
     if (!userId) {
         console.error("Missing userId");
@@ -413,13 +422,15 @@ if (e.target.classList.contains("activate-user")) {
         const userRef = doc(db, "user", userId);
 
         await updateDoc(userRef, {
-              alreadyProcessed: true,
             state: "active"
         });
-s
+
         // UI update
-        row.querySelector(".status").textContent = "Active";
-        row.querySelector(".status").className = "status active";
+        const status = row.querySelector(".status");
+        if (status) {
+            status.textContent = "Active";
+            status.className = "status active";
+        }
 
         e.target.textContent = "Suspend";
         e.target.className = "btn-pill suspend-user action-danger";
@@ -871,51 +882,53 @@ async function confirmAction(row, action) {
 
     if (!postId) return null;
 
-    let sourceCollection = "pendingPosts";
-
-    if (status === "approved") sourceCollection = "posts";
-    if (status === "rejected") sourceCollection = "rejectedPosts";
-    if (status === "archived") sourceCollection = "archivedPosts";
-
-    const ref = doc(db, sourceCollection, postId);
-    const snap = await getDoc(ref);
-
-    if (!snap.exists()) return null;
-
-    const data = snap.data();
-
-
-    // =============================
-    // APPROVE
-    // =============================
-    if (action === "approve") {
-        await addDoc(collection(db, "posts"), {
-            ...data,
-            approvedAt: serverTimestamp(),
-            alreadyProcessed: true
-        });
-
-        await deleteDoc(ref);
+    if (row.dataset.processing === "true") {
+        console.warn("⚠️ Already processing");
+        return null;
     }
 
-    // =============================
-    // REJECT
-    // =============================
-    if (action === "reject") {
-        await addDoc(collection(db, "rejectedPosts"), {
-            ...data,
-            rejectedAt: serverTimestamp(),
-            alreadyProcessed: true
-        });
+    row.dataset.processing = "true";
 
-        await deleteDoc(ref);
+    try {
+
+        let sourceCollection = "pendingPosts";
+
+        if (status === "approved") sourceCollection = "posts";
+        if (status === "rejected") sourceCollection = "rejectedPosts";
+        if (status === "archived") sourceCollection = "archivedPosts";
+
+        const ref = doc(db, sourceCollection, postId);
+        const snap = await getDoc(ref);
+
+        if (!snap.exists()) return null;
+
+        const data = snap.data();
+
+        if (action === "approve") {
+            await addDoc(collection(db, "posts"), {
+                ...data,
+                approvedAt: serverTimestamp()
+            });
+            await deleteDoc(ref);
+        }
+
+        if (action === "reject") {
+            await addDoc(collection(db, "rejectedPosts"), {
+                ...data,
+                rejectedAt: serverTimestamp()
+            });
+            await deleteDoc(ref);
+        }
+
+        return {
+            id: postId,
+            ...data
+        };
+
+    } finally {
+        row.dataset.processing = "false";
     }
-
-    return {
-        id: postId,
-        ...data
-    };
-}   
+}
 
 
 
@@ -983,63 +996,39 @@ function openActionModal(action) {
 
 
 
-
-// ================== CONFIRM ACTION BUTTON ==================
 confirmBtn.addEventListener("click", async () => {
 
     const row = currentRow;
     const action = currentAction;
 
-    if (!row || !action) {
-        console.error("❌ Missing state:", { row, action });
-        return;
-    }
+    if (!row || !action) return;
 
-    // 🔒 prevent double click spam
-    if (isProcessingAction) {
-        console.warn("⚠️ Already processing...");
-        return;
-    }
+    if (isProcessingAction) return;
 
     isProcessingAction = true;
     confirmBtn.disabled = true;
     confirmBtn.textContent = "Processing...";
 
-    // optional loader sync (if you use it)
     showLoader?.("Processing...");
 
     const statusCell = row.querySelector(".status");
 
     try {
 
-        let postData = null;
-        const isPostAction = ["approve", "reject"].includes(action);
-
         // =============================
         // APPROVE / REJECT
         // =============================
-        if (isPostAction) {
+        if (action === "approve" || action === "reject") {
 
-            postData = await confirmAction(row, action);
+            const postData = await confirmAction(row, action);
 
-            if (!postData) {
-                console.error("❌ confirmAction returned null");
-                return;
-            }
+            if (!postData) return;
 
-            if (action === "approve") {
-                statusCell.textContent = "Approved";
-                statusCell.className = "status approved";
-            }
+            statusCell.textContent = action === "approve" ? "Approved" : "Rejected";
+            statusCell.className = action === "approve"
+                ? "status approved"
+                : "status rejected";
 
-            if (action === "reject") {
-                statusCell.textContent = "Rejected";
-                statusCell.className = "status rejected";
-            }
-
-            // =============================
-            // NOTIFICATION
-            // =============================
             if (postData?.userId) {
                 await sendNotification({
                     post: {
@@ -1060,21 +1049,31 @@ confirmBtn.addEventListener("click", async () => {
         // =============================
         // SUSPEND USER
         // =============================
-        if (action === "suspend") {
+        else if (action === "suspend") {
 
             const reason = suspendReason.value;
 
             if (!reason.trim()) {
                 alert("Please enter a reason.");
-                return;
+                return; // 🔥 safe now (finally will still run)
             }
 
             const userId = row.dataset.userid;
 
             if (!userId) {
-                console.error("❌ Missing userId on row");
+                console.error("Missing userId");
                 return;
             }
+
+            await addDoc(collection(db, "user", userId, "notifications"), {
+                type: "suspended",
+                fromUserId: "admin",
+                fromUsername: "Admin",
+                fromProfilePic: "/photos/admin.png",
+                read: false,
+                message: reason,
+                createdAt: serverTimestamp()
+            });
 
             statusCell.textContent = "Suspended";
             statusCell.className = "status suspended";
@@ -1086,36 +1085,21 @@ confirmBtn.addEventListener("click", async () => {
             }
 
             row.setAttribute("data-state", "suspended");
-
-            await addDoc(collection(db, "user", userId, "notifications"), {
-                type: "suspended",
-                fromUserId: "admin",
-                fromUsername: "Admin",
-                fromProfilePic: "/photos/admin.png",
-                read: false,
-                message: reason,
-                createdAt: serverTimestamp()
-            });
         }
 
-        // =============================
-        // CLOSE MODAL
-        // =============================
         closeAll();
 
     } catch (err) {
         console.error("❌ Action failed:", err);
     } finally {
-        currentAction = null;
-        currentRow = null;  
-        // 🔥 ALWAYS RESET (THIS FIXES YOUR BUG)
+
         isProcessingAction = false;
         confirmBtn.disabled = false;
         confirmBtn.textContent = "Confirm";
+        currentRow = null;
+        currentAction = null;
 
         hideLoader?.();
-
-        
     }
 });
 
