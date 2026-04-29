@@ -16,6 +16,7 @@ app.use('/ai', require('./studyAI'));
 
 
 app.post("/chatbot", (req, res) => {
+   res.json({ reply: "test" });
   console.log("DIRECT CHATBOT HIT");
   res.json({ ok: true });
 });

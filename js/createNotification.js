@@ -9,7 +9,7 @@ export async function createNotification({
   postTitle
 }) {
   try {
-    await addDoc(collection(db, "users", toUserId, "notifications"), {
+    await addDoc(collection(db, "user", toUserId, "notifications"), {
       type,
       fromUser,
       postId,

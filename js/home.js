@@ -61,10 +61,19 @@ function syncAllSaveButtons() {
 /* =========================
    CATEGORY BUTTONS
 ========================= */
+let selectedCategory = "All";
+
 const categories = [
-  "All", "Art", "Programming", "Math", "Physics", 
-  "Psychology", "Business", "History", "Engineering", 
-  "Design", "Medicine"
+  "All",
+  "Mathematics",
+  "Science",
+  "Computer Science",
+  "Engineering",
+  "Health & Medicine",
+  "Social Science",
+  "Business & Economics",
+  "Arts & Humanities",
+  "General Studies"
 ];
 
 generateCategories(categories);
@@ -78,9 +87,12 @@ function generateCategories(categoryList) {
     if (category === "All") button.classList.add("active");
 
     button.addEventListener("click", () => {
-      document.querySelectorAll(".category").forEach(btn => btn.classList.remove("active"));
-      button.classList.add("active");
-    });
+  document.querySelectorAll(".category").forEach(btn => btn.classList.remove("active"));
+  button.classList.add("active");
+
+  selectedCategory = category;
+applyCategoryFilter();          // 👈 reload posts
+}); 
     container.appendChild(button);
   });
 }
@@ -88,6 +100,19 @@ function generateCategories(categoryList) {
 /* =========================
    LOAD POSTS FROM FIRESTORE
 ========================= */
+function applyCategoryFilter() {
+  const cards = document.querySelectorAll(".note-card");
+
+  cards.forEach(card => {
+    const postCategory = card.dataset.category;
+
+    if (selectedCategory === "All" || postCategory === selectedCategory) {
+      card.style.display = "block";
+    } else {
+      card.style.display = "none";
+    }
+  });
+}
 function loadPostsRealtime() {
   const container = document.getElementById("notesFeed");
   const userId = currentUser ? currentUser.uid : null;
@@ -125,6 +150,7 @@ function loadPostsRealtime() {
       card.className = "note-card";
       card.dataset.postid = docSnap.id;
       card.addEventListener("click", () => openPost(docSnap.id));
+      card.dataset.category = post.subject; // ✅ ADDED
 
       card.innerHTML = `
         <div class="note-preview">
@@ -584,6 +610,8 @@ function updateNotificationCount(count){
   badge.innerText = count;
   badge.style.display = count === 0 ? "none" : "block";
 }
+
+
 
 const searchInput = document.getElementById("searchInput");
 const results = document.getElementById("searchResults");

@@ -5,6 +5,9 @@ import {
   orderBy,
   onSnapshot,
   doc,
+  where,
+  writeBatch,
+  getDocs,
   updateDoc,
   getDoc
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
@@ -210,6 +213,27 @@ function formatTime(timestamp) {
 document.querySelector(".close").onclick = () => {
   modal.style.display = "none";
 };
+
+document.getElementById("markAllReadBtn").addEventListener("click", async () => {
+  if (!user) return;
+
+  const q = query(
+    collection(db, "user", user.uid, "notifications"),
+    where("read", "==", false)
+  );
+
+  const snapshot = await getDocs(q);
+
+  const batch = writeBatch(db);
+
+  snapshot.forEach(docSnap => {
+    batch.update(docSnap.ref, { read: true });
+  });
+
+  await batch.commit();
+
+  console.log("All notifications marked as read");
+});
 
 window.onclick = function (e) {
   if (e.target === modal) {

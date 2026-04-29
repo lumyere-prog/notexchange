@@ -118,9 +118,9 @@ if (file.size > MAX_SIZE) {
           voteRewards: {} // 🔥 future-proof (anti farming)
         };
 
-        const refDoc = await addDoc(collection(db, "posts"), postData);
+        const refDoc = await addDoc(collection(db, "pendingPosts"), postData);
+        console.log("UPLOADED TO pendingPosts:", postData);
 
-        console.log("🔥 POST CREATED:", refDoc.id);
 
         // 💰 ADD POINTS (only after success)
         await addPoints(user.uid, 10);

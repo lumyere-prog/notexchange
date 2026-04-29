@@ -83,7 +83,7 @@
             <div class="dashboard-bottom">
                 <div class="dashboard-card">
                     <h3>Recent Activity</h3>
-                    <ul class="activity-list">
+                    <ul class="activity-list" id="activityList">
                         <li><span class="material-icons activity-icon upload">upload_file</span> <b>Juan</b> uploaded "Application Development"</li>
                         <li><span class="material-icons activity-icon warn">gavel</span> <b>Maria Santos</b> was suspended</li>
                         <li><span class="material-icons activity-icon success">verified</span> Note approved by <b>System Admin</b></li>
@@ -102,15 +102,21 @@
 
         <section id="notes-section" class="section">
             <div class="page-header">
-                <h2>Manage Notes</h2>
+                <h2>Manage Notes</h2> 
                 <p>Review, approve, or reject user uploads.</p>
             </div>
+            <button id="refresh-notes-btn" class="btn-secondary">
+    <span class="material-icons">refresh</span></button>
 
             <div class="filters">
                 <button class="active">All</button>
                 <button>Pending</button>
                 <button>Approved</button>
                 <button>Rejected</button>
+                <button>Archived</button>
+                <button onclick="deleteAllApprovedPosts()" style="background:red;color:white;">
+    Delete ALL Approved (TEMP)
+</button>
             </div>
 
             <div class="table-container">
@@ -124,18 +130,8 @@
                             <th style="text-align: right;">Actions</th>
                         </tr>
                     </thead>
-                    <tbody>
-                        <tr>
-                            <td><b>Application Development</b></td>
-                            <td><span class="category-pill">CC106</span></td>
-                            <td>Jennifer Cabutin</td>
-                            <td><span class="status pending">Pending</span></td>
-                            <td class="action-cells">
-                                <button class="btn-icon approve" title="Approve"><span class="material-icons">check</span></button>
-                                <button class="btn-icon reject" title="Reject"><span class="material-icons">close</span></button>
-                            </td>
-                        </tr>
-                    </tbody>
+                   <tbody id="pendingTableBody">
+</tbody>
                 </table>
             </div>
         </section>
@@ -245,6 +241,38 @@
     </div>
 </div>
 
-<script src="/js/admin.js"></script>
+<script type="module" src="/js/admin.js"></script>
+<script type="module">
+
+import { getDocs, collection, deleteDoc, doc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+import { db } from "/firebase/firebase-client.js"; // adjust path if needed
+
+window.deleteAllApprovedPosts = async function () {
+
+    const ok = confirm("⚠️ Delete ALL APPROVED posts? This cannot be undone.");
+    if (!ok) return;
+
+    try {
+        const snap = await getDocs(collection(db, "posts"));
+
+        if (snap.empty) {
+            console.log("No approved posts to delete.");
+            return;
+        }
+
+        await Promise.all(
+            snap.docs.map(docSnap =>
+                deleteDoc(doc(db, "posts", docSnap.id))
+            )
+        );
+
+        console.log("🧼 All approved posts deleted");
+
+    } catch (err) {
+        console.error("❌ Failed to delete approved posts:", err);
+    }
+};
+
+</script></script>
 </body>
 </html>
