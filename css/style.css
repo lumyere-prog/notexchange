@@ -1,167 +1,308 @@
 @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700;900&display=swap');
 
-/* prevent horizontal scroll */
-html {
+html, body {
     width: 100%;
-    min-height: 100%;
-}
-
-body {
+    min-height: 100dvh;
     margin: 0;
     padding: 0;
     overflow-x: hidden;
     font-family: 'Roboto', sans-serif;
     background: linear-gradient(135deg, #F8FAFC 0%, #E2E8F0 100%);
-    min-height: 100vh;
-    width: 100%;
 }
 
 /* =========================
-   LOGO / TITLE
+   NATIVE SCROLL CAROUSEL
 ========================= */
-.title {
+.carousel-container {
     display: flex;
-    justify-content: center;
-    margin-top: 10vh;
-    margin-bottom: 20px;
+    width: 100vw;
+    height: 100dvh;
+    overflow-x: auto;
+    overflow-y: hidden;
+    scroll-snap-type: x mandatory; /* The magic for native swiping! */
+    scroll-behavior: smooth;
+    -webkit-overflow-scrolling: touch; /* Smooth iOS momentum */
 }
 
-.title .logo {
-    width: 70vw;
-    max-width: 300px;
-    filter: drop-shadow(0 4px 12px rgba(0, 0, 0, 0.1));
+/* Hide the ugly scrollbar on mobile */
+.carousel-container::-webkit-scrollbar {
+    display: none;
+}
+.carousel-container {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
 }
 
 /* =========================
-   LOGIN CONTAINER
+   SLIDES
 ========================= */
-.login {
+.slide {
+    flex: 0 0 100vw; /* Forces each slide to be exactly screen width */
+    width: 100vw;
+    height: 100dvh;
+    scroll-snap-align: start; /* Locks into place when swiping */
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 0 5vw;
+    box-sizing: border-box;
+}
+
+.slide-content {
     display: flex;
     flex-direction: column;
     align-items: center;
     width: 100%;
-    padding: 0 5vw;
-    box-sizing: border-box;
-    margin-top: 8vh;
+    max-width: 400px;
+    margin-top: -60px; /* Offset for bottom controls */
 }
 
-/* Title */
-.sign {
-    font-size: 28px;
+.slide-img {
+    width: 75vw;
+    max-width: 280px;
+    margin-bottom: 40px;
+    filter: drop-shadow(0 10px 20px rgba(0,0,0,0.06));
+}
+
+.slide-title {
+    font-size: 26px;
+    font-weight: 800;
+    color: #111827;
     margin-bottom: 12px;
-    text-align: center;
-    color: #1F2937;
-    font-weight: 700;
+    letter-spacing: -0.5px;
 }
 
-/* Subtitle */
-#sign-p {
-    font-size: 16px;
-    margin-bottom: 32px;
-    text-align: center;
-    color: #6B7280;
-    font-weight: 500;
-    line-height: 1.5;
+.slide-desc {
+    font-size: 15px;
+    color: #4B5563;
+    line-height: 1.6;
 }
 
 /* =========================
-   MICROSOFT BUTTON
+   NOTE (SLIDE 3)
+========================= */
+.note {
+    font-size: 13px;
+    color: #6B7280;
+    background: rgba(255, 255, 255, 0.6);
+    padding: 10px 16px;
+    border-radius: 50px;
+    display: inline-block;
+    margin-top: 24px;
+    border: 1px solid rgba(0,0,0,0.05);
+}
+
+/* =========================
+   CONTROLS (BOTTOM)
+========================= */
+.carousel-controls {
+    position: fixed;
+    bottom: 50px;
+    left: 0;
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 24px;
+    z-index: 10;
+}
+
+.dots {
+    display: flex;
+    gap: 8px;
+}
+
+.dot {
+    width: 8px;
+    height: 8px;
+    background: #D1D5DB;
+    border-radius: 50%;
+    transition: 0.3s;
+}
+
+.dot.active {
+    width: 24px;
+    background: #111827;
+    border-radius: 4px;
+}
+
+/* =========================
+   BUTTONS
 ========================= */
 .ms-btn {
     width: 90%;
-    max-width: 400px;
+    max-width: 320px;
     padding: 16px;
-    background: black;
+    background: #111827;
     color: white;
     border: none;
-    border-radius: 12px;
+    border-radius: 50px;
     font-size: 16px;
     font-weight: 600;
     cursor: pointer;
     transition: all 0.2s ease-in-out;
-    box-shadow: 0 4px 12px rgba(136, 126, 177, 0.3);
+    box-shadow: 0 8px 20px rgba(17, 24, 39, 0.15);
 }
 
 .ms-btn:hover {
-    background: #F2BFC7;
-    transform: translateY(-2px);
-    box-shadow: 0 8px 24px rgba(196, 181, 253, 0.4);
+    background: #DC2626;
+    box-shadow: 0 8px 24px rgba(220, 38, 38, 0.25);
 }
 
-/* Press effect */
 .ms-btn:active {
     transform: scale(0.98);
 }
 
-/* =========================
-   NOTE TEXT
-========================= */
-.note {
+/* 🔥 The New Google Button */
+.google-btn {
+    width: 100%;
+    max-width: 320px;
+    padding: 14px 20px;
+    border-radius: 50px; 
+    border: 1px solid #E5E7EB;
+    background: #FFFFFF;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
     font-size: 15px;
-    color: #6B7280;
-    margin-top: 20px;
-    text-align: center;
-    font-weight: 500;
-    line-height: 1.5;
+    font-weight: 600;
+    color: #1F2937;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+    position: relative;
+    z-index: 999; /* Prevents invisible blocking */
+}
+
+.google-btn img {
+    width: 20px;
+}
+
+.google-btn:hover {
+    background: #F9FAFB;
+    border-color: #D1D5DB;
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08);
+    transform: translateY(-1px);
+}
+
+.google-btn:active {
+    transform: scale(0.98);
+}
+.final-btn {
+    width: 100%;
+    margin-top: 10px;
+    /* 🔥 FIX 1: Forces the button to sit above all invisible layers */
+    position: relative;
+    z-index: 999; 
 }
 
 /* =========================
-   SMALL SCREEN FIXES
+   FOOTER
 ========================= */
-@media (max-width: 420px) {
-    .title .logo {
-        width: 60vw;
-    }
-
-    .sign {
-        font-size: 24px;
-    }
-
-    .ms-btn {
-        padding: 14px;
-        font-size: 14px;
-    }
-}
-
-@media (max-width: 350px) {
-    .title .logo {
-        width: 55vw;
-    }
-
-    .sign {
-        font-size: 22px;
-    }
-
-    .ms-btn {
-        padding: 12px;
-        font-size: 13px;
-    }
-}
-
 .footer-terms {
     position: fixed;
-    left: 0;
-    right: 0;
-    bottom: 0;
+    bottom: 20px;
     width: 100%;
-    max-width: 100%;
     text-align: center;
     font-size: 12px;
     color: #6B7280;
-    background: transparent;
-    font-weight: 500;
-    user-select: none;
-    padding: 12px 16px;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.5s ease;
+    z-index: 10;
+    pointer-events: none; /* Prevents invisible block */
 }
 
-.footer-terms a {
-    color: black;
-    text-decoration: none;
-    transition: all 0.2s ease-in-out;
-}
-
-.footer-terms a:hover,
-.footer-terms a:focus {
-    color: #F2BFC7;
+.terms-link {
+    color: #111827;
+    font-weight: 700;
     text-decoration: underline;
+    cursor: pointer;
+    pointer-events: auto; /* Re-enables clicking on the link only */
+}
+
+/* =========================
+   TERMS MOBILE BOTTOM SHEET
+========================= */
+.terms-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100dvh;
+    background: rgba(17, 24, 39, 0.6); 
+    z-index: 10000;
+    display: none; 
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.terms-overlay.show {
+    opacity: 1;
+}
+
+.terms-modal {
+    position: absolute;
+    bottom: -100%;
+    left: 0;
+    width: 100%;
+    background: #FFFFFF;
+    border-radius: 24px 24px 0 0; 
+    max-height: 85dvh;
+    display: flex;
+    flex-direction: column;
+    transition: bottom 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.terms-overlay.show .terms-modal {
+    bottom: 0; /* Slides up smoothly */
+}
+
+.terms-header {
+    padding: 20px 24px;
+    border-bottom: 1px solid #E5E7EB;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.terms-header h3 {
+    margin: 0;
+    font-size: 18px;
+    font-weight: 700;
+    color: #111827;
+}
+
+.close-terms {
+    font-size: 28px;
+    color: #9CA3AF;
+    cursor: pointer;
+    line-height: 1;
+}
+
+.close-terms:active {
+    color: #111827;
+}
+
+.terms-body {
+    padding: 24px 24px 40px; /* Extra bottom padding so text doesn't hit edge */
+    overflow-y: auto; 
+    flex: 1;
+    -webkit-overflow-scrolling: touch;
+}
+
+.terms-body h4 {
+    margin: 0 0 8px 0;
+    color: #111827;
+    font-size: 15px;
+}
+
+.terms-body p {
+    margin: 0 0 24px 0;
+    color: #4B5563;
+    font-size: 14px;
+    line-height: 1.6;
 }

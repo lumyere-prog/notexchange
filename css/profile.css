@@ -903,3 +903,44 @@ input:checked + .slider {
 input:checked + .slider:before {
     transform: translateX(20px);
 }
+
+/* =========================
+   PROFILE MOBILE FIX
+========================= */
+.profile-container {
+    width: 90%;
+    max-width: 600px;
+    margin: 0 auto;
+    box-sizing: border-box; /* Prevents padding from stretching the width */
+}
+
+/* Ensure long emails or names don't break the layout */
+.profile-info h3, .profile-info p {
+    word-break: break-word;
+    overflow-wrap: break-word;
+}
+
+/* Automatically adjusts on phone screens */
+@media (max-width: 600px) {
+    .profile-header {
+        flex-direction: column; /* Stack the picture on top of the text */
+        text-align: center;
+        padding: 24px 16px;
+    }
+    
+    .profile-info {
+        margin-top: 16px;
+        align-items: center; /* Center the text */
+    }
+
+    .edit-btn {
+        width: 100%; /* Make the button full width for easy tapping */
+        margin-top: 16px;
+        justify-content: center;
+    }
+
+    .stats-container {
+        flex-wrap: wrap; /* Let the stats drop to a new line if they get squeezed */
+        gap: 12px;
+    }
+}

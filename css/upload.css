@@ -94,6 +94,65 @@ textarea{
     border-radius:15px;
 }
 
+.subject-dropdown {
+    position: relative;
+}
+
+.subject-control {
+    width: 100%;
+    padding: 12px 16px;
+    border-radius: 20px;
+    border: 1px solid #999;
+    background: #eee;
+    color: #1F2937;
+    font-size: 14px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    cursor: pointer;
+}
+
+.subject-control:focus {
+    outline: none;
+    border-color: #111827;
+    background: #fff;
+}
+
+.subject-options {
+    position: absolute;
+    left: 0;
+    right: 0;
+    margin-top: 8px;
+    background: #FFFFFF;
+    border: 1px solid #999;
+    border-radius: 20px;
+    box-shadow: 0 18px 45px rgba(0, 0, 0, 0.12);
+    max-height: calc(4 * 48px);
+    overflow-y: auto;
+    z-index: 20;
+}
+
+.subject-options.hidden {
+    display: none;
+}
+
+.subject-option {
+    width: 100%;
+    padding: 12px 16px;
+    border: none;
+    background: transparent;
+    text-align: left;
+    font-size: 14px;
+    color: #1F2937;
+    cursor: pointer;
+    transition: background 0.2s ease;
+}
+
+.subject-option:hover,
+.subject-option.selected {
+    background: #F3F4F6;
+}
+
 /* upload button */
 .upload-btn{
     width:100%;
@@ -120,6 +179,51 @@ textarea{
   height: 100%;
   background: #4caf50;
   transition: width 0.2s;
+}
+
+.upload-modal {
+    position: fixed;
+    inset: 0;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    background: rgba(0, 0, 0, 0.48);
+    z-index: 10000;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.2s ease;
+}
+
+.upload-modal.show {
+    display: flex;
+    opacity: 1;
+    pointer-events: auto;
+}
+
+.upload-modal.hidden {
+    display: none;
+}
+
+.upload-modal-content {
+    width: min(92%, 360px);
+    background: #FFFFFF;
+    padding: 24px;
+    border-radius: 24px;
+    text-align: center;
+    box-shadow: 0 24px 60px rgba(0, 0, 0, 0.12);
+}
+
+.upload-modal-content p {
+    color: #111827;
+    font-size: 16px;
+    line-height: 1.6;
+    margin-bottom: 24px;
+}
+
+.upload-modal-content .upload-btn {
+    width: auto;
+    min-width: 140px;
+    padding: 12px 24px;
 }
 
 /* footer */

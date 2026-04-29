@@ -20,11 +20,85 @@ document.addEventListener("DOMContentLoaded", () => {
 
   const fileInput = document.getElementById("fileInput");
   const fileNameText = document.getElementById("fileName");
+  const subjectInput = document.getElementById("subject");
+  const subjectBtn = document.getElementById("subjectBtn");
+  const subjectValue = document.getElementById("subjectValue");
+  const subjectOptions = document.getElementById("subjectOptions");
+  const uploadModal = document.getElementById("uploadModal");
+  const modalCloseBtn = document.getElementById("modalCloseBtn");
+
+  const categories = [
+    "Mathematics",
+    "Science",
+    "Computer Science",
+    "Engineering",
+    "Health & Medicine",
+    "Social Science",
+    "Business & Economics",
+    "Arts & Humanities",
+    "General Studies"
+  ];
+
+  const renderSubjectOptions = () => {
+    if (!subjectOptions) return;
+    categories.forEach(category => {
+      const option = document.createElement("button");
+      option.type = "button";
+      option.className = "subject-option";
+      option.textContent = category;
+      option.addEventListener("click", () => {
+        if (!subjectInput || !subjectValue) return;
+        subjectInput.value = category;
+        subjectValue.textContent = category;
+        subjectOptions.classList.add("hidden");
+        subjectBtn.setAttribute("aria-expanded", "false");
+      });
+      subjectOptions.appendChild(option);
+    });
+  };
+
+  renderSubjectOptions();
+
+  const closeSubjectDropdown = () => {
+    if (!subjectOptions || !subjectBtn) return;
+    subjectOptions.classList.add("hidden");
+    subjectBtn.setAttribute("aria-expanded", "false");
+  };
+
+  if (subjectBtn && subjectOptions) {
+    subjectBtn.addEventListener("click", () => {
+      subjectOptions.classList.toggle("hidden");
+      const expanded = subjectOptions.classList.contains("hidden") ? "false" : "true";
+      subjectBtn.setAttribute("aria-expanded", expanded);
+    });
+  }
+
+  document.addEventListener("click", (event) => {
+    const dropdown = document.getElementById("subjectDropdown");
+    if (dropdown && !dropdown.contains(event.target)) {
+      closeSubjectDropdown();
+    }
+  });
 
   fileInput.addEventListener("change", () => {
     const file = fileInput.files[0];
     fileNameText.textContent = file ? file.name : "";
   });
+
+  const showUploadModal = () => {
+    if (!uploadModal) return;
+    uploadModal.classList.remove("hidden");
+    uploadModal.classList.add("show");
+  };
+
+  if (modalCloseBtn && uploadModal) {
+    modalCloseBtn.addEventListener("click", () => {
+      uploadModal.classList.remove("show");
+      uploadModal.classList.add("hidden");
+    });
+  }
+
+  window.showUploadModal = showUploadModal;
 
 });
 
@@ -128,8 +202,9 @@ if (file.size > MAX_SIZE) {
         // 🔓 RESET BUTTON
         uploadBtn.disabled = false;
         uploadBtn.innerText = "Upload";
-
-        alert("Upload complete!");
+        document.getElementById("postForm").reset();
+        document.getElementById("fileName").textContent = "";
+        showUploadModal();
       }
     );
 

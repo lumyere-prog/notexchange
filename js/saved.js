@@ -323,6 +323,12 @@ window.submitComment = async function(event, postId, btn) {
 };
 
 window.openFileModal = function(url, title) {
+    // 🔥 FIX: Wrap in Google Viewer if it's a PDF
+    let finalUrl = url;
+    if (url && url.toLowerCase().includes('.pdf')) {
+        finalUrl = `https://docs.google.com/gview?embedded=true&url=${encodeURIComponent(url)}`;
+    }
+
     let pdfModal = document.getElementById("dynamicPdfModal");
     if (!pdfModal) {
         pdfModal = document.createElement("div");
@@ -331,17 +337,17 @@ window.openFileModal = function(url, title) {
         pdfModal.innerHTML = `
             <div style="background: white; width: 100%; height: 90vh; position: absolute; bottom: 0; border-radius: 20px 20px 0 0; display: flex; flex-direction: column;">
                 <div style="padding: 16px 20px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #ddd;">
-                    <span onclick="document.getElementById('dynamicPdfModal').style.display='none'" style="font-size: 24px; cursor: pointer;">←</span>
+                    <span onclick="document.getElementById('dynamicPdfModal').style.display='none'" style="font-size: 24px; cursor: pointer;">✕</span>
                     <h3 style="margin: 0; font-size: 16px;">${title || "Document"}</h3>
                     <span></span>
                 </div>
-                <iframe src="${url}" style="flex: 1; border: none; width: 100%;"></iframe>
+                <iframe src="${finalUrl}" style="flex: 1; border: none; width: 100%;"></iframe>
             </div>
         `;
         document.body.appendChild(pdfModal);
     } else {
         pdfModal.querySelector("h3").innerText = title;
-        pdfModal.querySelector("iframe").src = url;
+        pdfModal.querySelector("iframe").src = finalUrl;
     }
     pdfModal.style.display = "block";
 };

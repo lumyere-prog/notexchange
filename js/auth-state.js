@@ -10,7 +10,8 @@ onAuthStateChanged(auth, (user) => {
   currentUser = user;
 
   if (!user) {
-    window.location.href = "login.html";
+    // 🚀 Redirect to the index page instead of login.html
+    window.location.href = "index.html";
     return;
   }
 
@@ -38,5 +39,6 @@ export function getUser() {
 export async function logout() {
   await signOut(auth);
   localStorage.removeItem("user");
-  window.location.href = "login.html";
+  // 🚀 Redirect to the index page
+  window.location.href = "index.html";
 }

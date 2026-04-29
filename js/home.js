@@ -422,7 +422,14 @@ window.openFileModal = function(url, title, fileName) {
   activeFile = { url, title, fileName };
 
   document.getElementById("file-title").innerText = "📄 " + (title || "Selected File");
-  document.getElementById("pdfFrame").src = url;
+
+  // 🔥 FIX: Check if it's a PDF and wrap it in the Google Docs Viewer
+  let finalUrl = url;
+  if (url && url.toLowerCase().includes('.pdf')) {
+    finalUrl = `https://docs.google.com/gview?embedded=true&url=${encodeURIComponent(url)}`;
+  }
+
+  document.getElementById("pdfFrame").src = finalUrl;
   document.getElementById("pdfTitle").innerText = title || "PDF File";
   document.getElementById("pdfModal").style.display = "block";
 
@@ -430,7 +437,6 @@ window.openFileModal = function(url, title, fileName) {
 
   // 🔥 TOOLTIP MESSAGE (no extra function needed)
   const tooltip = document.getElementById("globalTooltip");
-
   const name = fileName || title || "This file";
 
   tooltip.innerText = `${name} is saved in Lumiere. Try the chatbot for summaries or quizzes.`;
