@@ -82,7 +82,7 @@ if (snapshot.empty) {
         else if (n.type === "archive") actionText = "archived your post";
 
       div.innerHTML += `
-        <img class="avatar" src="${n.fromProfilePic || "/photos/profile.jpg"}">
+        <img class="avatar" src="${n.fromProfilePic || "/photos/logofinal.jpg"}">
         <div class="notif-text">
           <b>${n.fromUsername || "Unknown"}</b> ${actionText}
           <div class="time">${formatTime(n.createdAt)}</div>

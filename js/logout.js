@@ -8,15 +8,7 @@ document.querySelector(".logout-btn").addEventListener("click", async () => {
     const user = JSON.parse(localStorage.getItem("user"));
 
     // 🔥 update Firestore status first
-    if (user?.uid) {
-      const userRef = doc(db, "user", user.uid);
 
-      await updateDoc(userRef, {
-        state: "Offline"
-      });
-
-      console.log("👋 User set to Offline");
-    }
 
     // 🚪 logout from Firebase Auth
     await signOut(auth);
