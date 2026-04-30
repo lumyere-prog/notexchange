@@ -139,7 +139,7 @@ function loadPostsRealtime() {
           post.comments.forEach(c => {
               commentsHTML += `
                   <div class="comment">
-                      <strong style="font-size: 12px; color: #9D182B;">${c.username}</strong>
+                      <strong style="font-size: 12px; color: #111827;">${c.username}</strong>
                       <div style="font-size: 14px; margin-top: 2px;">${c.text}</div>
                   </div>
               `;
@@ -173,7 +173,7 @@ function loadPostsRealtime() {
                 <button class="fav-btn" data-postid="${docSnap.id}" onclick="toggleFav(event, this, '${docSnap.id}')">🔖</button>
                 <button class="comment-icon-btn" onclick="toggleComments(event, this, '${docSnap.id}')"><span class="material-icons">chat_bubble_outline</span></button>
                   <button class="open-file-btn"
-  onclick="openFileModal(
+  onclick="event.stopPropagation(); openFileModal(
     '${post.fileURL}',
     '${post.title}',
     '${post.fileName || "Unknown File"}'
@@ -308,7 +308,7 @@ async function openPost(postId, showComments = false){
       <div style="display: flex; align-items: center; gap: 4px;">
           <button class="fav-btn" data-postid="${postId}" onclick="toggleFav(event, this, '${postId}')">🔖</button>
           <button class="comment-icon-btn" onclick="toggleComments(event, this, '${postId}')"><span class="material-icons">chat_bubble_outline</span></button>
-          <button class="open-file-btn" onclick="openFileModal('${post.fileURL}', '${post.title}')"><span class="material-icons" style="font-size: 18px;">description</span> Open</button>
+          <button class="open-file-btn" onclick="event.stopPropagation(); openFileModal('${post.fileURL}', '${post.title}')"><span class="material-icons" style="font-size: 18px;">description</span> Open</button>
       </div>
     </div>
     <div class="comment-section" style="display: ${openComments.has(postId) ? 'block' : 'none'};" onclick="event.stopPropagation()">
@@ -421,37 +421,46 @@ window.openFileModal = function(url, title, fileName) {
   selectedPDF = { url, title, fileName };
   activeFile = { url, title, fileName };
 
-  document.getElementById("file-title").innerText = "📄 " + (title || "Selected File");
-
-  // 🔥 FIX: Check if it's a PDF and wrap it in the Google Docs Viewer
-  let finalUrl = url;
-  if (url && url.toLowerCase().includes('.pdf')) {
-    finalUrl = `https://docs.google.com/gview?embedded=true&url=${encodeURIComponent(url)}`;
+  const titleNode = document.getElementById("file-title");
+  if (titleNode) {
+    titleNode.innerText = "📄 " + (title || "Selected File");
   }
 
-  document.getElementById("pdfFrame").src = finalUrl;
-  document.getElementById("pdfTitle").innerText = title || "PDF File";
-  document.getElementById("pdfModal").style.display = "block";
+  const pdfFrame = document.getElementById("pdfFrame");
+  if (pdfFrame) {
+    pdfFrame.src = url;
+  }
+
+  const pdfModal = document.getElementById("pdfModal");
+  if (pdfModal) {
+    pdfModal.style.display = "block";
+    pdfModal.style.zIndex = "99999";
+  }
+
+  const pdfTitle = document.getElementById("pdfTitle");
+  if (pdfTitle) {
+    pdfTitle.innerText = title || "PDF File";
+  }
 
   console.log("FILE SELECTED:", activeFile);
 
-  // 🔥 TOOLTIP MESSAGE (no extra function needed)
   const tooltip = document.getElementById("globalTooltip");
   const name = fileName || title || "This file";
+  if (tooltip) {
+    tooltip.innerText = `${name} is saved in Lumiere. Try the chatbot for summaries or quizzes.`;
+    tooltip.classList.add("show");
 
-  tooltip.innerText = `${name} is saved in Lumiere. Try the chatbot for summaries or quizzes.`;
-  tooltip.classList.add("show");
-
-  clearTimeout(tooltip._timeout);
-
-  tooltip._timeout = setTimeout(() => {
-    tooltip.classList.remove("show");
-  }, 3500);
+    clearTimeout(tooltip._timeout);
+    tooltip._timeout = setTimeout(() => {
+      tooltip.classList.remove("show");
+    }, 3500);
+  }
 };
 
 window.closeFileModal = function() {
   document.getElementById("pdfModal").style.display = "none";
   document.getElementById("pdfFrame").src = "";
+  document.body.classList.remove("modal-open");
 };
 
 window.clearFile = function () {

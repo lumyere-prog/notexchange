@@ -293,3 +293,24 @@ body {
 .add-btn .material-icons {
     color: #FFFFFF;
 }
+
+/* =========================================
+   MARK ALL AS READ BUTTON
+   ========================================= */
+.mark-all-read {
+    background: transparent;
+    color: #DC2626; /* Your Logo Red */
+    border: 1px solid rgba(220, 38, 38, 0.2); /* Soft red border */
+    padding: 6px 14px;
+    border-radius: 50px; /* Pill shape */
+    font-size: 12px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s ease-in-out;
+    margin-left: auto; /* Pushes it to the far right if placed in the header */
+    margin-right: 5px;
+    white-space: nowrap;
+}
+.mark-all-read:active {
+    transform: scale(0.95); /* Satisfying click bounce */
+}

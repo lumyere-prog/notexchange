@@ -167,20 +167,31 @@ document.addEventListener("click", (e) => {
 
     // VIEW NOTE
 // =============================
-// PREVIEW DOCUMENT (FIXED)
+// PREVIEW DOCUMENT (UPDATED)
 // =============================
 const noteRow = e.target.closest("#notes-section tbody tr");
 
 if (noteRow && !e.target.closest(".action-cells")) {
 
     const fileURL = noteRow.dataset.fileurl;
+    const status = noteRow.dataset.status; // 🔥 Retrieve the current status
 
     if (!fileURL) {
         console.error("No fileURL found for this post");
         return;
     }
 
-    pdfViewer.src = fileURL; // 🔥 REAL FIREBASE FILE
+    pdfViewer.src = fileURL; 
+
+    // 🔥 NEW LOGIC: Only show Approve/Reject if status is 'pending'
+    const modalActions = viewModal.querySelector(".view-actions");
+    if (modalActions) {
+        if (status === "pending") {
+            modalActions.style.display = "flex";
+        } else {
+            modalActions.style.display = "none"; // Hide actions for Approved/Rejected/Archived
+        }
+    }
 
     viewModal.style.display = "flex";
     overlay.style.display = "block";
@@ -279,7 +290,7 @@ window.currentUserId = userId; // 🔥 STORE GLOBAL
             const post = docSnap.data();
 
             html += `
-            <div class="post-card">
+            <div class="post-card" data-fileurl="${post.fileURL || ''}">
                 <div class="post-top">
                     <h4>${post.title}</h4>
                     <span class="status approved">Approved</span>
@@ -306,7 +317,7 @@ window.currentUserId = userId; // 🔥 STORE GLOBAL
             const post = docSnap.data();
 
             html += `
-            <div class="post-card">
+            <div class="post-card" data-fileurl="${post.fileURL || ''}">
                 <div class="post-top">
                     <h4>${post.title}</h4>
                     <span class="status pending">Pending</span>
@@ -333,7 +344,7 @@ window.currentUserId = userId; // 🔥 STORE GLOBAL
             const post = docSnap.data();
 
             html += `
-            <div class="post-card">
+            <div class="post-card" data-fileurl="${post.fileURL || ''}">
                 <div class="post-top">
                     <h4>${post.title}</h4>
                     <span class="status rejected">Rejected</span>
@@ -1203,3 +1214,168 @@ applyNoteFilter();
 loadPendingTable();
 loadRecentActivity();
 loadUsers();
+
+
+
+
+function checkAdminLogin() {
+    const user = document.getElementById("adminUser").value;
+    const pass = document.getElementById("adminPass").value;
+    const errorText = document.getElementById("adminLoginError");
+
+    // 🔥 CHANGE THESE TO YOUR PREFERRED LOGIN
+    const VALID_USER = "admin";
+    const VALID_PASS = "admin123";
+
+    if (user === VALID_USER && pass === VALID_PASS) {
+        // Success: Hide the login overlay, show the dashboard
+        document.getElementById("adminLoginOverlay").style.display = "none";
+        document.getElementById("adminDashboard").style.display = "flex"; 
+        
+        // Save session so it doesn't ask again on refresh
+        sessionStorage.setItem("adminUnlocked", "true");
+    } else {
+        // Fail: Show error
+        errorText.innerText = "Invalid username or password.";
+        errorText.style.display = "block";
+        
+        // Shake animation for incorrect password (optional polish)
+        const box = document.querySelector(".admin-login-box");
+        box.style.transform = "translateX(5px)";
+        setTimeout(() => box.style.transform = "translateX(-5px)", 50);
+        setTimeout(() => box.style.transform = "translateX(0)", 100);
+    }
+}
+
+// Auto-unlock if already logged in during this browser session
+window.addEventListener("DOMContentLoaded", () => {
+    if (sessionStorage.getItem("adminUnlocked") === "true") {
+        document.getElementById("adminLoginOverlay").style.display = "none";
+        document.getElementById("adminDashboard").style.display = "flex";
+    }
+    
+    // Allow pressing "Enter" to log in
+    document.getElementById("adminPass").addEventListener("keypress", function(e) {
+        if (e.key === "Enter") checkAdminLogin();
+    });
+});
+
+// 🔥 FIX: Added "window." so the HTML button can see this function inside a module
+window.checkAdminLogin = function() {
+    const user = document.getElementById("adminUser").value;
+    const pass = document.getElementById("adminPass").value;
+    const errorText = document.getElementById("adminLoginError");
+
+    const VALID_USER = "admin";
+    const VALID_PASS = "admin123";
+
+    if (user === VALID_USER && pass === VALID_PASS) {
+        document.getElementById("adminLoginOverlay").style.display = "none";
+        document.getElementById("adminDashboard").style.display = "flex"; 
+        sessionStorage.setItem("adminUnlocked", "true");
+    } else {
+        errorText.innerText = "Invalid username or password.";
+        errorText.style.display = "block";
+        
+        const box = document.querySelector(".admin-login-box");
+        box.style.transform = "translateX(5px)";
+        setTimeout(() => box.style.transform = "translateX(-5px)", 50);
+        setTimeout(() => box.style.transform = "translateX(0)", 100);
+    }
+};
+
+
+// 🔥 SYNC DASHBOARD STATS
+async function syncDashboardStats() {
+    try {
+        const [postsSnap, pendingSnap, rejectedSnap] = await Promise.all([
+            getDocs(collection(db, "posts")),
+            getDocs(collection(db, "pendingPosts")),
+            getDocs(collection(db, "rejectedPosts"))
+        ]);
+
+        const cards = document.querySelectorAll(".card-info h3");
+        if (cards.length >= 4) {
+            // Total = Approved + Pending + Rejected
+            cards[0].textContent = postsSnap.size + pendingSnap.size + rejectedSnap.size; 
+            cards[1].textContent = pendingSnap.size; // Pending Review
+            cards[2].textContent = postsSnap.size;   // Approved
+            cards[3].textContent = rejectedSnap.size; // Rejected
+        }
+    } catch (err) {
+        console.error("Dashboard Sync Error:", err);
+    }
+}
+// Initial call to fill numbers on load
+syncDashboardStats();
+
+// 🔥 ADD THIS: Makes the search bar actually work
+const globalSearch = document.querySelector(".search-box input");
+if (globalSearch) {
+    globalSearch.addEventListener("input", (e) => {
+        const term = e.target.value.toLowerCase();
+        const activeSection = document.querySelector(".section.active").id;
+        
+        // Pick the right table to search through based on the tab you're in
+        const targetTableId = activeSection === "notes-section" ? "pendingTableBody" : "user-table";
+        const rows = document.querySelectorAll(`#${targetTableId} tr`);
+
+        rows.forEach(row => {
+            const rowText = row.innerText.toLowerCase();
+            row.style.display = rowText.includes(term) ? "" : "none";
+        });
+    });
+}
+
+// 🔥 ADD THIS: Handles the "Suspend" button inside the User Profile panel
+document.getElementById("suspend-from-profile").addEventListener("click", async () => {
+    const userId = window.currentUserId; 
+    const reason = document.getElementById("profile-reason").value;
+
+    if (!userId || !reason.trim()) return alert("Please select a user and provide a reason.");
+
+    try {
+        await updateDoc(doc(db, "user", userId), { state: "suspended" });
+        await addDoc(collection(db, "user", userId, "notifications"), {
+            type: "suspended",
+            message: reason,
+            fromUsername: "Admin",
+            read: false,
+            createdAt: serverTimestamp()
+        });
+        alert("User suspended.");
+        closeAll(); // Closes the panel
+    } catch (err) { console.error(err); }
+});
+
+// 🔥 ADD THIS: Handles "Preview Document" clicks inside the User History list
+document.getElementById("user-history").addEventListener("click", (e) => {
+    if (e.target.classList.contains("view-note-btn")) {
+        const card = e.target.closest(".post-card");
+        const url = card.dataset.fileurl;
+        if (url) {
+            document.getElementById("pdf-viewer").src = url;
+            document.getElementById("view-modal").style.display = "flex";
+            document.getElementById("overlay").style.display = "block";
+        }
+    }
+});
+
+// 🔥 Change the old 'function goToSection' to this:
+window.goToSection = function(sectionId) {
+    // 1. Hide all sections and remove active classes from nav
+    document.querySelectorAll(".section").forEach(s => s.classList.remove("active"));
+    document.querySelectorAll(".nav-link").forEach(l => l.classList.remove("active"));
+
+    // 2. Show the target section
+    const target = document.getElementById(sectionId);
+    if (target) {
+        target.classList.add("active");
+        // Also add active class to the corresponding sidebar link
+        const navLink = document.querySelector(`[data-target="${sectionId}"]`);
+        if (navLink) navLink.classList.add("active");
+    }
+
+    // 3. If going back to dashboard, refresh the numbers
+    if (sectionId === 'dashboard-section') syncDashboardStats();
+};

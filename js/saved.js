@@ -159,8 +159,8 @@ async function openSavedModal(postId, showComments = false){
     if (modalContent) {
         modalContent.style.cssText = `
             background: #FFFFFF;
-            width: 82%; 
-            max-width: 320px; 
+            width: 92%; 
+            max-width: 450px; 
             margin: auto;
             border-radius: 28px;
             box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
@@ -323,31 +323,25 @@ window.submitComment = async function(event, postId, btn) {
 };
 
 window.openFileModal = function(url, title) {
-    // 🔥 FIX: Wrap in Google Viewer if it's a PDF
-    let finalUrl = url;
-    if (url && url.toLowerCase().includes('.pdf')) {
-        finalUrl = `https://docs.google.com/gview?embedded=true&url=${encodeURIComponent(url)}`;
-    }
-
     let pdfModal = document.getElementById("dynamicPdfModal");
     if (!pdfModal) {
         pdfModal = document.createElement("div");
         pdfModal.id = "dynamicPdfModal";
-        pdfModal.style.cssText = "display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 3000;";
+        pdfModal.style.cssText = "display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 99999;";
         pdfModal.innerHTML = `
             <div style="background: white; width: 100%; height: 90vh; position: absolute; bottom: 0; border-radius: 20px 20px 0 0; display: flex; flex-direction: column;">
-                <div style="padding: 16px 20px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #ddd;">
-                    <span onclick="document.getElementById('dynamicPdfModal').style.display='none'" style="font-size: 24px; cursor: pointer;">✕</span>
-                    <h3 style="margin: 0; font-size: 16px;">${title || "Document"}</h3>
+                <div style="padding: 16px 20px; display: flex; justify-content: space-between; align-items: center; background: #111827; border-radius: 20px 20px 0 0;">
+                    <span onclick="document.getElementById('dynamicPdfModal').style.display='none'" style="font-size: 24px; cursor: pointer; color: white;">✕</span>
+                    <h3 style="margin: 0; font-size: 16px; color: white;">${title || "Document"}</h3>
                     <span></span>
                 </div>
-                <iframe src="${finalUrl}" style="flex: 1; border: none; width: 100%;"></iframe>
+                <iframe src="${url}" style="flex: 1; border: none; width: 100%;"></iframe>
             </div>
         `;
         document.body.appendChild(pdfModal);
     } else {
         pdfModal.querySelector("h3").innerText = title;
-        pdfModal.querySelector("iframe").src = finalUrl;
+        pdfModal.querySelector("iframe").src = url;
     }
     pdfModal.style.display = "block";
 };
