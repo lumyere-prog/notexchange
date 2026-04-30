@@ -38,6 +38,7 @@
             <div>
                 <h2 class="name">User</h2>
                 <p class="username">@User</p>
+                <p id="accountStatus" class="username"></p>
             </div>
         </div>
 
@@ -49,10 +50,21 @@
 
         <!-- STATS -->
         <div class="stats">
-            <div><strong>7</strong><span>Post</span></div>
-            <div><strong>90.03k</strong><span>Points</span></div>
-            <div><strong>100</strong><span>Votes</span></div>
-        </div>
+    <div>
+        <strong id="postCount">0</strong>
+        <span>Post</span>
+    </div>
+
+    <div>
+        <strong id="pointsCount">0</strong>
+        <span>Points</span>
+    </div>
+
+    <div>
+        <strong id="votesCount">0</strong>
+        <span>Votes</span>
+    </div>
+</div>
 
         <!-- TABS -->
         <div class="tabs">
@@ -300,7 +312,7 @@
             </div>
         </div>
     </div>
-
+<script type="module" src="/js/profile-stats.js"></script>
 <script type="module" src="/js/auth-state.js"></script>
 <script type="module" src="/js/profile.js"></script>
 <script type="module" src="js/logout.js"></script>

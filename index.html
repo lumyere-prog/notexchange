@@ -44,6 +44,31 @@
                     <span>Continue with Google</span>
                 </button>
 
+
+
+
+
+
+
+
+                        <div class="install-section">
+                        <h4>Install Our App</h4>
+                        
+                        <div id="qrcode"></div>
+    
+                        <p>Scan > Open > Tap "Install App"</p>
+                        </div>
+                       <button id="installBtn" onclick="installApp()">Install App</button>
+
+
+
+
+
+
+
+
+
+
                 <p class="note">
                     Built exclusively for <br><b>Quezon City University</b> students
                 </p>
@@ -184,5 +209,11 @@
             document.querySelectorAll(".slide").forEach(slide => observer.observe(slide));
         });
     </script>
+<!-- QR library FIRST -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+
+<!-- Your JS -->
+<script src="install.js"></script>
+</script>
 </body>
 </html>

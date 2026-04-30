@@ -1,8 +1,7 @@
 import { db } from "/firebase/firebase-client.js";
-import { getDoc, onSnapshot, doc, deleteDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+import { getDoc, getDocs, onSnapshot,collection, doc, deleteDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 import { addPoints } from "/js/points.js";
 import {
-  collection,
   query,
   limit,
   updateDoc,
@@ -59,18 +58,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
 let tooltipTimeout;
 
-photoSection.addEventListener("click", () => {
-    // reset timer if clicking repeatedly
-    clearTimeout(tooltipTimeout);
-
-    // show tooltip
-    photoSection.classList.add("show-tooltip");
-
-    // auto hide after 1s
-    tooltipTimeout = setTimeout(() => {
-        photoSection.classList.remove("show-tooltip");
-    }, 1000);
-});
 
     // 📝 BIO
     const bioEl = document.querySelector(".bio");
@@ -81,13 +68,12 @@ photoSection.addEventListener("click", () => {
       `;
     }
 
-    // ⭐ STATS
-    const stats = document.querySelectorAll(".stats div strong");
-    if (stats.length >= 2) {
-      stats[1].textContent = user.points || 0;
-    }
+
   });
 });
+
+
+
 function toggleMenu() {
   const menu = document.getElementById("dropdownMenu");
 
@@ -565,6 +551,7 @@ async function openPost(postId, showComments = false) {
             </div>
         </div>
     `;
+  
 
     body.querySelector(".upvote-btn").addEventListener("click", async (e) => {
         e.stopPropagation();

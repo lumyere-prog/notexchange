@@ -34,7 +34,6 @@ loginBtn.addEventListener("click", async () => {
     if (snap.exists()) {
       // ✅ EXISTING USER → just update status
       await updateDoc(userRef, {
-        state: "Active",
         lastLogin: serverTimestamp()
       });
 

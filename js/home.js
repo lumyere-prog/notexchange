@@ -20,6 +20,54 @@ import {
   arrayRemove
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
+
+
+
+
+
+import { checkUserState } 
+from "/js/profile-stats.js";
+
+import { onAuthStateChanged } 
+from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+
+import { auth } from "/firebase/firebase-client.js";
+
+
+
+export function initAuthGuard(callback) {
+
+    onAuthStateChanged(auth, async (user) => {
+
+        console.log("🔥 AUTH USER:", user);
+
+        if (!user) {
+            console.log("❌ No user logged in");
+            return;
+        }
+
+        const state = await checkUserState(user);
+        console.log("🧠 USER STATE:", state);
+
+        if (state === "suspended") {
+            console.log("🚫 USER BLOCKED");
+
+            // 🔥 USE CENTRAL MODAL (NO DUPLICATION)
+            showSuspendedModal("Your account is suspended");
+
+            return;
+        }
+
+        // ✅ allow page logic
+        if (callback) callback(user, state);
+    });
+}
+
+
+
+
+
+
 /* =========================
    STATE MEMORY & GLOBAL USER
 ========================= */
