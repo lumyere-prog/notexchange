@@ -306,6 +306,27 @@ html, body {
     font-size: 14px;
     line-height: 1.6;
 }
+
+
+#qrcode {
+    width: 120px;
+    height: 120px;
+}
+
+#qrcode canvas,
+#qrcode img {
+    width: 100% !important;
+    height: 100% !important;
+}
+
+#qrcode {
+    width: 120px;
+    height: 120px;
+    margin: 0 auto;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
 #installBtn {
     display: inline-block;
     padding: 12px 18px;
