@@ -1,5 +1,5 @@
 import { db } from "/firebase/firebase-client.js";
-import { sendNotification } from "./notificationManager.js"; // adjust path
+import { sendNotification } from "/js/notificationManager.js"; // adjust path
 
 import { addPoints } from "/js/points.js";
 import {
@@ -133,11 +133,11 @@ document.addEventListener("click", (e) => {
     // =============================
     if (e.target.closest(".approve") && !e.target.closest(".view-actions")) {
         e.stopPropagation();
-
         currentRow = row;
-        openActionModal("approve"); // ✅ FIXED
-    }
 
+        openActionModal("approve"); // ✅ FIXED 
+    }
+    
     // =============================
     // REJECT
     // =============================
@@ -147,6 +147,7 @@ document.addEventListener("click", (e) => {
         currentRow = row;
         openActionModal("reject"); // ✅ FIXED
     }
+    
 });
 
 
@@ -890,6 +891,7 @@ async function confirmAction(row, action) {
 
     const postId = row?.dataset?.id;
     const status = row?.dataset?.status;
+    
 
     if (!postId) return null;
 
@@ -905,8 +907,8 @@ async function confirmAction(row, action) {
         let sourceCollection = "pendingPosts";
 
         if (status === "approved") sourceCollection = "posts";
-        if (status === "rejected") sourceCollection = "rejectedPosts";
-        if (status === "archived") sourceCollection = "archivedPosts";
+        else if (status === "rejected") sourceCollection = "rejectedPosts";
+        else if (status === "archived") sourceCollection = "archivedPosts";
 
         const ref = doc(db, sourceCollection, postId);
         const snap = await getDoc(ref);
@@ -915,20 +917,67 @@ async function confirmAction(row, action) {
 
         const data = snap.data();
 
+        // 🧠 shared notification base (removes repetition)
+        const baseNotification = {
+            post: {
+                id: postId,
+                title: data.title || "Untitled",
+                userId: data.userId
+            }
+        };
+        
+        // =========================
+        // APPROVE
+        // =========================
         if (action === "approve") {
+
             await addDoc(collection(db, "posts"), {
                 ...data,
                 approvedAt: serverTimestamp()
             });
+
             await deleteDoc(ref);
+
+            await sendNotification({
+                ...baseNotification,
+                type: "approve"
+            });
         }
 
-        if (action === "reject") {
+        // =========================
+        // REJECT
+        // =========================
+        else if (action === "reject") {
+
             await addDoc(collection(db, "rejectedPosts"), {
                 ...data,
                 rejectedAt: serverTimestamp()
             });
+
             await deleteDoc(ref);
+
+            await sendNotification({
+                ...baseNotification,
+                type: "reject"
+            });
+        }
+
+        // =========================
+        // ARCHIVE
+        // =========================
+        else if (action === "archive") {
+
+            await addDoc(collection(db, "archivedPosts"), {
+                ...data,
+                archivedAt: serverTimestamp()
+            });
+
+            await deleteDoc(ref);
+
+            await sendNotification({
+                ...baseNotification,
+                type: "archive"
+            });
         }
 
         return {
@@ -953,7 +1002,7 @@ async function confirmAction(row, action) {
 const currentUser = {
     uid: "admin",
     name: "Admin",
-    photo: "/photos/guest.png"
+    photo: "/photos/logofinal.png"
 };
 
 // ================== MODAL FUNCTIONS ==================
@@ -1040,21 +1089,7 @@ confirmBtn.addEventListener("click", async () => {
                 ? "status approved"
                 : "status rejected";
 
-            if (postData?.userId) {
-                await sendNotification({
-                    post: {
-                        id: postData.id,
-                        userId: postData.userId,
-                        title: postData.title
-                    },
-                    currentUser: {
-                        uid: "admin",
-                        name: "Admin",
-                        photo: "/photos/admin.png"
-                    },
-                    type: action
-                });
-            }
+            
         }
 
         // =============================
@@ -1075,16 +1110,6 @@ confirmBtn.addEventListener("click", async () => {
                 console.error("Missing userId");
                 return;
             }
-
-            await addDoc(collection(db, "user", userId, "notifications"), {
-                type: "suspended",
-                fromUserId: "admin",
-                fromUsername: "Admin",
-                fromProfilePic: "/photos/admin.png",
-                read: false,
-                message: reason,
-                createdAt: serverTimestamp()
-            });
 
             statusCell.textContent = "Suspended";
             statusCell.className = "status suspended";
@@ -1335,14 +1360,6 @@ document.getElementById("suspend-from-profile").addEventListener("click", async 
     if (!userId || !reason.trim()) return alert("Please select a user and provide a reason.");
 
     try {
-        await updateDoc(doc(db, "user", userId), { state: "suspended" });
-        await addDoc(collection(db, "user", userId, "notifications"), {
-            type: "suspended",
-            message: reason,
-            fromUsername: "Admin",
-            read: false,
-            createdAt: serverTimestamp()
-        });
         alert("User suspended.");
         closeAll(); // Closes the panel
     } catch (err) { console.error(err); }
