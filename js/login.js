@@ -47,7 +47,7 @@ loginBtn.addEventListener("click", async () => {
         profilePic: user.photoURL,
         createdAt: serverTimestamp(),
         lastLogin: serverTimestamp(),
-        state: "Active",
+        state: "",
         points: 0,
         bio: "",
         interest: ""

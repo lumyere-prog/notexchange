@@ -64,14 +64,21 @@ async function loadProfileStats(user) {
 // 🔥 REUSABLE STATE CHECKER
 export async function checkUserState(user) {
 
-    if (!user?.uid) return "active";
+    if (!user?.uid) return "suspended";
 
     const userRef = doc(db, "user", user.uid);
     const userSnap = await getDoc(userRef);
 
-    return userSnap.exists()
-        ? (userSnap.data().state || "active").toLowerCase()
-        : "active";
+    if (!userSnap.exists()) {
+        return "suspended";
+    }
+
+    const state = userSnap.data().state;
+
+    // 🚨 NEVER default to active
+    if (!state) return "suspended";
+
+    return state.toLowerCase();
 }
 
 
