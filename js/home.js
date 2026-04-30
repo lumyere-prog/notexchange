@@ -490,19 +490,6 @@ window.openFileModal = function(url, title, fileName) {
     pdfTitle.innerText = title || "PDF File";
   }
 
-  console.log("FILE SELECTED:", activeFile);
-
-  const tooltip = document.getElementById("globalTooltip");
-  const name = fileName || title || "This file";
-  if (tooltip) {
-    tooltip.innerText = `${name} is saved in Lumiere. Try the chatbot for summaries or quizzes.`;
-    tooltip.classList.add("show");
-
-    clearTimeout(tooltip._timeout);
-    tooltip._timeout = setTimeout(() => {
-      tooltip.classList.remove("show");
-    }, 3500);
-  }
 };
 
 window.closeFileModal = function() {

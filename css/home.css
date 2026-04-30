@@ -1016,25 +1016,3 @@ body {
 /* =========================================
    CHATBOT: REMOVE FILE BUTTON (Compact)
    ========================================= */
-#removeFileBtn {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 4px;
-    background: #FEE2E2; 
-    color: #DC2626; 
-    border: 1px solid #FCA5A5; 
-    padding: 4px 10px; /* Tiny pill shape */
-    border-radius: 50px; 
-    font-size: 11px; /* Smaller font */
-    font-weight: 600;
-    cursor: pointer;
-    white-space: nowrap; 
-    flex-shrink: 0; /* Prevents button from being squished by long titles */
-    transition: all 0.2s ease;
-}
-
-#removeFileBtn:active {
-    background: #FCA5A5;
-    transform: scale(0.95);
-}
