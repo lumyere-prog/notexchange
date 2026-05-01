@@ -8,10 +8,7 @@ console.trace("🔥 sendNotification called from:");
 
 export async function sendNotification({ post, currentUser, type }) {
   console.log("🔥 sendNotification CALLED");
-
-  console.log("POST USERID:", post?.userId);
-  console.log("CURRENT USERID:", currentUser?.uid);
-
+  
   try {
     if (!post?.userId) {
       console.error("❌ Missing post.userId");
@@ -25,31 +22,29 @@ export async function sendNotification({ post, currentUser, type }) {
     }
 
     console.log("📡 Writing notification to Firestore...");
+    
+    // 1. Determine if this is an Admin action
+    // It's Admin if currentUser is missing (system) or has the 'admin' UID
+    const isAdmin = !currentUser || currentUser.uid === "admin";
+
     const data = {
       type,
       postId: post.id,
       postTitle: post.title,
       read: false,
-      createdAt: serverTimestamp()
+      createdAt: serverTimestamp(),
+      // 2. Set the sender info based on Admin status
+      fromUserId: isAdmin ? "admin" : currentUser.uid,
+      fromUsername: isAdmin ? "Admin" : (currentUser.name || currentUser.username || "Unknown User"),
+      fromProfilePic: isAdmin ? "/photos/logofinal.jpg" : (currentUser.photo || "/photos/profile.jpg")
     };
-
-    // 👇 ONLY ADD USER INFO IF currentUser EXISTS
-    if (currentUser) {
-     const isAdmin = !currentUser || currentUser.uid === "admin";
-
-      data.fromUserId = isAdmin ? "admin" : currentUser.uid;
-      data.fromUsername = isAdmin ? "Admin" : (currentUser.name || "Unknown");
-      data.fromProfilePic = isAdmin
-        ? "/photos/logofinal.jpg"
-        : (currentUser.photo || "/photos/profile.jpg");
-    }
 
     const ref = await addDoc(
       collection(db, "user", post.userId, "notifications"),
       data
     );
 
-    console.log("✅ Notification saved:", ref.id);
+    console.log("✅ Notification saved with ID:", ref.id);
 
   } catch (err) {
     console.error("🔥 FIRESTORE ERROR:", err);

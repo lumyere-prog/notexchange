@@ -8,6 +8,10 @@
     <link rel="stylesheet" href="/css/home.css">
     <link rel="stylesheet" href="/css/global.css">
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
+    <script>
+        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js';
+    </script>
 </head>
 
 <body>
@@ -92,18 +96,21 @@
         </div>
     </div>
 
-        <div id="pdfModal" class="pdf-modal">
-  <div class="pdf-content">
+    <div id="checkInModal" class="reward-modal">
+    <div class="reward-content">
+        
+        <!-- Asset Spot -->
+        <img src="/photos/earned.png" alt="Reward Earned" class="reward-image">
 
-    <div class="pdf-header">
-      <span id="pdfTitle">File</span>
-      <button class="close-btn" onclick="closeFileModal()">×</button>
+        <!-- Transcribed Text -->
+        <h3>Nice! You earned points!</h3>
+        <p>You received 50 points just for checking in today. Keep it up!</p>
+
+        <!-- Button with theme color -->
+        <button type="button" class="claim-btn" onclick="claimReward()">Claim Reward</button>
     </div>
-
-    <iframe id="pdfFrame"></iframe>
-
-  </div>
 </div>
+ 
     <div id="globalTooltip" class="global-tooltip"></div>
     <div id="chatbot-btn">
         <span class="material-icons">chat</span>

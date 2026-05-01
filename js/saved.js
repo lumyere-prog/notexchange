@@ -372,28 +372,173 @@ window.submitComment = async function(event, postId, btn) {
     } catch (error) { console.error(error); }
 };
 
-window.openFileModal = function(url, title) {
-    let pdfModal = document.getElementById("dynamicPdfModal");
+// ==========================================
+// 🔥 PDF.JS CANVAS RENDERER (DESIGN MATCHED)
+// ==========================================
+// ==========================================
+// 🔥 PDF.JS CANVAS RENDERER WITH DOWNLOAD
+// ==========================================
+let pdfDoc = null,
+    pageNum = 1,
+    pageIsRendering = false,
+    pageNumIsPending = null;
+
+// NEW: Track the current file for downloading
+let currentDownloadUrl = "";
+let currentDownloadTitle = "";
+
+window.openFileModal = async function(url, title) {
+    // 1. Store the file info for the download button
+    currentDownloadUrl = url;
+    currentDownloadTitle = title || "Document";
+
+    let pdfModal = document.getElementById("pdfJsModal");
+    
+    // 2. Create the Modal if it doesn't exist
     if (!pdfModal) {
         pdfModal = document.createElement("div");
-        pdfModal.id = "dynamicPdfModal";
-        pdfModal.style.cssText = "display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 99999;";
+        pdfModal.id = "pdfJsModal";
+        
+        pdfModal.style.cssText = "display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 99999; justify-content: center; align-items: center;";
+        
         pdfModal.innerHTML = `
-            <div style="background: white; width: 100%; height: 90vh; position: absolute; bottom: 0; border-radius: 20px 20px 0 0; display: flex; flex-direction: column;">
-                <div style="padding: 16px 20px; display: flex; justify-content: space-between; align-items: center; background: #111827; border-radius: 20px 20px 0 0;">
-                    <span onclick="document.getElementById('dynamicPdfModal').style.display='none'" style="font-size: 24px; cursor: pointer; color: white;">✕</span>
-                    <h3 style="margin: 0; font-size: 16px; color: white;">${title || "Document"}</h3>
-                    <span></span>
+            <div style="width: 95%; max-width: 800px; height: 90vh; background: #323639; border-radius: 12px; display: flex; flex-direction: column; overflow: hidden; box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);">
+                
+                <!-- 🔥 UPDATED HEADER: Now with Download Button -->
+                <div style="background: #111827; padding: 16px 20px; display: flex; justify-content: space-between; align-items: center;">
+                    <h3 id="pdfJsTitle" style="color: white; margin: 0; font-size: 16px; font-weight: 700; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${title || "Document"}</h3>
+                    
+                    <div style="display: flex; align-items: center; gap: 20px;">
+                        <!-- DOWNLOAD ICON -->
+                        <span class="material-icons" onclick="downloadCurrentPdf()" style="color: white; font-size: 26px; cursor: pointer;" title="Download PDF">download</span>
+                        <!-- CLOSE ICON -->
+                        <span onclick="closePdfJsModal()" style="color: white; font-size: 24px; cursor: pointer; font-weight: bold; line-height: 1;">✕</span>
+                    </div>
                 </div>
-                <iframe src="${url}" style="flex: 1; border: none; width: 100%;"></iframe>
+                
+                <div style="background: #323639; padding: 10px 16px; display: flex; justify-content: space-between; align-items: center; color: white; border-bottom: 1px solid #1f2937;">
+                    <button id="prevPage" style="background: rgba(255,255,255,0.1); color: white; padding: 8px 16px; border-radius: 6px; border: none; font-size: 14px; font-weight: bold; cursor: pointer;">◄ Prev</button>
+                    <span style="font-size: 14px; color: #E5E7EB;">Page <span id="page_num">...</span> of <span id="page_count">...</span></span>
+                    <button id="nextPage" style="background: rgba(255,255,255,0.1); color: white; padding: 8px 16px; border-radius: 6px; border: none; font-size: 14px; font-weight: bold; cursor: pointer;">Next ►</button>
+                </div>
+
+                <div id="canvasContainer" style="flex: 1; overflow: auto; background: #525659; display: flex; justify-content: center; padding: 16px;">
+                    <canvas id="pdfCanvas" style="max-width: 100%; height: auto; box-shadow: 0 4px 8px rgba(0,0,0,0.4); border-radius: 4px;"></canvas>
+                </div>
             </div>
         `;
         document.body.appendChild(pdfModal);
-    } else {
-        pdfModal.querySelector("h3").innerText = title;
-        pdfModal.querySelector("iframe").src = url;
+
+        document.getElementById('prevPage').addEventListener('click', onPrevPage);
+        document.getElementById('nextPage').addEventListener('click', onNextPage);
     }
-    pdfModal.style.display = "block";
+
+    // 3. Setup UI for new document
+    document.getElementById("pdfJsTitle").innerText = title || "Document";
+    pdfModal.style.display = "flex"; 
+    
+    const canvas = document.getElementById('pdfCanvas');
+    const ctx = canvas.getContext('2d');
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    document.getElementById('page_num').textContent = "...";
+    document.getElementById('page_count').textContent = "...";
+
+    // 4. Fetch and Render the PDF via PDF.js
+    try {
+        pdfDoc = await pdfjsLib.getDocument(url).promise;
+        document.getElementById('page_count').textContent = pdfDoc.numPages;
+        pageNum = 1;
+        renderPage(pageNum);
+    } catch (error) {
+        console.error("Error loading PDF:", error);
+        alert("Could not load PDF. It may be corrupted or blocked by CORS.");
+        closePdfJsModal();
+    }
 };
 
+window.closePdfJsModal = function() {
+    document.getElementById("pdfJsModal").style.display = "none";
+};
+
+// 🔥 NEW: Function to force the file to download
+window.downloadCurrentPdf = function() {
+    if (!currentDownloadUrl) return alert("No document is currently open.");
+
+    // Give the user visual feedback that it's working
+    const titleEl = document.getElementById("pdfJsTitle");
+    const originalTitle = titleEl.innerText;
+    titleEl.innerText = "Downloading...";
+
+    fetch(currentDownloadUrl)
+        .then(response => response.blob())
+        .then(blob => {
+            const blobUrl = window.URL.createObjectURL(blob);
+            const tempLink = document.createElement("a");
+            tempLink.style.display = "none";
+            tempLink.href = blobUrl;
+            
+            // Clean up the title so it makes a valid filename
+            const safeTitle = currentDownloadTitle.replace(/[^a-z0-9]/gi, '_').toLowerCase();
+            tempLink.download = safeTitle + ".pdf";
+            
+            document.body.appendChild(tempLink);
+            tempLink.click();
+            
+            window.URL.revokeObjectURL(blobUrl);
+            tempLink.remove();
+            titleEl.innerText = originalTitle; // Put the original title back
+        })
+        .catch(err => {
+            console.error("Download failed:", err);
+            alert("Failed to download the file. Please check your connection.");
+            titleEl.innerText = originalTitle;
+        });
+};
+
+// --- PDF Render Logic ---
+function renderPage(num) {
+    pageIsRendering = true;
+
+    pdfDoc.getPage(num).then(page => {
+        const canvas = document.getElementById('pdfCanvas');
+        const ctx = canvas.getContext('2d');
+        
+        const containerWidth = document.getElementById('canvasContainer').clientWidth;
+        const unscaledViewport = page.getViewport({ scale: 1 });
+        const scale = Math.min((containerWidth - 20) / unscaledViewport.width, 2.0); 
+        
+        const viewport = page.getViewport({ scale: scale });
+        canvas.height = viewport.height;
+        canvas.width = viewport.width;
+
+        const renderCtx = { canvasContext: ctx, viewport: viewport };
+
+        page.render(renderCtx).promise.then(() => {
+            pageIsRendering = false;
+            if (pageNumIsPending !== null) {
+                renderPage(pageNumIsPending);
+                pageNumIsPending = null;
+            }
+        });
+
+        document.getElementById('page_num').textContent = num;
+    });
+}
+
+function queueRenderPage(num) {
+    if (pageIsRendering) pageNumIsPending = num;
+    else renderPage(num);
+}
+
+function onPrevPage() {
+    if (pageNum <= 1) return;
+    pageNum--;
+    queueRenderPage(pageNum);
+}
+
+function onNextPage() {
+    if (pageNum >= pdfDoc.numPages) return;
+    pageNum++;
+    queueRenderPage(pageNum);
+}
 window.openSavedModal = openSavedModal;

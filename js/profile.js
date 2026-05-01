@@ -58,17 +58,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
 let tooltipTimeout;
 
-
-    // 📝 BIO
-    const bioEl = document.querySelector(".bio");
-    if (bioEl) {
-      bioEl.innerHTML = `
-        <p><strong>BIO:</strong> ${user.bio || "No bio yet"}</p>
-        <p><strong>INTEREST:</strong> ${user.interest || "Not set"}</p>
-      `;
-    }
-
-
   });
 });
 
@@ -105,153 +94,6 @@ window.onclick = function(event) {
     }
 };
 
-// =========================================
-// EDIT PROFILE: SLIDE ANIMATION LOGIC
-// =========================================
-
-// ===============================
-// OPEN EDIT PROFILE
-// ===============================
-
-
-window.openEditProfile = async function () {
-    const modal = document.getElementById("editProfileModal");
-    const user = JSON.parse(localStorage.getItem("user"));
-
-    if (!user?.uid) return;
-
-    try {
-        const ref = doc(db, "user", user.uid);
-        const snap = await getDoc(ref);
-
-        if (!snap.exists()) return;
-
-        const data = snap.data();
-
-        // Fill inputs
-        document.getElementById("editBio").value = data.bio || "";
-        document.getElementById("editLink").value = data.link || "";
-
-        // Profile image
-        const img = document.getElementById("editProfileImage");
-        if (img) img.src = data.profilePic || "/photos/guest.jpg";
-
-    } catch (err) {
-        console.error("Load profile error:", err);
-    }
-
-    if (modal) modal.classList.add("active");
-
-    const dropdown = document.getElementById("dropdownMenu");
-    if (dropdown) dropdown.style.display = "none";
-};
-
-import {
-    getStorage,
-    ref,
-    uploadBytes,
-    getDownloadURL
-} from "https://www.gstatic.com/firebasejs/10.7.1/firebase-storage.js";
-
-// ===============================
-// INIT STORAGE
-// ===============================
-const storage = getStorage();
-
-// ===============================
-// PROFILE PICTURE UPLOAD
-// ===============================
-window.handleProfilePicChange = async function (event) {
-    const file = event.target.files[0];
-    const user = JSON.parse(localStorage.getItem("user"));
-
-    if (!file || !user?.uid) return;
-
-    try {
-        // 📦 storage reference
-        const storageRef = ref(storage, `profilePictures/${user.uid}`);
-
-        // ⬆️ upload file
-        await uploadBytes(storageRef, file);
-
-        // 🔗 get download URL
-        const downloadURL = await getDownloadURL(storageRef);
-
-        // 🖼 update UI immediately
-        const img = document.getElementById("editProfileImage");
-        if (img) img.src = downloadURL;
-
-        // 💾 save to Firestore
-        const userRef = doc(db, "user", user.uid);
-        await updateDoc(userRef, {
-            profilePic: downloadURL
-        });
-
-        console.log("Profile picture updated successfully!");
-
-    } catch (err) {
-        console.error("Upload failed:", err);
-    }
-};
-
-// ===============================
-// BIND FILE INPUT EVENT
-// ===============================
-window.addEventListener("DOMContentLoaded", () => {
-    const input = document.getElementById("profilePicInput");
-
-    if (input) {
-        input.addEventListener("change", handleProfilePicChange);
-    }
-});
-// ===============================
-// CLOSE MODAL
-// ===============================
-window.closeEditProfile = function () {
-    const modal = document.getElementById("editProfileModal");
-    if (modal) modal.classList.remove("active");
-};
-
-// ===============================
-// SAVE PROFILE
-// ===============================
-window.saveProfileChanges = async function () {
-    const user = JSON.parse(localStorage.getItem("user"));
-    if (!user?.uid) return;
-
-    const updatedData = {
-        bio: document.getElementById("editBio").value,
-        link: document.getElementById("editLink").value,
-    };
-
-    try {
-        const ref = doc(db, "user", user.uid);
-        await updateDoc(ref, updatedData);
-
-        console.log("Profile updated successfully");
-
-        window.closeEditProfile();
-
-    } catch (err) {
-        console.error("Save error:", err);
-    }
-};
-
-// ===============================
-// ADD INTEREST (temporary local UI only)
-// ===============================
-window.addNewInterest = function () {
-    const value = prompt("Enter new interest:");
-    if (!value) return;
-
-    const container = document.getElementById("editInterestsContainer");
-
-    const tag = document.createElement("span");
-    tag.className = "interest-tag";
-    tag.innerHTML = `<span class="material-icons">star</span> ${value}`;
-
-    container.insertBefore(tag, container.querySelector(".add-interest"));
-};
 
 // =========================================
 // SETTINGS: SLIDE ANIMATION LOGIC
@@ -283,50 +125,126 @@ window.handleLogout = function() {
 };
 
 // =========================================
-// LEGAL MODAL: BOTTOM-TO-TOP LOGIC
+// LEGAL MODAL: PDF.JS MULTI-PAGE LOGIC
 // =========================================
 
-window.openTerms = function() {
+let currentLegalPdf = null; 
+let currentLegalPageNumber = 1;
+let isLegalPageRendering = false;
+
+// 1. Dedicated function to render a specific page
+async function renderLegalPage(pageNum) {
+    if (!currentLegalPdf || isLegalPageRendering) return;
+    isLegalPageRendering = true;
+
+    const canvas = document.getElementById("legalPdfCanvas");
+    const ctx = canvas.getContext("2d");
+    const container = document.querySelector(".pdf-viewer-container");
+
+    try {
+        const page = await currentLegalPdf.getPage(pageNum);
+
+        // Scale to fit mobile width
+        const containerWidth = container.clientWidth - 40;
+        const unscaledViewport = page.getViewport({ scale: 1.0 });
+        const scale = containerWidth / unscaledViewport.width;
+        const viewport = page.getViewport({ scale: scale });
+
+        canvas.height = viewport.height;
+        canvas.width = viewport.width;
+
+        const renderContext = {
+            canvasContext: ctx,
+            viewport: viewport
+        };
+        await page.render(renderContext).promise;
+
+        // Update the text and button states
+        document.getElementById("legalPageIndicator").textContent = `Page ${pageNum} of ${currentLegalPdf.numPages}`;
+        
+        // Disable 'Previous' on page 1, disable 'Next' on last page
+        const prevBtn = document.getElementById("legalPrevPage");
+        const nextBtn = document.getElementById("legalNextPage");
+        
+        if (prevBtn) {
+            prevBtn.disabled = pageNum <= 1;
+            prevBtn.style.opacity = pageNum <= 1 ? "0.5" : "1";
+        }
+        if (nextBtn) {
+            nextBtn.disabled = pageNum >= currentLegalPdf.numPages;
+            nextBtn.style.opacity = pageNum >= currentLegalPdf.numPages ? "0.5" : "1";
+        }
+
+    } catch (error) {
+        console.error("Error rendering Legal Page:", error);
+    }
+
+    isLegalPageRendering = false;
+}
+
+// 2. Open the modal and load the PDF
+window.openTerms = async function() {
     const modal = document.getElementById("legalModal");
-    const iframe = document.getElementById("legalPdfFrame");
+    const container = document.querySelector(".pdf-viewer-container");
 
-    // 1. Set the source of the PDF
-    iframe.src = "/assets/terms.pdf";
-
-    // 2. Show the modal
     modal.classList.add("active");
+
+    try {
+        const loadingTask = pdfjsLib.getDocument("/assets/terms.pdf");
+        currentLegalPdf = await loadingTask.promise;
+        
+        // Reset to page 1 every time it opens
+        currentLegalPageNumber = 1; 
+        await renderLegalPage(currentLegalPageNumber);
+
+    } catch (error) {
+        console.error("Error loading Terms PDF:", error);
+        document.getElementById("legalPdfCanvas").style.display = "none";
+        document.querySelector(".pdf-controls").style.display = "none";
+        container.innerHTML += `<p style="color:red; text-align:center; margin-top:20px;">Could not load terms. Please try again later.</p>`;
+    }
 };
 
+// 3. Clean up when closed
 window.closeTerms = function() {
     const modal = document.getElementById("legalModal");
-    const iframe = document.getElementById("legalPdfFrame");
+    const canvas = document.getElementById("legalPdfCanvas");
 
-    // 1. Hide the modal
     modal.classList.remove("active");
 
-    // 2. Clear the iframe source after animation to save memory
     setTimeout(() => {
-        iframe.src = "";
+        if (canvas) {
+            const ctx = canvas.getContext("2d");
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+        }
+        if (currentLegalPdf) {
+            currentLegalPdf.destroy();
+            currentLegalPdf = null;
+        }
     }, 400);
 };
 
-// =========================================
-// PERSONAL INFO: SLIDE ANIMATION LOGIC
-// =========================================
+// 4. Attach Click Listeners to the Buttons
+document.addEventListener("DOMContentLoaded", () => {
+    const prevBtn = document.getElementById("legalPrevPage");
+    const nextBtn = document.getElementById("legalNextPage");
 
-window.openPersonalInfo = function() {
-    const modal = document.getElementById("personalInfoModal");
-    if (modal) {
-        modal.classList.add("active");
+    if (prevBtn) {
+        prevBtn.addEventListener("click", () => {
+            if (currentLegalPageNumber <= 1) return;
+            currentLegalPageNumber--;
+            renderLegalPage(currentLegalPageNumber);
+        });
     }
-};
 
-window.closePersonalInfo = function() {
-    const modal = document.getElementById("personalInfoModal");
-    if (modal) {
-        modal.classList.remove("active");
+    if (nextBtn) {
+        nextBtn.addEventListener("click", () => {
+            if (!currentLegalPdf || currentLegalPageNumber >= currentLegalPdf.numPages) return;
+            currentLegalPageNumber++;
+            renderLegalPage(currentLegalPageNumber);
+        });
     }
-};
+});
 
 // =========================================
 // NOTIFICATIONS: SLIDE ANIMATION LOGIC

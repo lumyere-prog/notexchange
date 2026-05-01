@@ -586,7 +586,7 @@ document.getElementById("pendingTableBody").addEventListener("click", async (e) 
         openActionModal("reject");
     }
 
-    // =============================
+// =============================
     // RETURN (REJECTED → PENDING)
     // =============================
     if (e.target.closest(".return") && status === "rejected") {
@@ -600,12 +600,19 @@ document.getElementById("pendingTableBody").addEventListener("click", async (e) 
 
             const data = snap.data();
 
-            await addDoc(collection(db, "pendingPosts"), {
+            // 🔥 CHANGED: Use setDoc to keep the exact same ID!
+            await setDoc(doc(db, "pendingPosts", postId), {
                 ...data,
                 returnedAt: serverTimestamp()
             });
 
             await deleteDoc(postRef);
+
+            // 🔥 NEW: Send the Restore notification
+            await sendNotification({
+                post: { id: postId, title: data.title || "Untitled", userId: data.userId },
+                type: "restore"
+            });
 
             console.log("🔁 Returned → pending");
 
@@ -632,13 +639,19 @@ document.getElementById("pendingTableBody").addEventListener("click", async (e) 
 
             const data = snap.data();
 
-            await addDoc(collection(db, "pendingPosts"), {
+            // 🔥 CHANGED: Keep the same ID when returning
+            await setDoc(doc(db, "pendingPosts", postId), {
                 ...data,
                 restoredFromArchive: true,
                 returnedAt: serverTimestamp()
             });
 
             await deleteDoc(postRef);
+
+            await sendNotification({
+                post: { id: postId, title: data.title || "Untitled", userId: data.userId },
+                type: "restore"
+            });
 
             console.log("🔁 Archive → pending");
 
@@ -677,13 +690,18 @@ document.getElementById("pendingTableBody").addEventListener("click", async (e) 
 
             const data = snap.data();
 
-            await addDoc(collection(db, "archivedPosts"), {
+            await setDoc(doc(db, "archivedPosts", postId), {
                 ...data,
                 archivedAt: serverTimestamp(),
                 from: status
             });
 
             await deleteDoc(postRef);
+
+            await sendNotification({
+                post: { id: postId, title: data.title || "Untitled", userId: data.userId },
+                type: "archive"
+            });
 
             console.log("📦 Archived");
 
@@ -931,7 +949,8 @@ async function confirmAction(row, action) {
         // =========================
         if (action === "approve") {
 
-            await addDoc(collection(db, "posts"), {
+            // Keep the exact same ID
+            await setDoc(doc(db, "posts", postId), {
                 ...data,
                 approvedAt: serverTimestamp()
             });
@@ -942,6 +961,12 @@ async function confirmAction(row, action) {
                 ...baseNotification,
                 type: "approve"
             });
+
+            // 🔥 NEW: Give the user their pending points!
+            if (data.userId) {
+                console.log(`Granting 100 points to ${data.userId} for approved upload.`);
+                await addPoints(data.userId, 100); 
+            }
         }
 
         // =========================
@@ -949,7 +974,8 @@ async function confirmAction(row, action) {
         // =========================
         else if (action === "reject") {
 
-            await addDoc(collection(db, "rejectedPosts"), {
+            // 🔥 CHANGED: Use setDoc to keep the exact same ID
+            await setDoc(doc(db, "rejectedPosts", postId), {
                 ...data,
                 rejectedAt: serverTimestamp()
             });
@@ -967,7 +993,8 @@ async function confirmAction(row, action) {
         // =========================
         else if (action === "archive") {
 
-            await addDoc(collection(db, "archivedPosts"), {
+            // 🔥 CHANGED: Keep the same ID when archiving
+            await setDoc(doc(db, "archivedPosts", postId), {
                 ...data,
                 archivedAt: serverTimestamp()
             });

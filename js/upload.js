@@ -130,8 +130,8 @@ document.addEventListener("DOMContentLoaded", () => {
 
   if (modalCloseBtn && uploadModal) {
     modalCloseBtn.addEventListener("click", () => {
-      uploadModal.classList.remove("show");
-      uploadModal.classList.add("hidden");
+      // Send them back to the home page instead of just hiding the modal
+      window.location.href = "home.html"; 
     });
   }
 

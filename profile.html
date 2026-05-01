@@ -9,6 +9,8 @@
 <link rel="stylesheet" href="/css/home.css">
 <link rel="stylesheet" href="/css/profile.css">
 <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
+<script>pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js';</script>
 </head>
 <body>
     
@@ -25,7 +27,6 @@
                 <div id="dropdownMenu" class="dropdown">
                     <p class="menu-title">☰ Menu</p>
                     <hr>
-                    <p onclick="openEditProfile()">Edit profile</p>
                     <p onclick="openSettings()">Settings and privacy</p>
                     <button class="logout-btn">Log out</button>
                 </div>
@@ -40,12 +41,6 @@
                 <p class="username">@User</p>
                 <p id="accountStatus" class="username"></p>
             </div>
-        </div>
-
-        <!-- BIO -->
-        <div class="bio">
-            <p><strong>BIO:</strong></p>
-            <p><strong>INTEREST:</strong></p>
         </div>
 
         <!-- STATS -->
@@ -170,10 +165,6 @@
         
         <div class="settings-content-body">
             <div class="settings-list">
-                <div class="settings-row" onclick="openPersonalInfo()">
-                    <span>Personal information</span>
-                    <span class="material-icons">chevron_right</span>
-                </div>
 
                 <div class="settings-row" onclick="openNotifications()">
                 <span>Notifications</span>
@@ -195,71 +186,18 @@
                 <span id="legalTitle">Terms & Policies</span>
                 <button class="close-legal-btn" onclick="closeTerms()">×</button>
             </div>
-            <div class="pdf-viewer-container">
-                <iframe id="legalPdfFrame" src="" width="100%" height="100%"></iframe>
-            </div>
-        </div>
-    </div>
-
-   <div id="personalInfoModal" class="full-screen-modal">
-    
-    <div class="settings-header">
-        <span class="back-arrow" onclick="closePersonalInfo()">←</span>
-
-        <div class="header-title-wrapper">
-            <span class="material-icons">person</span>
-            <h3>Personal Information</h3>
-        </div>
-
-        <span></span>
-    </div>
-
-    <div class="personal-info-content">
-
-        <!-- BASIC INFO -->
-        <div class="info-card">
-            <h4 class="card-title">Basic Information</h4>
-
-            <div class="field-group">
-                <label>Full Name</label>
-                <input id="fullName" type="text" value="" readonly>
-            </div>
-
-            <div class="field-group">
-                <label>Date of Birth</label>
-                <div class="calendar-input-wrapper">
-                    <span class="material-icons">calendar_month</span>
-                    <input id="dob" type="date" value="">
+            <!-- 🔥 CHANGED: Added Next/Prev buttons below the canvas -->
+            <div class="pdf-viewer-container" style="overflow-y: auto; background: #E5E7EB; display: flex; flex-direction: column; align-items: center; padding: 20px 0;">
+                <canvas id="legalPdfCanvas"></canvas>
+                
+                <div class="pdf-controls" style="display: flex; gap: 15px; align-items: center; margin-top: 15px; padding-bottom: 20px;">
+                    <button id="legalPrevPage" style="padding: 8px 16px; border: none; border-radius: 8px; background: #111827; color: white; font-weight: bold; cursor: pointer;">Previous</button>
+                    <span id="legalPageIndicator" style="font-size: 14px; font-weight: 600; color: #374151;">Page 1</span>
+                    <button id="legalNextPage" style="padding: 8px 16px; border: none; border-radius: 8px; background: #111827; color: white; font-weight: bold; cursor: pointer;">Next</button>
                 </div>
             </div>
         </div>
-
-        <!-- ACADEMIC INFO -->
-        <div class="info-card">
-            <h4 class="card-title">Academic Details</h4>
-
-            <div class="field-group">
-                <label>University</label>
-                <input id="university" type="text" value="" readonly>
-            </div>
-
-            <div class="field-group">
-                <label>Bachelor</label>
-                <input id="course" type="text" value="" readonly>
-            </div>
-        </div>
-
-        <!-- BUTTONS -->
-        <button class="edit-info-btn" onclick="enableEditProfile()">
-            Edit
-        </button>
-
-        <button class="edit-info-btn" onclick="saveProfileChanges()" style="display:none;" id="saveBtn">
-            Save
-        </button>
-
     </div>
-</div>
 
     <div id="notificationsModal" class="full-screen-modal">
         <div class="settings-header">

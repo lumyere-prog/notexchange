@@ -8,7 +8,8 @@ import {
 import { db } from "/firebase/firebase-client.js";
 
 // 🔥 CONFIG
-const DAILY_CAP = 50;
+const DAILY_CAP = 1000; // Updated from 50 to 1000
+const REWARD_VALUE = 50; // New config for the daily check-in reward
 
 // ===============================
 // CHECK NEW DAY
@@ -95,13 +96,14 @@ export async function spendPoints(userId, cost){
 // ===============================
 // DAILY REWARD (NO CAP)
 // ===============================
-export async function giveDailyReward(userId, amount = 20){
+// 🔥 UPDATED: Now uses the configured REWARD_VALUE
+export async function giveDailyReward(userId) {
 
   const userRef = doc(db, "user", userId);
 
   await runTransaction(db, async (transaction) => {
     transaction.update(userRef, {
-      points: increment(amount)
+      points: increment(REWARD_VALUE) // Use the new 50 point config
     });
   });
 }

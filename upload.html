@@ -61,10 +61,18 @@
     
 </form>
 
+<!-- NEW UPLOAD SUCCESS MODAL -->
 <div id="uploadModal" class="upload-modal hidden">
   <div class="upload-modal-content">
-    <p>Your note is pending approval by an admin. We will notify you once it is reviewed.</p>
-    <button id="modalCloseBtn" class="upload-btn">OK</button>
+    <img src="/photos/review.png" alt="Reviewing" class="review-image">
+    <h3>Reviewer Submitted!</h3>
+    <p>Your file is now being reviewed by the admins. You'll get your points once it's approved!</p>
+    
+    <div class="points-pending">
+        ⏳ 100 Points Pending
+    </div>
+
+    <button id="modalCloseBtn" class="back-dashboard-btn">Back To Dashboard</button>
   </div>
 </div>
 

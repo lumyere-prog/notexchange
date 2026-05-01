@@ -1,6 +1,6 @@
 import { db } from "/firebase/firebase-client.js";
 import { sendNotification } from "/js/notificationManager.js";
-import { addPoints } from "/js/points.js";
+import { addPoints, spendPoints, giveDailyReward } from "/js/points.js";
 import {
   collection,
   getDocs,
@@ -82,7 +82,13 @@ if (currentUser?.uid) {
     const userRef = doc(db, "user", currentUser.uid);
     onSnapshot(userRef, (snap) => {
         if (snap.exists()) {
-            globalSavedPosts = snap.data().savedPosts || [];
+            const data = snap.data();
+            globalSavedPosts = data.savedPosts || [];
+            
+            // 🔥 NEW: Check for the daily check-in as soon as user data arrives
+            // We are passing the user ID and the last timestamp from the doc
+            checkAndShowDailyCheckIn(currentUser.uid, data.lastCheckIn);
+            
             syncAllSaveButtons(); // Auto-updates buttons when data arrives
         }
     });
@@ -105,6 +111,92 @@ function syncAllSaveButtons() {
     });
 }
 
+// ===========================================
+// 🔥 THE COMPLETE PH TIME CHECK-IN SYNC
+// ===========================================
+
+// Helper to get the date string of "Now" in Manila timezone
+function getManilaDateString(timestamp = new Date()) {
+  const date = timestamp.toDate ? timestamp.toDate() : timestamp;
+  return date.toLocaleDateString("en-US", {
+    timeZone: "Asia/Manila",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit"
+  });
+}
+
+// Stores the document and userId globally when the modal opens
+let currentCheckInData = { userId: null };
+
+window.checkAndShowDailyCheckIn = async function (userId, lastCheckInTimestamp) {
+  // 1. SAFETY: Prevent duplicate checks if it's already open
+  if (document.getElementById("checkInModal").style.display === "flex") return;
+
+  // 2. PH Date Strings
+  const todayManila = getManilaDateString();
+  const lastCheckInManila = lastCheckInTimestamp 
+    ? getManilaDateString(lastCheckInTimestamp) 
+    : "Never";
+
+  console.log(`Checking Daily Reward: Today (Manila) is ${todayManila}, Last Check-in was ${lastCheckInManila}`);
+
+  // 3. Compare: If strings are different, it's a new day!
+  if (todayManila !== lastCheckInManila) {
+    // A. Store the info globally for the 'Claim' button
+    currentCheckInData.userId = userId;
+
+    // B. Create a simple "Open Modal" state
+    const modal = document.getElementById("checkInModal");
+    if (modal) modal.style.display = "flex";
+  }
+};
+
+window.claimReward = async function () {
+  // 1. SAFETY
+  const modal = document.getElementById("checkInModal");
+  if (!modal || modal.style.display !== "flex") return;
+
+  // 2. GET userId
+  const { userId } = currentCheckInData;
+  if (!userId) {
+    alert("System error: Could not confirm user identity.");
+    modal.style.display = "none";
+    return;
+  }
+
+  // 3. SHOW LOADER on the button for feedback
+  const btn = modal.querySelector(".claim-btn");
+  btn.innerText = "Claiming...";
+  btn.disabled = true;
+
+  try {
+    // 4. FIREBASE PART
+    // A. Give the points
+    await giveDailyReward(userId);
+
+    // B. Save the new timestamp using serverTimestamp()
+    const userRef = doc(db, "user", userId);
+    await updateDoc(userRef, {
+      lastCheckIn: serverTimestamp() // The server will automatically use the correct UTC time
+    });
+
+    console.log(" Daily check-in successful!");
+
+    // 5. SUCCESS UI
+    modal.style.display = "none";
+    showMessage("NICE! You just received +50 points for checking in today!");
+
+    // 6. CLEAR MEMORY
+    currentCheckInData.userId = null;
+
+  } catch (error) {
+    console.error(" Daily check-in failed:", error);
+    alert("Could not process reward. Please try again later.");
+    btn.innerText = "Claim Reward";
+    btn.disabled = false;
+  }
+};
 
 /* =========================
    CATEGORY BUTTONS
@@ -465,38 +557,172 @@ async function toggleFav(event, btn, postId) {
 }
 window.toggleFav = toggleFav;
 
-window.openFileModal = function(url, title, fileName) {
-  selectedPDF = { url, title, fileName };
-  activeFile = { url, title, fileName };
+// ==========================================
+// 🔥 PDF.JS CANVAS RENDERER WITH DOWNLOAD
+// ==========================================
+let pdfDoc = null,
+    pageNum = 1,
+    pageIsRendering = false,
+    pageNumIsPending = null;
 
-  const titleNode = document.getElementById("file-title");
-  if (titleNode) {
-    titleNode.innerText = "📄 " + (title || "Selected File");
-  }
+// NEW: Track the current file for downloading
+let currentDownloadUrl = "";
+let currentDownloadTitle = "";
 
-  const pdfFrame = document.getElementById("pdfFrame");
-  if (pdfFrame) {
-    pdfFrame.src = url;
-  }
+window.openFileModal = async function(url, title) {
+    // 1. Store the file info for the download button
+    currentDownloadUrl = url;
+    currentDownloadTitle = title || "Document";
 
-  const pdfModal = document.getElementById("pdfModal");
-  if (pdfModal) {
-    pdfModal.style.display = "block";
-    pdfModal.style.zIndex = "99999";
-  }
+    let pdfModal = document.getElementById("pdfJsModal");
+    
+    // 2. Create the Modal if it doesn't exist
+    if (!pdfModal) {
+        pdfModal = document.createElement("div");
+        pdfModal.id = "pdfJsModal";
+        
+        pdfModal.style.cssText = "display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 99999; justify-content: center; align-items: center;";
+        
+        pdfModal.innerHTML = `
+            <div style="width: 95%; max-width: 800px; height: 90vh; background: #323639; border-radius: 12px; display: flex; flex-direction: column; overflow: hidden; box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);">
+                
+                <!-- 🔥 UPDATED HEADER: Now with Download Button -->
+                <div style="background: #111827; padding: 16px 20px; display: flex; justify-content: space-between; align-items: center;">
+                    <h3 id="pdfJsTitle" style="color: white; margin: 0; font-size: 16px; font-weight: 700; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${title || "Document"}</h3>
+                    
+                    <div style="display: flex; align-items: center; gap: 20px;">
+                        <!-- DOWNLOAD ICON -->
+                        <span class="material-icons" onclick="downloadCurrentPdf()" style="color: white; font-size: 26px; cursor: pointer;" title="Download PDF">download</span>
+                        <!-- CLOSE ICON -->
+                        <span onclick="closePdfJsModal()" style="color: white; font-size: 24px; cursor: pointer; font-weight: bold; line-height: 1;">✕</span>
+                    </div>
+                </div>
+                
+                <div style="background: #323639; padding: 10px 16px; display: flex; justify-content: space-between; align-items: center; color: white; border-bottom: 1px solid #1f2937;">
+                    <button id="prevPage" style="background: rgba(255,255,255,0.1); color: white; padding: 8px 16px; border-radius: 6px; border: none; font-size: 14px; font-weight: bold; cursor: pointer;">◄ Prev</button>
+                    <span style="font-size: 14px; color: #E5E7EB;">Page <span id="page_num">...</span> of <span id="page_count">...</span></span>
+                    <button id="nextPage" style="background: rgba(255,255,255,0.1); color: white; padding: 8px 16px; border-radius: 6px; border: none; font-size: 14px; font-weight: bold; cursor: pointer;">Next ►</button>
+                </div>
 
-  const pdfTitle = document.getElementById("pdfTitle");
-  if (pdfTitle) {
-    pdfTitle.innerText = title || "PDF File";
-  }
+                <div id="canvasContainer" style="flex: 1; overflow: auto; background: #525659; display: flex; justify-content: center; padding: 16px;">
+                    <canvas id="pdfCanvas" style="max-width: 100%; height: auto; box-shadow: 0 4px 8px rgba(0,0,0,0.4); border-radius: 4px;"></canvas>
+                </div>
+            </div>
+        `;
+        document.body.appendChild(pdfModal);
 
+        document.getElementById('prevPage').addEventListener('click', onPrevPage);
+        document.getElementById('nextPage').addEventListener('click', onNextPage);
+    }
+
+    // 3. Setup UI for new document
+    document.getElementById("pdfJsTitle").innerText = title || "Document";
+    pdfModal.style.display = "flex"; 
+    
+    const canvas = document.getElementById('pdfCanvas');
+    const ctx = canvas.getContext('2d');
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    document.getElementById('page_num').textContent = "...";
+    document.getElementById('page_count').textContent = "...";
+
+    // 4. Fetch and Render the PDF via PDF.js
+    try {
+        pdfDoc = await pdfjsLib.getDocument(url).promise;
+        document.getElementById('page_count').textContent = pdfDoc.numPages;
+        pageNum = 1;
+        renderPage(pageNum);
+    } catch (error) {
+        console.error("Error loading PDF:", error);
+        alert("Could not load PDF. It may be corrupted or blocked by CORS.");
+        closePdfJsModal();
+    }
 };
 
-window.closeFileModal = function() {
-  document.getElementById("pdfModal").style.display = "none";
-  document.getElementById("pdfFrame").src = "";
-  document.body.classList.remove("modal-open");
+window.closePdfJsModal = function() {
+    document.getElementById("pdfJsModal").style.display = "none";
 };
+
+// 🔥 NEW: Function to force the file to download
+window.downloadCurrentPdf = function() {
+    if (!currentDownloadUrl) return alert("No document is currently open.");
+
+    // Give the user visual feedback that it's working
+    const titleEl = document.getElementById("pdfJsTitle");
+    const originalTitle = titleEl.innerText;
+    titleEl.innerText = "Downloading...";
+
+    fetch(currentDownloadUrl)
+        .then(response => response.blob())
+        .then(blob => {
+            const blobUrl = window.URL.createObjectURL(blob);
+            const tempLink = document.createElement("a");
+            tempLink.style.display = "none";
+            tempLink.href = blobUrl;
+            
+            // Clean up the title so it makes a valid filename
+            const safeTitle = currentDownloadTitle.replace(/[^a-z0-9]/gi, '_').toLowerCase();
+            tempLink.download = safeTitle + ".pdf";
+            
+            document.body.appendChild(tempLink);
+            tempLink.click();
+            
+            window.URL.revokeObjectURL(blobUrl);
+            tempLink.remove();
+            titleEl.innerText = originalTitle; // Put the original title back
+        })
+        .catch(err => {
+            console.error("Download failed:", err);
+            alert("Failed to download the file. Please check your connection.");
+            titleEl.innerText = originalTitle;
+        });
+};
+
+// --- PDF Render Logic ---
+function renderPage(num) {
+    pageIsRendering = true;
+
+    pdfDoc.getPage(num).then(page => {
+        const canvas = document.getElementById('pdfCanvas');
+        const ctx = canvas.getContext('2d');
+        
+        const containerWidth = document.getElementById('canvasContainer').clientWidth;
+        const unscaledViewport = page.getViewport({ scale: 1 });
+        const scale = Math.min((containerWidth - 20) / unscaledViewport.width, 2.0); 
+        
+        const viewport = page.getViewport({ scale: scale });
+        canvas.height = viewport.height;
+        canvas.width = viewport.width;
+
+        const renderCtx = { canvasContext: ctx, viewport: viewport };
+
+        page.render(renderCtx).promise.then(() => {
+            pageIsRendering = false;
+            if (pageNumIsPending !== null) {
+                renderPage(pageNumIsPending);
+                pageNumIsPending = null;
+            }
+        });
+
+        document.getElementById('page_num').textContent = num;
+    });
+}
+
+function queueRenderPage(num) {
+    if (pageIsRendering) pageNumIsPending = num;
+    else renderPage(num);
+}
+
+function onPrevPage() {
+    if (pageNum <= 1) return;
+    pageNum--;
+    queueRenderPage(pageNum);
+}
+
+function onNextPage() {
+    if (pageNum >= pdfDoc.numPages) return;
+    pageNum++;
+    queueRenderPage(pageNum);
+}
 
 window.clearFile = function () {
   activeFile = null;

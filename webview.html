@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NoteXchange</title>
+    <link rel="stylesheet" href="/css/webview.css">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700;900&display=swap" rel="stylesheet">
+</head>
+<body>
+
+    <!-- NAVIGATION -->
+    <nav class="navbar">
+        <div class="nav-container">
+            <img src="/photos/logofinal.jpg" alt="NoteXchange Logo" class="logo">
+            <!--<div class="nav-links">
+                <a href="#" class="nav-outline-btn"></a>
+                <a href="#" class="nav-outline-btn"></a>
+            </div> -->
+        </div>
+    </nav>
+
+    <!-- HERO BANNER -->
+    <section class="hero-wrapper">
+        <div class="hero-banner fade-in">
+            <div class="hero-text">
+                <h1>FROM ONE STUDENT TO ANOTHER, KNOWLEDGE THAT CONNECTS.</h1>
+                <p>Designed to help students easily share, discover, and access academic resources within <strong>QUEZON CITY UNIVERSITY</strong> community.</p>
+                <a href="#" class="download-btn-small">
+                    Download <span class="material-icons" style="font-size: 16px;">file_download</span>
+                </a>
+            </div>
+            <div class="hero-image">
+                <img src="/photos/rectangle.png" alt="NoteXchange Mobile App" class="phone-mockup">
+            </div>
+        </div>
+    </section>
+
+    <!-- TWO COLUMN DETAILS -->
+    <section class="details-section">
+        <div class="two-column-container fade-in">
+            
+            <!-- Left Column -->
+            <div class="detail-column">
+                <h3 class="column-title">Application Purpose</h3>
+                
+                <div class="bullet-group">
+                    <h4>Provides a centralized platform for:</h4>
+                    <ul>
+                        <li>Sharing notes</li>
+                        <li>Discovering study materials</li>
+                        <li>Exchanging academic resources within the campus</li>
+                    </ul>
+                </div>
+
+                <div class="bullet-group">
+                    <h4>Allows students to:</h4>
+                    <ul>
+                        <li>Easily find relevant reviewers in one place</li>
+                        <li>Access updated and course-specific materials</li>
+                    </ul>
+                </div>
+
+                <div class="bullet-group">
+                    <h4>Includes an AI tutor that:</h4>
+                    <ul>
+                        <li>Helps explain difficult topics instantly</li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Right Column -->
+            <div class="detail-column benefits-column">
+                <h3 class="column-title">Community & Benefits</h3>
+                
+                <div class="bullet-group">
+                    <ul>
+                        <li>Encourages a culture of collaboration among students</li>
+                        <li>Rewards users who share quality resources</li>
+                    </ul>
+                </div>
+
+                <div class="bullet-group">
+                    <h4>Promotes:</h4>
+                    <ul>
+                        <li>Peer-to-peer learning</li>
+                        <li>Academic support within the community</li>
+                    </ul>
+                </div>
+
+                <div class="bullet-group">
+                    <h4>Helps students:</h4>
+                    <ul>
+                        <li>Improve performance</li>
+                        <li>Increase chances of passing subjects</li>
+                    </ul>
+                </div>
+            </div>
+
+        </div>
+    </section>
+
+    <!-- HIGHLIGHTED FEATURES -->
+    <section class="features-section">
+        <h2 class="section-heading fade-in">Highlighted Features</h2>
+        
+        <div class="features-grid">
+            <!-- Feature 1 -->
+            <div class="feature-card fade-in">
+                <div class="feature-icon">
+                    <img src="/photos/chat.png" alt="AI Chatbot">
+                </div>
+                <h4>AI Chatbot</h4>
+                <p>Provide an AI-based chatbot that can answer academic-related questions. Implement a points-based system where users earn points by contributing academic resources or receiving upvotes from other users.</p>
+            </div>
+
+            <!-- Feature 2 -->
+            <div class="feature-card fade-in" style="transition-delay: 100ms;">
+                <div class="feature-icon">
+                    <img src="/photos/shared.png" alt="Upload & Download">
+                </div>
+                <h4>Upload & Download Files</h4>
+                <p>Users can upload and download academic materials like notes, study reviewers, or book recommendations. Provide a subject and keyword-based search feature to help users easily find relevant study materials.</p>
+            </div>
+
+            <!-- Feature 3 -->
+            <div class="feature-card fade-in" style="transition-delay: 200ms;">
+                <div class="feature-icon">
+                    <img src="/photos/image.png" alt="Flashcards">
+                </div>
+                <h4>Flashcards</h4>
+                <p>Users can upload their chosen file and turn it into a flashcard or reviewer with the help of AI Chatbot.</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- BOTTOM CTA & QR CODE -->
+    <section class="bottom-cta-section fade-in">
+        <hr class="subtle-divider">
+        
+        <div class="cta-container">
+            <!-- Left Side: Text & Logo -->
+            <div class="cta-text">
+                <img src="/photos/logofinal.jpg" alt="NoteXchange Logo" class="cta-logo">
+                <h2>DOWNLOAD<br><span>OUR APP NOW</span></h2>
+                <hr class="tiny-divider">
+                <p class="university-text">QUEZON CITY UNIVERSITY</p>
+                
+                <!-- Explicit Download Link Spot as Requested -->
+                <a href="#" class="direct-link">Click here to download</a>
+            </div>
+
+            <!-- Right Side: Dark QR Box -->
+            <div class="qr-frame">
+                <div class="qr-white-box">
+                    <!-- Blank inside for your QR code -->
+                </div>
+                <div class="qr-text">Scan QR Code</div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Simple Script for Scroll Animations -->
+    <script>
+        document.addEventListener("DOMContentLoaded", () => {
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        entry.target.classList.add("visible");
+                    }
+                });
+            }, { threshold: 0.1 });
+
+            document.querySelectorAll('.fade-in').forEach((el) => {
+                observer.observe(el);
+            });
+        });
+    </script>
+</body>
+</html>
