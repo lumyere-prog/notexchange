@@ -92,6 +92,7 @@ CONVERSATION RULES:
 - Answer directly, like you're already mid-convo
 
 
+
 === CHAT HISTORY ===
 ${history}
 

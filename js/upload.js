@@ -63,6 +63,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const subjectOptions = document.getElementById("subjectOptions");
   const uploadModal = document.getElementById("uploadModal");
   const modalCloseBtn = document.getElementById("modalCloseBtn");
+  const uploadAgainBtn = document.getElementById("uploadAgainBtn");
 
   const categories = [
     "Mathematics",
@@ -134,6 +135,29 @@ document.addEventListener("DOMContentLoaded", () => {
       window.location.href = "home.html"; 
     });
   }
+
+if (uploadAgainBtn && uploadModal) {
+  uploadAgainBtn.addEventListener("click", () => {
+    
+    // reset form
+    const form = document.getElementById("postForm");
+    if (form) form.reset();
+
+    // clear file name display
+    const fileName = document.getElementById("fileName");
+    if (fileName) fileName.textContent = "";
+
+    // reset subject display (if you use custom dropdown)
+    const subjectValue = document.getElementById("subjectValue");
+    if (subjectValue) subjectValue.textContent = "Select a subject";
+
+    const subjectInput = document.getElementById("subject");
+    if (subjectInput) subjectInput.value = "";
+
+    // hide modal
+    uploadModal.classList.add("hidden");
+  });
+}
 
   window.showUploadModal = showUploadModal;
 

@@ -1,6 +1,12 @@
+import { spendPoints } from "/js/points.js";
+import { db } from "/firebase/firebase-client.js";
+
 const API = 'http://localhost:3000';
 const user = JSON.parse(localStorage.getItem("user")) || {};
 const userID = user.email || "guest";
+
+let chatSession = [];
+let quizSession = null;
 
 // wait for DOM
 document.addEventListener("DOMContentLoaded", () => {
@@ -28,7 +34,6 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     sendBtn.addEventListener("click", sendMessage);
-
     // Enter key support
     input.addEventListener("keypress", (e) => {
         if (e.key === "Enter") sendMessage();
@@ -61,61 +66,121 @@ document.addEventListener("DOMContentLoaded", () => {
         chatBody.scrollTop = chatBody.scrollHeight;
     }
 
-    async function sendMessage() {
-        const prompt = input.value.trim();
-        if (!prompt) return;
+async function sendMessage() {
+    const prompt = input.value.trim();
+    if (!prompt) return;
 
-        addMessage(prompt, "user");
-        input.value = "";
+    addMessage(prompt, "user");
+    input.value = "";
 
-        // loading message (no ID needed anymore)
-        const loadingDiv = document.createElement("div");
-        loadingDiv.className = "bot-msg";
-        loadingDiv.textContent = "Thinking...";
-        chatBody.appendChild(loadingDiv);
+    // =========================
+    // 🧠 SESSION MEMORY
+    // =========================
+    chatSession.push({
+        role: "user",
+        text: prompt
+    });
 
-        chatBody.scrollTop = chatBody.scrollHeight;
+    // =========================
+    // 💰 POINTS DEDUCTION
+    // =========================
+    const cost = 10;
 
-        try {
-            const res = await fetch(`${API}/chatbot`, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ prompt, userID })
-            });
+    // ✅ FIX: single source of truth
+    const storedUser = JSON.parse(localStorage.getItem("user"));
+    const id = storedUser?.uid;
 
-            const data = await res.json();
+    console.log("👤 USER ID:", id);
+    console.log("💰 REQUIRED COST:", cost);
 
-            loadingDiv.remove();
-
-            if (data.reply) {
-                addMessage("Lumiere: " + cleanText(data.reply), "bot");
-            } else {
-                addMessage("Error: " + data.error, "bot");
-            }
-
-        } catch (err) {
-            loadingDiv.remove();
-            addMessage("Server error 😭", "bot");
-            console.error(err);
-        }
+    if (!id) {
+        addMessage("User not ready yet 😭", "bot");
+        return;
     }
 
-    function cleanText(text) {
-        return text
-            .replace(/\*/g, "")
-            .replace(/_/g, "")
-            .trim();
+    const ok = await spendPoints(db, id, cost);
+
+    if (!ok) {
+        addMessage("Not enough points to use AI 😭", "bot");
+        return;
     }
 
-    function saveChat(prompt) {
-        const history = JSON.parse(localStorage.getItem(`chat_${userID}`)) || [];
+    // loading message
+    const loadingDiv = document.createElement("div");
+    loadingDiv.className = "bot-msg";
+    loadingDiv.textContent = "Thinking...";
+    chatBody.appendChild(loadingDiv);
 
-        history.push({
-            role: "user",
-            text: prompt
+    chatBody.scrollTop = chatBody.scrollHeight;
+
+    try {
+        const res = await fetch(`${API}/chatbot`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                prompt,
+                userID: id // 🔥 FIXED (was undefined before)
+            })
         });
 
-        localStorage.setItem(`chat_${userID}`, JSON.stringify(history));
-    }
+        const data = await res.json();
 
+        loadingDiv.remove();
+
+                if (prompt.toLowerCase().includes("quiz")) {
+            quizSession = {
+                step: "ask_count",
+                total: 0,
+                current: 0,
+                score: 0
+            };
+        }
+
+        if (data.reply) {
+            const reply = "Lumiere: " + cleanText(data.reply);
+            addMessage(reply, "bot");
+
+            // 🧠 session memory
+            chatSession.push({
+                role: "bot",
+                text: reply
+            });
+
+        } else {
+            addMessage("Error: " + data.error, "bot");
+        }
+
+    } catch (err) {
+        loadingDiv.remove();
+        addMessage("Server error 😭", "bot");
+        console.error(err);
+    }
+}
+
+function cleanText(text) {
+    return text
+        .replace(/\*/g, "")
+        .replace(/_/g, "")
+        .trim();
+}
+
+// ❌ FIXED: no more userID bug
+function saveChat(prompt, response) {
+    const historyKey = `chat_${id}`;
+
+    const history = JSON.parse(localStorage.getItem(historyKey)) || [];
+
+    history.push({
+        role: "user",
+        text: prompt
+    });
+
+    history.push({
+        role: "bot",
+        text: response
+    });
+    
+
+    localStorage.setItem(historyKey, JSON.stringify(history));
+}
 });

@@ -65,34 +65,56 @@ export async function addPoints(userId, amount){
 
   });
 }
-
 // ===============================
 // SPEND POINTS (FOR AI)
 // ===============================
-export async function spendPoints(userId, cost){
+export async function spendPoints(db, userId, cost) {
 
-  const userRef = doc(db, "user", userId);
+  // ✅ normalize userId (email, uid, or object)
+  const id =
+    typeof userId === "object"
+      ? userId.uid || userId.email
+      : userId;
 
-  return await runTransaction(db, async (transaction) => {
+  // 🔥 FIX: use normalized id here
+  const userRef = doc(db, "user", id);
 
-    const snap = await transaction.get(userRef);
-    if (!snap.exists()) return false;
+  try {
 
-    const user = snap.data();
+    const success = await runTransaction(db, async (transaction) => {
 
-    if ((user.points || 0) < cost){
-      alert("Not enough points!");
-      return false;
-    }
+      const snap = await transaction.get(userRef);
+      if (!snap.exists()) return false;
 
-    transaction.update(userRef, {
-      points: increment(-cost)
+      const user = snap.data();
+
+      console.log("📦 FULL USER DOC:", user);
+      console.log("💰 POINTS TYPE:", typeof user.points);
+      console.log("💰 RAW POINTS:", user.points);
+
+      const currentPoints = Number(user.points) || 0;
+
+      console.log("👤 RESOLVED USER ID:", id);
+      console.log("💰 CURRENT POINTS:", currentPoints);
+
+      if (currentPoints < cost) {
+        return false;
+      }
+
+      transaction.update(userRef, {
+        points: increment(-cost)
+      });
+
+      return true;
     });
 
-    return true;
-  });
-}
+    return success;
 
+  } catch (err) {
+    console.error("❌ spendPoints failed:", err);
+    return false;
+  }
+}
 // ===============================
 // DAILY REWARD (NO CAP)
 // ===============================
