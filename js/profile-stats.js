@@ -1,41 +1,44 @@
 import { db } from "/firebase/firebase-client.js";
-import { collection, getDocs, doc, getDoc } 
+import { collection, getDocs, doc, getDoc, query, where } 
 from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-
-// 🔥 LOAD PROFILE STATS + STATE
 async function loadProfileStats(user) {
     try {
+        if (!user?.uid) return;
 
-        // 📊 POSTS
-        const postsSnap = await getDocs(collection(db, "posts"));
-        const posts = postsSnap.size;
+        // 📊 POSTS (user only)
+        const postsSnap = await getDocs(
+            query(
+                collection(db, "posts"),
+                where("userId", "==", user.uid)
+            )
+        );
+
+        const posts = postsSnap.size || 0;
 
         const postEl = document.getElementById("postCount");
         if (postEl) postEl.textContent = posts;
 
-        // 💰 POINTS (Firestore version)
+        // 💰 POINTS
         let points = 0;
 
-        if (user?.uid) {
-            const userRef = doc(db, "user", user.uid); // ✅ FIXED (was "user")
-            const userSnap = await getDoc(userRef);
+        const userRef = doc(db, "user", user.uid);
+        const userSnap = await getDoc(userRef);
 
-            if (userSnap.exists()) {
-                points = userSnap.data().points || 0;
-            }
+        if (userSnap.exists()) {
+            points = userSnap.data().points || 0;
         }
 
         const pointsEl = document.getElementById("pointsCount");
         if (pointsEl) pointsEl.textContent = points.toLocaleString();
 
-        // 👍 VOTES COUNT (safe + optimized)
+        // 👍 VOTES (ONLY user's posts)
         let votesCount = 0;
 
         postsSnap.forEach((postDoc) => {
             const data = postDoc.data();
 
-            if (data.userVotes && typeof data.userVotes === "object") {
+            if (data.userVotes) {
                 votesCount += Object.keys(data.userVotes).length;
             }
         });
@@ -43,17 +46,12 @@ async function loadProfileStats(user) {
         const votesEl = document.getElementById("votesCount");
         if (votesEl) votesEl.textContent = votesCount;
 
-        // 👤 USER STATE (ONLY ONCE)
-        if (user?.uid) {
-            const userRef = doc(db, "user", user.uid); // ✅ FIXED
-            const userSnap = await getDoc(userRef);
+        // 👤 USER STATE
+        const state = userSnap.exists()
+            ? (userSnap.data().state || "active").toLowerCase()
+            : "active";
 
-            const state = userSnap.exists()
-                ? (userSnap.data().state || "active").toLowerCase()
-                : "active";
-
-            applyProfileState(state);
-        }
+        applyProfileState(state);
 
     } catch (err) {
         console.error("Profile stats error:", err);

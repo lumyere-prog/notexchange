@@ -1,7 +1,7 @@
 {
   "name": "NoteXchange",
   "short_name": "NoteX",
-  "start_url": "/",
+  "start_url": "/login.html",
   "display": "standalone",
   "background_color": "#ffffff",
   "theme_color": "#111827",
@@ -16,5 +16,8 @@
       "sizes": "512x512",
       "type": "image/png"
     }
+  ],
+  "categories": [
+    "education"
   ]
 }

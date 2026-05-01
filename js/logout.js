@@ -17,7 +17,7 @@ document.querySelector(".logout-btn").addEventListener("click", async () => {
     localStorage.removeItem("user");
 
     // 🚀 redirect directly to the new index/login hybrid
-    window.location.href = "index.html";
+    window.location.href = "login.html";
 
   } catch (err) {
     console.error("Logout error:", err);

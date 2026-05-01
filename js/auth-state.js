@@ -19,8 +19,8 @@ onAuthStateChanged(auth, (user) => {
     console.log("No user detected AFTER auth init");
 
     // prevent redirect loop in PWA
-    if (window.location.pathname !== "/index.html") {
-      window.location.href = "index.html";
+    if (window.location.pathname !== "/login.html") {
+      window.location.href = "login.html";
     }
     return;
   }

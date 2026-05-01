@@ -1,37 +1,191 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta http-equiv="Cross-Origin-Opener-Policy" content="same-origin-allow-popups">
-<meta http-equiv="Cross-Origin-Embedder-Policy" content="require-corp">
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-<title>NoteXchange - Login</title>
-
-<link rel="stylesheet" href="css/login.css">
+    
+    <meta name="theme-color" content="#111827">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>NoteXchange</title>
+    <link rel="stylesheet" href="css/style.css">
+    
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
 </head>
 
 <body>
 
-<div class="auth-container">
+    <div id="carousel-container" class="carousel-container">
+        
+        <div class="slide" id="slide-1">
+            <div class="slide-content">
+                <img src="photos/title.png" alt="NoteXchange Logo" class="slide-img">
+                <h2 class="slide-title">Welcome to NoteXchange</h2>
+                <p class="slide-desc">Your ultimate academic companion. Share, learn, and grow together.</p>
+            </div>
+        </div>
 
-    <!-- Logo -->
-    <img src="/photos/title.png" class="logo">
+        <div class="slide" id="slide-2">
+            <div class="slide-content">
+                <img src="photos/welcome.png" alt="Welcome Features" class="slide-img">
+                <h2 class="slide-title">Learn Faster</h2>
+                <p class="slide-desc">Access top-tier notes and get instant answers with Lumiere, your AI study buddy.</p>
+            </div>
+        </div>
 
-    <!-- TITLE -->
-    <h2 id="form-title">Welcome</h2>
-    <p class="subtitle">Continue with Google to get started</p>
+        <div class="slide" id="slide-3">
+            <div class="slide-content">
+                <img src="photos/title.png" alt="NoteXchange logo" class="slide-img" style="margin-bottom: 24px;">
+                <h2 class="slide-title" id="final-title">Ready to excel?</h2>
+                <p class="slide-desc" id="final-desc" style="margin-bottom: 32px;">
+                    A smarter way to study, share notes, and ask questions — built for students who want faster learning and better collaboration.
+                </p>
+                
+                <button id="googleLogin" class="google-btn">
+                    <img src="https://developers.google.com/identity/images/g-logo.png" alt="Google" />
+                    <span>Continue with Google</span>
+                </button>
 
-    <!-- Google -->
-    <script src="https://accounts.google.com/gsi/client" async defer></script>
+                <p class="note">
+                    Built exclusively for <br><b>Quezon City University</b> students
+                </p>
+            </div>
+        </div>
 
-    <button id="googleLogin" class="google-btn">
-      <img src="https://developers.google.com/identity/images/g-logo.png" />
-      <span>Continue with Google</span>
-    </button>
+    </div>
 
-</div>
-<script type="module" src="js/login.js"></script>
+    <div class="carousel-controls" id="carousel-controls">
+        <div class="dots">
+            <span class="dot active" id="dot-1"></span>
+            <span class="dot" id="dot-2"></span>
+            <span class="dot" id="dot-3"></span>
+        </div>
+        <button id="next-slide-btn" class="ms-btn slide-btn">Next</button>
+    </div>
+    
+    <footer class="footer-terms" id="footer-terms">
+        <p>
+            By using this app, you agree to the
+            <span id="open-terms" class="terms-link">Terms & Conditions</span>.
+        </p>
+    </footer>
 
+    <div id="terms-overlay" class="terms-overlay">
+        <div class="terms-modal">
+            <div class="terms-header">
+                <h3>Terms & Conditions</h3>
+                <span class="close-terms" id="close-terms">&times;</span>
+            </div>
+            <div class="terms-body">
+                <h4>1. Welcome to NoteXchange</h4>
+                <p>By downloading or using the app, these terms will automatically apply to you. Please read them carefully.</p>
+                <h4>2. Academic Integrity</h4>
+                <p>NoteXchange is designed for collaborative learning. Users must not upload direct exam answers, plagiarized essays, or any content that violates Quezon City University's academic integrity policies.</p>
+                <h4>3. User Content</h4>
+                <p>You retain ownership of the notes and materials you upload. However, by uploading, you grant NoteXchange a license to display and distribute this content to other users on the platform.</p>
+                <h4>4. Account Security</h4>
+                <p>You are responsible for maintaining the confidentiality of your login credentials.</p>
+            </div>
+        </div>
+    </div>
+
+    <script type="module" src="js/login.js"></script>
+
+    <script>
+        
+        document.addEventListener("DOMContentLoaded", () => {
+            const carousel = document.getElementById("carousel-container");
+            const nextBtn = document.getElementById("next-slide-btn");
+            const footer = document.getElementById("footer-terms");
+            const controls = document.getElementById("carousel-controls");
+
+            const slide1 = document.getElementById("slide-1");
+            const slide2 = document.getElementById("slide-2");
+            const slide3 = document.getElementById("slide-3");
+
+            const dots = [
+                document.getElementById("dot-1"),
+                document.getElementById("dot-2"),
+                document.getElementById("dot-3")
+            ];
+
+            // 🔥 FIX: Move the Terms & Conditions logic to the VERY TOP!
+            // This ensures it always loads, even if we skip the tutorial.
+            const termsOverlay = document.getElementById("terms-overlay");
+            
+            document.getElementById("open-terms").addEventListener("click", () => {
+                termsOverlay.style.display = "block";
+                setTimeout(() => termsOverlay.classList.add("show"), 10);
+            });
+            
+            function closeTerms() {
+                termsOverlay.classList.remove("show");
+                setTimeout(() => termsOverlay.style.display = "none", 300);
+            }
+            
+            document.getElementById("close-terms").addEventListener("click", closeTerms);
+            
+            termsOverlay.addEventListener("click", (e) => {
+                if (e.target === termsOverlay) closeTerms();
+            });
+
+
+            // 🔥 1. RETURNING USER LOGIC (The "Skip to Login" trick)
+            if (localStorage.getItem("onboardingComplete")) {
+                slide1.style.display = "none";
+                slide2.style.display = "none";
+                controls.style.display = "none";
+                
+                footer.style.opacity = "1";
+                footer.style.visibility = "visible";
+
+                document.getElementById("final-title").innerText = "Welcome back";
+                document.getElementById("final-desc").innerText = "Log in with Google to access your notes, friends, and Lumiere AI.";
+                
+                carousel.style.overflowX = "hidden";
+                
+                return; // Script stops here for returning users!
+            }
+
+            // 🔥 2. NEW USER LOGIC (Onboarding)
+            nextBtn.addEventListener("click", () => {
+                carousel.scrollBy({ left: window.innerWidth, behavior: "smooth" });
+            });
+
+            // Mark onboarding as complete
+            document.getElementById("googleLogin").addEventListener("click", () => {
+                localStorage.setItem("onboardingComplete", "true");
+            });
+
+            // Watch which slide is currently on screen
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        const slideId = entry.target.id;
+                        dots.forEach(d => d.classList.remove("active"));
+
+                        if (slideId === "slide-1" || slideId === "slide-2") {
+                            dots[slideId === "slide-1" ? 0 : 1].classList.add("active");
+                            controls.style.display = "flex";
+                            nextBtn.style.display = "block";
+                            footer.style.opacity = "0";
+                            footer.style.visibility = "hidden";
+                        } else if (slideId === "slide-3") {
+                            dots[2].classList.add("active");
+                            nextBtn.style.display = "none"; 
+                            footer.style.opacity = "1"; 
+                            footer.style.visibility = "visible";
+                        }
+                    }
+                });
+            }, { threshold: 0.6 }); 
+
+            document.querySelectorAll(".slide").forEach(slide => observer.observe(slide));
+        });
+    </script>
+<!-- QR library FIRST -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+
+<!-- Your JS -->
+<script src="install.js"></script>
+</script>
 </body>
 </html>
