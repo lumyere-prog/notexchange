@@ -19,8 +19,10 @@
     <div class="top-area" id="topArea">
         <div id="topbar">
             <div class="header-row">
-                <img src="/photos/logo.png" alt="NoteXchange Logo" class="app-logo">
-
+                <div class="brand-container">
+                <img src="/photos/logofinal.jpg" alt="NoteXchange Logo" class="app-logo">
+                    <span class="brand-text">NOTEXCHANGE</span>
+                </div>
                 <div class="bell-container" onclick="window.location.href='notifications.html'">
                 <span class="material-icons bell">notifications</span>
                 <span id="notificationCount" class="notification-badge" style="display: none;"></span>
@@ -119,7 +121,13 @@
 
     <div id="chatbot-modal" style="display:none;">
         <div class="chat-header">
+            <div style="display: flex; flex-direction: column;">
             <span>Lumiere - Study Companion</span>
+            <!-- This span will hold the live points -->
+            <span id="chatPointsDisplay" style="font-size: 12px; font-weight: 500; color: #FBBF24; margin-top: 2px;">
+            Loading points...
+            </span>
+            </div>
             <button id="close-chat" type="button">✖</button>
         </div>
 

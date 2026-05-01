@@ -90,6 +90,12 @@ if (currentUser?.uid) {
             checkAndShowDailyCheckIn(currentUser.uid, data.lastCheckIn);
             
             syncAllSaveButtons(); // Auto-updates buttons when data arrives
+            
+            const chatPoints = document.getElementById("chatPointsDisplay");
+            if (chatPoints) {
+                // Safely grab points, default to 0 if they don't have any yet
+                chatPoints.innerText = `${data.points || 0} Points`;
+            }
         }
     });
 }

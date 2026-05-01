@@ -52,19 +52,20 @@ document.addEventListener("DOMContentLoaded", () => {
     showRandomGreeting();
 
     function addMessage(text, sender) {
-        const div = document.createElement("div");
+    const div = document.createElement("div");
 
-        if (sender === "user") {
-            div.style.textAlign = "right";
-            div.textContent = "You: " + text;
-        } else {
-            div.className = "bot-msg";
-            div.textContent = text;
-        }
-
-        chatBody.appendChild(div);
-        chatBody.scrollTop = chatBody.scrollHeight;
+    if (sender === "user") {
+        // 🔥 Apply the new pill class instead of manual alignment
+        div.className = "user-msg"; 
+        div.textContent = text; // Removed "You: " for a cleaner look
+    } else {
+        div.className = "bot-msg";
+        div.textContent = text;
     }
+
+    chatBody.appendChild(div);
+    chatBody.scrollTop = chatBody.scrollHeight;
+}
 
 async function sendMessage() {
     const prompt = input.value.trim();
