@@ -1,0 +1,11 @@
+
+[{
+"relation": ["delegate_permission/common.handle_all_urls"],
+"target": {
+"namespace": "android_app",
+"package_name": "app.web.notexchangedb.twa",
+"sha256_cert_fingerprints": [
+"aa:15:e9:b4:36:96:3f:2d:35:c9:53:b6:4f:f4:f6:c1:8d:d1:1f:fc:25:8d:ea:fd:d8:c6:aa:33:76:50:08:44"
+]
+}
+}]
