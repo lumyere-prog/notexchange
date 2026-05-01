@@ -1,7 +1,7 @@
 import { spendPoints } from "/js/points.js";
 import { db } from "/firebase/firebase-client.js";
 
-const API = 'http://localhost:3000';
+const API = "https://api-qh3yfseiaq-uc.a.run.app";
 const user = JSON.parse(localStorage.getItem("user")) || {};
 const userID = user.email || "guest";
 

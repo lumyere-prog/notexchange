@@ -729,26 +729,6 @@ window.clearFile = function () {
   document.getElementById("file-title").innerText = "💬 Please open a file";
 };
 
-window.getSummary = async function () {
-  if (!activeFile) return alert("No file selected");
-  const res = await fetch("http://localhost:3000/ai/summarize", {
-    method: "POST", headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(activeFile)
-  });
-  const data = await res.json();
-  showMessage("🧠 Summary:\n\n" + data.summary);
-};
-
-window.getQuiz = async function () {
-  if (!activeFile) return alert("No file selected");
-  const res = await fetch("http://localhost:3000/ai/quiz", {
-    method: "POST", headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(activeFile)
-  });
-  const data = await res.json();
-  showMessage("📝 Quiz:\n\n" + data.quiz);
-};
-
 function showMessage(text) {
   const div = document.createElement("div");
   div.className = "bot-msg";
