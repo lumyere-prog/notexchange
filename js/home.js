@@ -696,10 +696,30 @@ function renderPage(num) {
         const scale = Math.min((containerWidth - 20) / unscaledViewport.width, 2.0); 
         
         const viewport = page.getViewport({ scale: scale });
-        canvas.height = viewport.height;
-        canvas.width = viewport.width;
 
-        const renderCtx = { canvasContext: ctx, viewport: viewport };
+        // 🔥 HIGH-RES FIX START
+        const outputScale = window.devicePixelRatio || 1;
+
+        // 1. Make internal resolution massive
+        canvas.width = Math.floor(viewport.width * outputScale);
+        canvas.height = Math.floor(viewport.height * outputScale);
+
+        // 2. Keep visual CSS size normal to fit the screen
+        canvas.style.width = Math.floor(viewport.width) + "px";
+        canvas.style.height = Math.floor(viewport.height) + "px";
+
+        // 3. Tell PDF.js to scale the text up
+        const transform = outputScale !== 1 
+            ? [outputScale, 0, 0, outputScale, 0, 0] 
+            : null;
+
+        // Add the transform parameter to your render context
+        const renderCtx = { 
+            canvasContext: ctx, 
+            transform: transform, 
+            viewport: viewport 
+        };
+        // 🔥 HIGH-RES FIX END
 
         page.render(renderCtx).promise.then(() => {
             pageIsRendering = false;
