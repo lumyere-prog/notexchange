@@ -29,12 +29,26 @@
     align-items: center;
 }
 
-.app-logo {
-    height: 36px; 
-    width: auto;
-    object-fit: contain; 
-    display: block;
+/* 🔥 New Home-Style Header Classes */
+.header-left {
+    display: flex;
+    align-items: center;
+    gap: 12px;
 }
+
+.header-profile-pic {
+    width: 36px;
+    height: 36px;
+    border-radius: 8px;
+}
+
+.app-title {
+    font-family: 'Roboto', sans-serif;
+    font-weight: 700; /* Nice and bold */
+    font-size: 20px;
+    color: #111827; /* Dark text to match the theme */
+    letter-spacing: 1px; /* Gives it that clean, premium logo feel */
+}   
 
 /* menu */
 .menu-container {
