@@ -6,7 +6,7 @@ const user = JSON.parse(localStorage.getItem("user")) || {};
 const userID = user.email || "guest";
 
 let chatSession = [];
-let quizSession = null;
+
 
 // wait for DOM
 document.addEventListener("DOMContentLoaded", () => {
@@ -15,18 +15,18 @@ document.addEventListener("DOMContentLoaded", () => {
     const input = document.getElementById("chat-input");
     const chatBody = document.getElementById("chat-body");
 
-    const greetings = [
-        "yo! what’s up?",
-        "hello there!!! ready to study?",
-        "hey hey? need help with something?",
-        "sup? ask me anything",
-        "yo genius? what are we solving today?",
-        "wsp clanker! what’s the mission?",
-        "yooooo! drop your question",
-        "hello! let’s cook some answers",
-        "hey clanky!! I’m ready when you are",
-        "what’s good? how can I help?"
-    ];
+   const greetings = [
+  "yo! what’s up? ready to cook some knowledge?",
+  "hello there 👋 let’s make studying less painful today",
+  "hey hey, what are we solving today?",
+  "sup? ask me anything—try to break me 😤 (please don’t actually)",
+  "yo genius, what are we diving into today?",
+  "wsp clanker! mission report: ready for learning?",
+  "yooo drop your question, I’m online and slightly caffeinated",
+  "hello! let’s turn confusion into clarity",
+  "hey clanky! don’t worry, I only malfunction emotionally",
+  "what’s good? I promise I’m smarter than I look",
+];
 
     if (!sendBtn || !input || !chatBody) {
         console.error("Chatbot elements missing in HTML");
@@ -128,17 +128,10 @@ async function sendMessage() {
 
         loadingDiv.remove();
 
-                if (prompt.toLowerCase().includes("quiz")) {
-            quizSession = {
-                step: "ask_count",
-                total: 0,
-                current: 0,
-                score: 0
-            };
-        }
+
 
         if (data.reply) {
-            const reply = "Lumiere: " + cleanText(data.reply);
+            const reply = " " + cleanText(data.reply);
             addMessage(reply, "bot");
 
             // 🧠 session memory

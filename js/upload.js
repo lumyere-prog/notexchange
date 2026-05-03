@@ -69,15 +69,21 @@ document.addEventListener("DOMContentLoaded", () => {
   const uploadAgainBtn = document.getElementById("uploadAgainBtn");
 
   const categories = [
-    "Mathematics",
-    "Science",
-    "Computer Science",
-    "Engineering",
-    "Health & Medicine",
-    "Social Science",
-    "Business & Economics",
-    "Arts & Humanities",
-    "General Studies"
+  "Programming",
+  "Algorithms & Theory",
+  "UI/UX Design",
+  "Research ",
+  "Capstone ",
+  "System Development",
+  "Database ",
+  "CyberSecurity ",
+  "Networking & Hardware",
+  "Professional",
+  "Technical Math",
+  "Social Sciences",
+  "Gen Education",
+  "National Service",
+  "Physical Education"
   ];
 
   const renderSubjectOptions = () => {

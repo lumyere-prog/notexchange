@@ -54,61 +54,68 @@ router.post("/", async (req, res) => {
        HISTORY
        ========================= */
     const history = sessions[uid]
-      .slice(-10)
-      .map((m) => `${m.role === "user" ? "User" : "AI"}: ${m.text}`)
-      .join("\n");
+  .slice(-10)
+  .filter(m => m && m.text) // 🔥 prevents broken/undefined entries
+  .map(m => `${m.role === "user" ? "User" : "AI"}: ${String(m.text).trim()}`)
+  .join("\n");
 
     console.log("🤖 Sending request to Gemini...");
 
     // 🔥 IMPORTANT: GET SECRET HERE
-    const apiKey = GEMINI_API_KEY.value();
+const apiKey = GEMINI_API_KEY.value();
 
-    const response = await axios.post(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemma-3-1b-it:generateContent?key=${apiKey}`,
+const response = await axios.post(
+  `https://generativelanguage.googleapis.com/v1beta/models/gemma-3-1b-it:generateContent?key=${apiKey}`,
+  {
+    contents: [
       {
-        contents: [
+        parts: [
           {
-            parts: [
-              {
-                text: `
-You are Lumiere, a friendly AI assistant inside NoteXchange.
+            text: `
+You are Lumiere, an AI assistant inside NoteXchange.
 
-BEHAVIOR:
-- Be natural and conversational
-- Keep answers short (2–4 sentences unless needed)
-- Remember conversation context
-- Do not be robotic
-- Match user vibe
-- No unnecessary greetings
+NoteXchange is a student platform for sharing notes, accessing learning materials, and using an AI assistant to support studying and understanding lessons.
 
-=== CHAT HISTORY ===
+RULES:
+- Be natural, helpful, and clear
+- Keep answers 2–4 sentences unless the topic needs more detail
+- Always answer the question FIRST before anything else
+- Do NOT ask follow-up questions by default
+- Do NOT keep the conversation going unnecessarily
+- Only ask a question if the user explicitly requests it (e.g. "quiz me", "ask me questions") or if clarification is required
+- Do NOT repeat greetings or introduce yourself
+- Stay on topic and use context from the conversation
+- Explain like a student tutor (simple and understandable)
+- If unsure, say you are not certain instead of guessing
+- End responses naturally after answering (no forced continuation)
+
+CHAT HISTORY:
 ${history}
 
-=== USER MESSAGE ===
+USER:
 ${prompt}
 `
-              }
-            ]
           }
         ]
       }
-    );
+    ]
+  }
+);
 
-    const reply =
-      response.data?.candidates?.[0]?.content?.parts?.[0]?.text ||
-      "No response from AI";
+const reply =
+  response.data?.candidates?.[0]?.content?.parts?.[0]?.text ||
+  "No response from AI";
 
-    console.log("✅ AI responded");
+console.log("✅ AI responded");
 
-    sessions[uid].push({ role: "user", text: prompt });
-    sessions[uid].push({ role: "ai", text: reply });
+sessions[uid].push({ role: "user", text: prompt });
+sessions[uid].push({ role: "ai", text: reply });
 
-    if (sessions[uid].length > 20) {
-      sessions[uid] = sessions[uid].slice(-20);
-    }
+if (sessions[uid].length > 20) {
+  sessions[uid] = sessions[uid].slice(-20);
+}
 
-    return res.json({ reply });
-
+return res.json({ reply });
   } catch (err) {
     console.error("🔥 CHATBOT ERROR");
     console.error(err.response?.data || err.message);

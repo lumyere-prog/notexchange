@@ -221,15 +221,21 @@ let selectedCategory = "All";
 
 const categories = [
   "All",
-  "Mathematics",
-  "Science",
-  "Computer Science",
-  "Engineering",
-  "Health & Medicine",
-  "Social Science",
-  "Business & Economics",
-  "Arts & Humanities",
-  "General Studies"
+  "Programming",
+  "Algorithms & Theory",
+  "UI/UX Design",
+  "Research ",
+  "Capstone ",
+  "System Development",
+  "Database ",
+  "CyberSecurity ",
+  "Networking & Hardware",
+  "Professional",
+  "Technical Math",
+  "Social Sciences",
+  "Gen Education",
+  "National Service",
+  "Physical Education"
 ];
 
 generateCategories(categories);
