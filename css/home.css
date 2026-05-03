@@ -511,7 +511,7 @@ body {
     word-break: break-word;
     overflow-wrap: break-word; 
     overflow-y: auto;
-    max-height: 38vh; 
+    max-height: 30vh; 
     padding-right: 4px;
 }
 

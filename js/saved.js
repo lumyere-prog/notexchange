@@ -202,7 +202,7 @@ function renderEmptyState() {
             <span style="font-size: 13px; font-weight: 700; padding: 0 4px; color: #4B5563;">${post.upvotes || 0} | ${post.downvotes || 0}</span>
             <button style="background:transparent; border:none; cursor:pointer; width:32px; height:32px; display:flex; align-items:center; justify-content:center; ${downStyle}" onclick="vote(event, '${postId}', -1)"><span class="material-icons" style="font-size: 18px;">arrow_downward</span></button>
           </div>
-          <div style="display: flex; align-items: center; gap: 8px;">
+          <div style="display: flex; align-items: center; gap: 4px;">
               <button onclick="toggleFav(event, this, '${postId}')" style="background:none; border:none; cursor:pointer; display:flex; align-items:center; justify-content:center; width:32px; height:32px; ${pinStyle}">📌</button>
               <button onclick="event.stopPropagation(); openSavedModal('${postId}', true)" style="background:none; border:none; cursor:pointer; color: #6B7280; display:flex; padding:6px;"><span class="material-icons" style="font-size:20px;">chat_bubble_outline</span></button>
               <button onclick="event.stopPropagation(); openFileModal('${post.fileURL}', '${post.title}')" style="background: white; color: #111827; border: 1px solid #E5E7EB; padding: 8px 16px; border-radius: 50px; font-weight: 800; cursor: pointer; display: flex; align-items: center; gap: 4px; font-size: 13px;"><span class="material-icons" style="font-size: 18px;">description</span> Open</button>
@@ -260,12 +260,12 @@ async function openSavedModal(postId, showComments = false){
         <p style="font-size: 12px; font-weight: 700; color: #111827; margin: 0 0 4px 0; text-transform: uppercase;">${post.subject || ""}</p>
         <div class="modal-text" style="white-space: pre-wrap; font-size: 14px; line-height: 1.6; color: #4B5563; margin-top: 20px; overflow-wrap: anywhere; word-break: normal;">${(post.description || "").trim().replace(/</g, '&lt;').replace(/>/g, '&gt;')}</div>
         <div class="note-footer" style="margin-top: 24px; display: flex; justify-content: space-between; align-items: center; border-top: 1px solid #F3F4F6; padding-top: 16px;">
-            <div style="display: flex; align-items: center; gap: 8px;">
+            <div style="display: flex; align-items: center; gap: 4px;">
               <button class="upvote-btn" style="background:transparent; border:none; cursor:pointer; width:34px; height:34px; display:flex; align-items:center; justify-content:center; ${upStyle}"><span class="material-icons" style="font-size: 20px;">arrow_upward</span></button>
               <span style="font-size: 13px; font-weight: 700; color: #4B5563;">${post.upvotes || 0} | ${post.downvotes || 0}</span>
               <button class="downvote-btn" style="background:transparent; border:none; cursor:pointer; width:34px; height:34px; display:flex; align-items:center; justify-content:center; ${downStyle}"><span class="material-icons" style="font-size: 20px;">arrow_downward</span></button>
             </div>
-            <div style="display: flex; align-items: center; gap: 12px;">
+            <div style="display: flex; align-items: center; gap: 8px;">
                 <button onclick="toggleFav(event, this, '${postId}')" style="background:none; border:none; cursor:pointer; display:flex; align-items:center; justify-content:center; width:34px; height:34px; ${pinStyle}">📌</button>
                 <button onclick="toggleComments(event, this, '${postId}')" style="background:none; border:none; cursor:pointer; color: #6B7280; display:flex; padding:6px;"><span class="material-icons" style="font-size:22px;">chat_bubble_outline</span></button>
                 <button onclick="openFileModal('${post.fileURL}', '${post.title}')" style="background: white; color: #111827; border: 1px solid #E5E7EB; padding: 10px 20px; border-radius: 50px; font-weight: 800; cursor: pointer; display: flex; align-items: center; gap: 6px; font-size: 14px;"><span class="material-icons" style="font-size: 18px; color: #111827;">description</span> Open</button>
