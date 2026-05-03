@@ -275,20 +275,38 @@ function applyCategoryFilter() {
     }
   });
 }
+
+
+
+// 🔥 NEW: Variables to control the Infinite Scroll
+let currentLimit = 8;
+let postListener = null;
+
 function loadPostsRealtime() {
   const container = document.getElementById("notesFeed");
   const userId = currentUser ? currentUser.uid : null;
 
+  // 🔥 Stop the old listener before creating a new one with a bigger limit
+  if (postListener) postListener();
+
   const q = query(
     collection(db, "posts"),
     orderBy("timestamp", "desc"),
-    limit(8)
+    limit(currentLimit)
   );
 
-  onSnapshot(q, (snapshot) => {
-    container.innerHTML = "";
+  postListener = onSnapshot(q, (snapshot) => {
+    // 🔥 REMOVED container.innerHTML = ""; 
+    // We use docChanges() to cleanly insert, update, or remove without breaking the screen!
+    snapshot.docChanges().forEach(change => {
+      const docSnap = change.doc;
 
-    snapshot.forEach(docSnap => {
+      // If a post was deleted by an admin, safely remove it from the screen
+      if (change.type === "removed") {
+          const oldCard = document.querySelector(`.note-card[data-postid="${docSnap.id}"]`);
+          if (oldCard) oldCard.remove();
+          return; // Skip the rest of the loop
+      }
 
       const post = docSnap.data();
       const fullDesc = (post.description || "No description").trim();
@@ -449,13 +467,27 @@ card.querySelector(".downvote-btn").addEventListener("click", async (e) => {
   });
 });
       card.dataset.title = post.title || "";
-card.dataset.desc = post.description || "";
-card.dataset.subject = post.subject || "";
-card.dataset.user = post.username || "";
-      container.appendChild(card);
+      card.dataset.desc = post.description || "";
+      card.dataset.subject = post.subject || "";
+      card.dataset.user = post.username || "";
+
+      // 🔥 SMART RENDER: Updates existing cards, or places new ones in the exact right order!
+      const existingCard = document.querySelector(`.note-card[data-postid="${docSnap.id}"]`);
+      
+      if (existingCard) {
+          container.replaceChild(card, existingCard); // Update (keeps your scroll position safe)
+      } else {
+          // Insert precisely where Firebase says it belongs in the timeline
+          const targetNode = container.children[change.newIndex];
+          if (targetNode) {
+              container.insertBefore(card, targetNode);
+          } else {
+              container.appendChild(card);
+          }
+      }
     });
 
-    // 🔥 Sync buttons immediately after drawing the feed
+    // Sync buttons after the updates
     syncAllSaveButtons();
   });
 }
@@ -1492,3 +1524,26 @@ window.toggleReadMore = function(postId) {
         descEl.dataset.expanded = "true";
     }
 };
+
+// ==========================================
+// 🔥 INFINITE SCROLL SENSOR
+// ==========================================
+let isLoadingMore = false;
+
+window.addEventListener("scroll", () => {
+    if (isLoadingMore) return; // Prevent spamming the database
+
+    // Calculate how far down the user has scrolled
+    const scrollPosition = window.innerHeight + window.scrollY;
+    const pageHeight = document.documentElement.scrollHeight;
+
+    // If they are near the bottom of the feed (800px away)...
+    if (scrollPosition >= pageHeight - 800) {
+        isLoadingMore = true;
+        currentLimit += 8; // Ask Firebase for 8 more posts
+        loadPostsRealtime(); // Re-fetch
+
+        // 1.5 second cooldown before allowing another fetch
+        setTimeout(() => { isLoadingMore = false; }, 1500);
+    }
+});
