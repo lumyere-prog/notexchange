@@ -170,7 +170,7 @@ body {
 }
 
 .category.active {
-    background: #111827; /* Pitch Black */
+    background: #461111; /* Pitch Black */
     color: #FFFFFF; 
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
     font-weight: 700;
@@ -505,6 +505,16 @@ body {
     min-width: 0;
 }
 
+
+.note-preview-text, .modal-text {
+    white-space: pre-wrap; /* 🔥 This forces HTML to respect your line breaks */
+    word-break: break-word;
+    overflow-wrap: break-word; 
+    overflow-y: auto;
+    max-height: 38vh; 
+    padding-right: 4px;
+}
+
 .vote-box {
     display: flex;
     align-items: center;
@@ -538,11 +548,11 @@ body {
 }
 
 
-/* Forces long Firebase URLs to break to the next line */
+/* Forces long URLs to break, but keeps normal words and spacing intact */
 .modal-content p, .note-preview-text, .modal-text {
-    word-break: break-all;
-    overflow-wrap: break-word;
-    white-space: normal;
+    overflow-wrap: anywhere; /* Breaks long links ONLY if they don't fit */
+    word-break: normal; /* Tells normal words to safely drop to the next line */
+    white-space: pre-wrap; /* Ensures your enter keys and spaces are respected */
 }
 
 

@@ -289,7 +289,13 @@ function loadPostsRealtime() {
     container.innerHTML = "";
 
     snapshot.forEach(docSnap => {
+
       const post = docSnap.data();
+      const fullDesc = (post.description || "No description").trim();
+      const isLong = fullDesc.length > 150; 
+      const displayDesc = isLong ? fullDesc.substring(0, 150) + "..." : fullDesc;
+      const safeFullDesc = fullDesc.replace(/"/g, '&quot;').replace(/\n/g, '&#10;');
+      
       let upClass = "";
       let downClass = "";
       
@@ -352,7 +358,10 @@ function loadPostsRealtime() {
             </div>
 
         <p class="note-code">${post.subject || ""}</p>
-        <div class="note-preview-text">${post.description || "No description"}</div>
+        
+        <div class="note-preview-text" id="desc-${docSnap.id}" data-fulldesc="${safeFullDesc}" style="white-space: pre-wrap;">${displayDesc.replace(/</g, '&lt;').replace(/>/g, '&gt;')}${isLong ? `\n\n<span class="read-more-btn" style="color: #3B82F6; font-weight: bold; cursor: pointer; display: block; margin-top: 4px;" onclick="event.stopPropagation(); toggleReadMore('${docSnap.id}')">Read More</span>` : ""}</div>
+        
+        <!-- Clickable Author Section with larger profile pic layout -->
         
         <!-- Clickable Author Section with larger profile pic layout -->
         <div class="note-author" onclick="event.stopPropagation(); openUserCard('${post.userId}')" style="display:flex; align-items: flex-start; gap:12px; margin-top: 12px; padding-top: 12px; border-top: 1px solid #F3F4F6; cursor: pointer;">
@@ -512,7 +521,7 @@ if (post.comments && post.comments.length > 0) {
   body.innerHTML = `
     <h3>${post.title}</h3>
     <p style="font-size:12px;">${post.subject || ""}</p>
-    <div class="modal-text">${post.description}</div>
+    <div class="modal-text" style="white-space: pre-wrap;">${(post.description || "").replace(/</g, '&lt;').replace(/>/g, '&gt;')}</div>
     <div class="note-footer" style="margin-top: 24px;">
       <div class="vote-box">
         <button class="vote-btn upvote-btn ${upClass}"><span class="material-icons">arrow_upward</span></button>
@@ -1452,3 +1461,34 @@ document.addEventListener('click', (e) => {
         document.querySelectorAll('.post-dropdown, .comment-dropdown').forEach(m => m.style.display = 'none');
     }
 });
+
+window.toggleReadMore = function(postId) {
+    const descEl = document.getElementById(`desc-${postId}`);
+    if (!descEl) return;
+    
+    const fullText = decodeURIComponent(descEl.getAttribute("data-fulldesc"));
+    const MAX_EXPANDED_LENGTH = 600; 
+    
+    if (descEl.dataset.expanded === "true") {
+        // 🔥 COLLAPSED STATE: Remove scrollbars
+        descEl.style.maxHeight = "none";
+        descEl.style.overflowY = "visible";
+        
+        descEl.textContent = fullText.substring(0, 150) + "...";
+        descEl.insertAdjacentHTML("beforeend", `<span class="read-more-btn" style="color: #3B82F6; font-weight: bold; cursor: pointer; display: block; margin-top: 4px;" onclick="event.stopPropagation(); toggleReadMore('${postId}')">Read More</span>`);
+        descEl.dataset.expanded = "false";
+    } else {
+        // 🔥 EXPANDED STATE: Turn on the scroll box
+        descEl.style.maxHeight = "250px";
+        descEl.style.overflowY = "auto";
+        
+        let expandedText = fullText;
+        if (fullText.length > MAX_EXPANDED_LENGTH) {
+            expandedText = fullText.substring(0, MAX_EXPANDED_LENGTH) + "\n\n... [Content truncated by Admin limit]";
+        }
+        
+        descEl.textContent = expandedText;
+        descEl.insertAdjacentHTML("beforeend", `<span class="read-more-btn" style="color: #3B82F6; font-weight: bold; cursor: pointer; display: block; margin-top: 4px;" onclick="event.stopPropagation(); toggleReadMore('${postId}')">Show Less</span>`);
+        descEl.dataset.expanded = "true";
+    }
+};

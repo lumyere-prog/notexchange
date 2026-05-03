@@ -576,9 +576,14 @@ function createProfileNoteCard(docSnap) {
         });
     }
 
+    const fullDesc = (post.description || "No description").trim();
+    const isLong = fullDesc.length > 150; 
+    const displayDesc = isLong ? fullDesc.substring(0, 150) + "..." : fullDesc;
+    const safeFullDesc = encodeURIComponent(fullDesc);
+
     card.innerHTML = `
         <div class="note-preview">
-        <div class="note-preview-text">${post.description || "No description"}</div>
+        <div class="note-preview-text" id="desc-${postId}" data-fulldesc="${safeFullDesc}">${displayDesc.replace(/</g, '&lt;').replace(/>/g, '&gt;')}${isLong ? `\n\n<span class="read-more-btn" style="color: #3B82F6; font-weight: bold; cursor: pointer; display: block; margin-top: 4px;" onclick="event.stopPropagation(); toggleReadMore('${postId}')">Read More</span>` : ""}</div>
         <p class="note-code">${post.subject || ""}</p>
         <h3 class="note-title">${post.title || "Untitled"}</h3>
         
@@ -745,7 +750,7 @@ async function openPost(postId, showComments = false) {
     body.innerHTML = `
         <h3>${post.title}</h3>
         <p style="font-size:12px; color:#6B7280;">${post.subject || ""}</p>
-        <div class="modal-text">${post.description || ""}</div>
+        <div class="modal-text">${(post.description || "").trim().replace(/</g, '&lt;').replace(/>/g, '&gt;')}</div>
         <div class="note-footer" style="margin-top: 24px;">
             <div class="vote-box">
                 <button class="vote-btn upvote-btn ${upClass}" type="button"><span class="material-icons">arrow_upward</span></button>
@@ -1074,4 +1079,36 @@ window.openReportModal = function(targetId, type, commentIndex = null) {
     document.getElementById("selectedReasonText").textContent = "Select a reason";
     document.getElementById("reportTrigger").classList.remove("active");
     renderReportOptions(); // Build the new list
+};
+
+
+window.toggleReadMore = function(postId) {
+    const descEl = document.getElementById(`desc-${postId}`);
+    if (!descEl) return;
+    
+    const fullText = decodeURIComponent(descEl.getAttribute("data-fulldesc"));
+    const MAX_EXPANDED_LENGTH = 600; 
+    
+    if (descEl.dataset.expanded === "true") {
+        // 🔥 COLLAPSED STATE
+        descEl.style.maxHeight = "none";
+        descEl.style.overflowY = "visible";
+        
+        descEl.textContent = fullText.substring(0, 150) + "...";
+        descEl.insertAdjacentHTML("beforeend", `<span class="read-more-btn" style="color: #3B82F6; font-weight: bold; cursor: pointer; display: block; margin-top: 4px;" onclick="event.stopPropagation(); toggleReadMore('${postId}')">Read More</span>`);
+        descEl.dataset.expanded = "false";
+    } else {
+        // 🔥 EXPANDED STATE
+        descEl.style.maxHeight = "250px";
+        descEl.style.overflowY = "auto";
+        
+        let expandedText = fullText;
+        if (fullText.length > MAX_EXPANDED_LENGTH) {
+            expandedText = fullText.substring(0, MAX_EXPANDED_LENGTH) + "\n\n... [Content truncated by Admin limit]";
+        }
+        
+        descEl.textContent = expandedText;
+        descEl.insertAdjacentHTML("beforeend", `<span class="read-more-btn" style="color: #3B82F6; font-weight: bold; cursor: pointer; display: block; margin-top: 4px;" onclick="event.stopPropagation(); toggleReadMore('${postId}')">Show Less</span>`);
+        descEl.dataset.expanded = "true";
+    }
 };

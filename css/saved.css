@@ -49,10 +49,31 @@ body {
     transform: scale(0.99);
 }
 
+/* 1. Feed Card Text (Handles the background and pre-wrap) */
+.note-preview-text {
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+    word-break: normal;
+    background: #F9FAFB;
+    padding: 12px;
+    border-radius: 12px;
+    margin-bottom: 12px;
+    font-size: 14px;
+    color: #4B5563;
+}
+
+/* 2. Full-Screen Modal Text (Handles the 45vh scroll limit) */
 .modal-text {
-    word-wrap: break-word;
-    overflow-wrap: break-word;
-    word-break: break-word;
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+    word-break: normal;
+    font-size: 14px;
+    line-height: 1.6;
+    color: #4B5563;
+    margin-top: 20px;
+    max-height: 30vh; 
+    overflow-y: auto;
+    padding-right: 4px;
 }
 
 /* --- MODAL FOOTER & BUTTON STYLES --- */

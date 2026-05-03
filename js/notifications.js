@@ -267,10 +267,12 @@ async function openPostFromNotif(postId, notifType, fromUsername) {
       // 5. BUILD COMMENTS (If any)
       let commentsHTML = "";
       if (notifType === "comment" && post.comments && post.comments.length > 0) {
-          commentsHTML = `<div style="margin-top: 16px; border-top: 1px solid #F3F4F6; padding-top: 12px;">`;
+          // 🔥 NEW: Added max-height: 25vh and overflow-y: auto to make comments scrollable!
+          commentsHTML = `<div style="margin-top: 16px; border-top: 1px solid #F3F4F6; padding-top: 12px; max-height: 25vh; overflow-y: auto; padding-right: 4px;">`;
           post.comments.forEach(c => {
-              commentsHTML += `<div class="quote" style="margin-bottom: 8px;">
-                      <strong style="color: #111827; font-style: normal; font-size: 12px;">${c.username}</strong><br>${c.text}
+              commentsHTML += `<div class="quote" style="background: #F9FAFB; padding: 10px; border-radius: 8px; margin-bottom: 8px; border: 1px solid #E5E7EB;">
+                      <strong style="color: #111827; font-style: normal; font-size: 12px;">${c.username}</strong><br>
+                      <span style="font-size: 14px; color: #4B5563;">${c.text}</span>
                   </div>`;
           });
           commentsHTML += `</div>`;
@@ -280,12 +282,16 @@ async function openPostFromNotif(postId, notifType, fromUsername) {
       modalContent.innerHTML = `
         <span class="close" id="closeBtn">&times;</span>
         ${contextBadge}
-        <h3 style="margin-bottom: 4px;">${post.title || "Untitled"}</h3>
+        <h3 style="margin-bottom: 4px; color: #111827; font-weight: 800;">${post.title || "Untitled"}</h3>
         <p style="font-size: 11px; font-weight: 700; color: #9CA3AF; text-transform: uppercase; margin-bottom: 12px; margin-top: 0;">
             ${post.subject || "GENERAL"}
         </p>
-        <p>${post.description || ""}</p>
+        
+        <!-- 🔥 NEW: Added pre-wrap and max-height: 35vh so the description scrolls perfectly -->
+        <div style="white-space: pre-wrap; overflow-wrap: anywhere; word-break: normal; max-height: 35vh; overflow-y: auto; padding-right: 4px; font-size: 14px; line-height: 1.6; color: #4B5563;">${(post.description || "").trim().replace(/</g, '&lt;').replace(/>/g, '&gt;')}</div>
+        
         ${commentsHTML}
+        
         <div style="display: flex; align-items: center; border-top: 1px solid #F3F4F6; margin-top: 20px; padding-top: 16px;">
             <div style="display: flex; align-items: center; gap: 6px; font-size: 14px; font-weight: 700; color: #4B5563;">
                 <span class="material-icons" style="font-size: 18px; color: #10B981;">arrow_upward</span> ${post.upvotes || 0}

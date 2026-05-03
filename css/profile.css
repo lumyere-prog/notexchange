@@ -212,6 +212,35 @@
     color: white;
     border-radius: 12px 12px 0 0;
 }
+
+/* 1. Feed Card Text */
+.note-preview-text {
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+    word-break: normal;
+    background: #F9FAFB;
+    padding: 12px;
+    border-radius: 12px;
+    margin-bottom: 12px;
+    font-size: 14px;
+    color: #4B5563;
+}
+
+/* 2. Full-Screen Modal Text */
+.modal-text {
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+    word-break: normal;
+    font-size: 14px;
+    line-height: 1.6;
+    color: #4B5563;
+    margin-top: 20px;
+    max-height: 35vh; 
+    overflow-y: auto;
+    padding-right: 4px;
+}
+
+
 /* =========================================
    MODALS (Post & Search)
    ========================================= */

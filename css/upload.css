@@ -56,7 +56,7 @@ body{
 .file-btn{
     display:inline-block;
     margin-top:15px;
-    background:#111827; /* Matched to logo red */
+    background:#461111; /* Matched to logo red */
     color:white;
     padding:10px 20px;
     border-radius:20px;
@@ -157,7 +157,7 @@ textarea{
 .upload-btn{
     width:100%;
     padding:12px;
-    background:#111827; /* Matched to logo red */
+    background:#461111; /* Matched to logo red */
     color:white;
     border:none;
     border-radius:25px;

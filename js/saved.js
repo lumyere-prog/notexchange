@@ -156,6 +156,11 @@ function renderEmptyState() {
     const displayName = post.alias || post.username || post.name || "Anonymous";
     const displayPic = post.profilePic || "/photos/profile.jpg";
 
+    const fullDesc = (post.description || "No description").trim();
+    const isLong = fullDesc.length > 150; 
+    const displayDesc = isLong ? fullDesc.substring(0, 150) + "..." : fullDesc;
+    const safeFullDesc = encodeURIComponent(fullDesc);
+
     let interestsHTML = "";
     if (post.interests && Array.isArray(post.interests)) {
         post.interests.forEach(tag => interestsHTML += window.getInterestPillHTML(tag));
@@ -180,7 +185,7 @@ function renderEmptyState() {
         </div>
 
         <p style="font-size: 12px; font-weight: 700; color: #111827; margin: 4px 0 12px 0; text-transform: uppercase;">${post.subject || "GENERAL"}</p>
-        <div class="note-preview-text" style="background: #F9FAFB; padding: 12px; border-radius: 12px; margin-bottom: 12px; font-size: 14px; color: #4B5563; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden;">${post.description || "No description"}</div>
+        <div class="note-preview-text" id="desc-${postId}" data-fulldesc="${safeFullDesc}" style="white-space: pre-wrap; background: #F9FAFB; padding: 12px; border-radius: 12px; margin-bottom: 12px; font-size: 14px; color: #4B5563;">${displayDesc.replace(/</g, '&lt;').replace(/>/g, '&gt;')}${isLong ? `\n\n<span class="read-more-btn" style="color: #3B82F6; font-weight: bold; cursor: pointer; display: block; margin-top: 4px;" onclick="event.stopPropagation(); toggleReadMore('${postId}')">Read More</span>` : ""}</div>
         
         <!-- NEW AUTHOR LAYOUT -->
         <div class="note-author" onclick="event.stopPropagation(); window.openUserCard ? window.openUserCard('${post.userId}') : null" style="display:flex; align-items: flex-start; gap:12px; margin-top: 12px; padding-top: 12px; border-top: 1px solid #F3F4F6; cursor: pointer;">
@@ -253,8 +258,7 @@ async function openSavedModal(postId, showComments = false){
     body.innerHTML = `
         <h3 style="font-size: 20px; font-weight: 800; margin: 0 0 8px 0; color: #111827;">${post.title}</h3>
         <p style="font-size: 12px; font-weight: 700; color: #111827; margin: 0 0 4px 0; text-transform: uppercase;">${post.subject || ""}</p>
-        <div class="modal-text" style="font-size: 14px; line-height: 1.6; color: #4B5563; margin-top: 20px; overflow-wrap: break-word;">${post.description || ""}</div>
-      
+        <div class="modal-text" style="white-space: pre-wrap; font-size: 14px; line-height: 1.6; color: #4B5563; margin-top: 20px; overflow-wrap: anywhere; word-break: normal;">${(post.description || "").trim().replace(/</g, '&lt;').replace(/>/g, '&gt;')}</div>
         <div class="note-footer" style="margin-top: 24px; display: flex; justify-content: space-between; align-items: center; border-top: 1px solid #F3F4F6; padding-top: 16px;">
             <div style="display: flex; align-items: center; gap: 8px;">
               <button class="upvote-btn" style="background:transparent; border:none; cursor:pointer; width:34px; height:34px; display:flex; align-items:center; justify-content:center; ${upStyle}"><span class="material-icons" style="font-size: 20px;">arrow_upward</span></button>
@@ -755,5 +759,37 @@ window.submitComment = async function(event, postId, btn) {
         openSavedModal(postId); // Refresh the modal to show the new comment
     } catch (error) { 
         console.error("Comment failed:", error); 
+    }
+};
+
+
+window.toggleReadMore = function(postId) {
+    const descEl = document.getElementById(`desc-${postId}`);
+    if (!descEl) return;
+    
+    const fullText = decodeURIComponent(descEl.getAttribute("data-fulldesc"));
+    const MAX_EXPANDED_LENGTH = 600; 
+    
+    if (descEl.dataset.expanded === "true") {
+        // 🔥 COLLAPSED STATE
+        descEl.style.maxHeight = "none";
+        descEl.style.overflowY = "visible";
+        
+        descEl.textContent = fullText.substring(0, 150) + "...";
+        descEl.insertAdjacentHTML("beforeend", `<span class="read-more-btn" style="color: #3B82F6; font-weight: bold; cursor: pointer; display: block; margin-top: 4px;" onclick="event.stopPropagation(); toggleReadMore('${postId}')">Read More</span>`);
+        descEl.dataset.expanded = "false";
+    } else {
+        // 🔥 EXPANDED STATE
+        descEl.style.maxHeight = "250px";
+        descEl.style.overflowY = "auto";
+        
+        let expandedText = fullText;
+        if (fullText.length > MAX_EXPANDED_LENGTH) {
+            expandedText = fullText.substring(0, MAX_EXPANDED_LENGTH) + "\n\n... [Content truncated by Admin limit]";
+        }
+        
+        descEl.textContent = expandedText;
+        descEl.insertAdjacentHTML("beforeend", `<span class="read-more-btn" style="color: #3B82F6; font-weight: bold; cursor: pointer; display: block; margin-top: 4px;" onclick="event.stopPropagation(); toggleReadMore('${postId}')">Show Less</span>`);
+        descEl.dataset.expanded = "true";
     }
 };
