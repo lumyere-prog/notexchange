@@ -247,7 +247,7 @@ textarea{
 }
 
 .back-dashboard-btn {
-    background: #3D1010; /* Maroon theme color */
+    background: #111827; /* Maroon theme color */
     color: #FFFFFF;
     width: 100%;
     padding: 14px;
@@ -258,6 +258,7 @@ textarea{
     cursor: pointer;
     transition: transform 0.2s, box-shadow 0.2s;
     box-shadow: 0 4px 12px rgba(61, 16, 16, 0.2);
+    margin-top: 8px;
 }
 
 .back-dashboard-btn:active {

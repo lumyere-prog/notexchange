@@ -4,6 +4,8 @@ import { addPoints } from "/js/points.js";
 import {
   collection,
   addDoc,
+  doc, 
+  getDoc,
   serverTimestamp
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
@@ -24,9 +26,7 @@ import { auth } from "/firebase/firebase-client.js";
 
 
 export function initAuthGuard(callback) {
-
     onAuthStateChanged(auth, async (user) => {
-
         console.log("🔥 AUTH USER:", user);
 
         if (!user) {
@@ -37,12 +37,15 @@ export function initAuthGuard(callback) {
         const state = await checkUserState(user);
         console.log("🧠 USER STATE:", state);
 
-        if (state === "suspended") {
-            console.log("🚫 USER BLOCKED");
+        // We fetch the full user data to check granular restrictions
+        const userDoc = await getDoc(doc(db, "user", user.uid));
+        const userData = userDoc.exists() ? userDoc.data() : {};
 
-            // 🔥 USE CENTRAL MODAL (NO DUPLICATION)
+        // Only trigger the full page block if the state is "suspended" AND it's a full App Lockdown.
+        if (state === "suspended" && userData.restrictions?.appLock !== false) {
+            console.log("🚫 USER BLOCKED (Full Lockdown)");
+            // 🔥 USE CENTRAL MODAL
             showSuspendedModal("Your account is suspended");
-
             return;
         }
 
@@ -180,9 +183,26 @@ form.addEventListener("submit", async (e) => {
 if (!user?.uid) return alert("Login first");
 if (!file) return alert("Select a file first");
 
-if (window.userState === "suspended") {
-  alert("🚫 Your account is suspended. You cannot upload posts.");
-  return;
+// 🔥 ADMIN RESTRICTION CHECK (Gets fresh data from Firestore)
+const userRef = doc(db, "user", user.uid);
+const userSnap = await getDoc(userRef);
+if (userSnap.exists()) {
+    const userData = userSnap.data();
+    
+   // Check Full Lockdown OR specific Post Block
+    if (userData.state === "suspended" || userData.restrictions?.postBlock === true) {
+        
+        // Show the custom mobile modal
+        const restrictionMsg = document.getElementById("restrictionMessage");
+        const restrictionModalWrapper = document.getElementById("restrictionModalWrapper");
+
+        if (restrictionMsg && restrictionModalWrapper) {
+            restrictionMsg.textContent = "Your account is restricted from uploading posts. Reason: " + (userData.suspendReason || "Admin action.");
+            restrictionModalWrapper.style.display = "flex"; // 🔥 Changed to flex to center it
+        }
+        
+        return; // Stop the upload
+    }
 }
 
 // 🔒 PDF ONLY VALIDATION
@@ -238,42 +258,54 @@ if (file.size > MAX_SIZE) {
       },
 
       // ✅ COMPLETE
-      async () => {
-        const fileURL = await getDownloadURL(uploadTask.snapshot.ref);
+      // ... inside the uploadTask.on "complete" callback
+async () => {
+    const fileURL = await getDownloadURL(uploadTask.snapshot.ref);
 
-        console.log("🔥 FILE URL:", fileURL);
+    const userRef = doc(db, "user", user.uid);
+    const userSnap = await getDoc(userRef);
+    
+    // 🔥 DEBUG LOGS
+    console.log("Looking for UID:", user.uid);
+    console.log("Does Profile Exist?:", userSnap.exists());
+    
+    const userData = userSnap.exists() ? userSnap.data() : {};
+    console.log("Fresh Profile Data found:", userData);
 
-        // 📝 SAVE POST
-        const postData = {
-          title: document.getElementById("title").value,
-          subject: document.getElementById("subject").value,
-          description: document.getElementById("description").value,
-          fileURL: fileURL,
-          fileName: file.name,
-          profilePic: user.profilePic || user.photo || "",
-          upvotes: 0,
-          downvotes: 0,
-          userId: user.uid,
-          username: user.username || user.name,
-          timestamp: serverTimestamp(),
-          userVotes: {},
-          voteRewards: {} // 🔥 future-proof (anti farming)
-        };
+    const postData = {
+        title: document.getElementById("title").value,
+        subject: document.getElementById("subject").value,
+        description: document.getElementById("description").value,
+        fileURL: fileURL,
+        fileName: file.name,
+        
+        // Use the alias from Firestore, or fallback if NOT found
+        alias: userData.alias || user.name || "Anonymous Student",
+        interests: userData.interests || [],
+        profilePic: userData.profilePic || user.photo || "/photos/profile.jpg",
+        
+        upvotes: 0,
+        downvotes: 0,
+        userId: user.uid,
+        username: user.username || user.name,
+        timestamp: serverTimestamp(),
+        userVotes: {},
+        voteRewards: {}
+    };
 
-        const refDoc = await addDoc(collection(db, "pendingPosts"), postData);
-        console.log("UPLOADED TO pendingPosts:", postData);
+    const refDoc = await addDoc(collection(db, "pendingPosts"), postData);
+    console.log("UPLOADED WITH PROFILE DATA:", postData);
 
+    // 💰 ADD POINTS
+    await addPoints(user.uid, 10);
 
-        // 💰 ADD POINTS (only after success)
-        await addPoints(user.uid, 10);
-
-        // 🔓 RESET BUTTON
-        uploadBtn.disabled = false;
-        uploadBtn.innerText = "Upload";
-        document.getElementById("postForm").reset();
-        document.getElementById("fileName").textContent = "";
-        showUploadModal();
-      }
+    // 🔓 RESET UI
+    uploadBtn.disabled = false;
+    uploadBtn.innerText = "Upload";
+    document.getElementById("postForm").reset();
+    document.getElementById("fileName").textContent = "";
+    showUploadModal();
+}
     );
 
   } catch (err) {

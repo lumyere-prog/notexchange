@@ -28,6 +28,9 @@
             <a class="nav-link" data-target="users-section">
                 <span class="material-icons">people</span> Users
             </a>
+            <a class="nav-link" data-target="reports-section">
+                <span class="material-icons">flag</span> Reports
+            </a>
         </nav>
     </aside>
 
@@ -169,6 +172,37 @@
                 </table>
             </div>
         </section>
+
+<!-- 🔥 NEW: Reports Section -->
+        <section id="reports-section" class="section">
+            <div class="page-header">
+                <h2>User Reports</h2>
+                <p>Review and act on flagged content and user behavior.</p>
+            </div>
+            
+            <div class="filters">
+                <button class="active" data-report-filter="pending">Pending</button>
+                <button data-report-filter="resolved">Resolved</button>
+            </div>
+
+            <div class="table-container">
+                <table class="admin-table">
+                    <thead>
+                        <tr>
+                            <th>Reported Content</th>
+                            <th>Reason & Details</th>
+                            <th>Status</th>
+                            <th style="text-align: right;">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="reports-table">
+                        <!-- Reports will render here -->
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+
     </main>
 </div>
 
@@ -186,20 +220,36 @@
         Are you sure you want to proceed?
     </p>
 
-    <!-- 🔥 Suspension Reason -->
-    <div id="suspend-wrapper" style="display:none;">
-        <label style="font-size: 13px; opacity: 0.7;">Reason</label>
+   <!-- 🔥 CORRECTED: Single Suspension Wrapper -->
+    <div id="suspend-wrapper" style="display:none; text-align: left; margin-bottom: 24px; width: 100%;">
+        <label style="font-size: 13px; font-weight: 700; color: #4B5563; margin-bottom: 12px; display: block;">Select Restrictions</label>
+        
+        <div style="display: flex; flex-direction: column; gap: 10px; background: #F3F4F6; padding: 16px; border-radius: 12px; margin-bottom: 16px;">
+            <label style="display: flex; align-items: center; gap: 10px; cursor: pointer; font-size: 14px;">
+                <input type="checkbox" id="restrict-app" style="width: 18px; height: 18px;"> Lock Account (App Lockdown)
+            </label>
+            <label style="display: flex; align-items: center; gap: 10px; cursor: pointer; font-size: 14px;">
+                <input type="checkbox" id="restrict-post" style="width: 18px; height: 18px;"> Unable to Post
+            </label>
+            <label style="display: flex; align-items: center; gap: 10px; cursor: pointer; font-size: 14px;">
+                <input type="checkbox" id="restrict-comment" style="width: 18px; height: 18px;"> Unable to Comment
+            </label>
+        </div>
+
+        <label style="font-size: 13px; font-weight: 700; color: #4B5563; margin-bottom: 8px; display: block;">Reason for Suspension</label>
         <textarea 
             id="suspend-reason" 
-            class="premium-input" 
-            placeholder="Enter reason for suspension..."
+            style="width: 100%; padding: 12px; border: 1px solid #E5E7EB; border-radius: 8px; background: #F9FAFB; font-family: inherit; font-size: 14px; min-height: 80px; resize: none; outline: none; box-sizing: border-box;" 
+            placeholder="Reason... (The user will see this)"
         ></textarea>
     </div>
 
+    <!-- 🔥 The Action Buttons MUST be outside the wrapper but inside the modal -->
     <div class="modal-actions">
         <button id="cancel-btn" class="btn-secondary">Cancel</button>
         <button id="confirm-btn" class="btn-primary">Confirm</button>
     </div>
+</div> <!-- End of action-modal -->
 
 </div>
 <div id="view-modal" class="premium-modal huge-modal">

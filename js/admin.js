@@ -420,24 +420,30 @@ if (e.target.classList.contains("suspend-user")) {
 // =============================
 // ACTIVATE USER (FIRESTORE FIXED)
 // =============================
+// =============================
+// ACTIVATE USER (THE "HALT" BUTTON)
+// =============================
 if (e.target.classList.contains("activate-user")) {
-
     const row = e.target.closest("tr");
     const userId = row?.dataset?.userid;
 
-    if (!userId) {
-        console.error("Missing userId");
-        return;
-    }
+    if (!userId) return console.error("Missing userId");
 
     try {
         const userRef = doc(db, "user", userId);
 
+        // 🔥 UPDATED: Clear state AND granular restrictions
         await updateDoc(userRef, {
-            state: "active"
+            state: "active",
+            restrictions: {
+                appLock: false,
+                postBlock: false,
+                commentBlock: false
+            },
+            suspendReason: "" // Optional: Clear the old reason
         });
 
-        // UI update
+        // UI Update: Instantly change the status badge and button text
         const status = row.querySelector(".status");
         if (status) {
             status.textContent = "Active";
@@ -446,13 +452,13 @@ if (e.target.classList.contains("activate-user")) {
 
         e.target.textContent = "Suspend";
         e.target.className = "btn-pill suspend-user action-danger";
-
         row.dataset.state = "active";
 
-        console.log("✅ User activated");
+        console.log("🔓 User restrictions lifted and state set to Active");
+        alert("Suspension lifted successfully.");
 
     } catch (err) {
-        console.error("Activate failed:", err);
+        console.error("Activation failed:", err);
     }
 }
 });
@@ -484,14 +490,18 @@ function loadUsers() {
             tr.dataset.state = user.state || "offline";
 
             const state = user.state || "offline";
+            
+            // 🔥 NEW: Check if they have ANY restrictions active
+            const hasRestrictions = user.restrictions?.appLock || user.restrictions?.postBlock || user.restrictions?.commentBlock;
+            const isRestricted = state === "suspended" || hasRestrictions;
 
             tr.innerHTML = `
                 <td><b>${user.username || "Unknown"}</b></td>
                 <td>${user.email || "No email"}</td>
 
                 <td>
-                    <span class="status ${state}">
-                        ${state.charAt(0).toUpperCase() + state.slice(1)}
+                    <span class="status ${isRestricted ? 'suspended' : state}">
+                        ${isRestricted ? 'Restricted' : state.charAt(0).toUpperCase() + state.slice(1)}
                     </span>
                 </td>
 
@@ -502,8 +512,8 @@ function loadUsers() {
                     </button>
 
                     ${
-                        state === "suspended"
-                            ? `<button class="btn-pill activate-user action-success">Activate</button>`
+                        isRestricted
+                            ? `<button class="btn-pill activate-user action-success">Lift Restrictions</button>`
                             : `<button class="btn-pill suspend-user action-danger">Suspend</button>`
                     }
 
@@ -1034,20 +1044,19 @@ const currentUser = {
 
 // ================== MODAL FUNCTIONS ==================
 function openActionModal(action) {
-
-    if (!action) {
-        console.error("❌ openActionModal missing action");
-        return;
-    }
-
-    currentAction = action; // ✅ ONLY HERE
+    if (!action) return;
+    currentAction = action;
 
     const wrapper = document.getElementById("suspend-wrapper");
     const reasonInput = document.getElementById("suspend-reason");
+    
+    // 🔥 NEW: Reset Checkboxes
+    document.getElementById("restrict-app").checked = false;
+    document.getElementById("restrict-post").checked = false;
+    document.getElementById("restrict-comment").checked = false;
 
     reasonInput.value = "";
     wrapper.style.display = "none";
-
     if (action === "approve") {
         modalTitle.textContent = "Approve Post?";
         modalText.textContent = "This will make the post visible.";
@@ -1066,7 +1075,7 @@ function openActionModal(action) {
         modalHeaderIcon.style.color = "#DC2626";
     }
 
-    if (action === "suspend") {
+    if (action === "suspend" || action === "suspend_report") {
         modalTitle.textContent = "Suspend User?";
         modalText.textContent = "User will lose posting access.";
 
@@ -1088,7 +1097,9 @@ confirmBtn.addEventListener("click", async () => {
     const row = currentRow;
     const action = currentAction;
 
-    if (!row || !action) return;
+    if (!action) return;
+    // Allow 'suspend_report' to proceed even if there is no table row selected
+    if (action !== "suspend_report" && action !== "suspend" && !row) return;
 
     if (isProcessingAction) return;
 
@@ -1098,7 +1109,7 @@ confirmBtn.addEventListener("click", async () => {
 
     showLoader?.("Processing...");
 
-    const statusCell = row.querySelector(".status");
+    const statusCell = row ? row.querySelector(".status") : null;
 
     try {
 
@@ -1111,10 +1122,12 @@ confirmBtn.addEventListener("click", async () => {
 
             if (!postData) return;
 
-            statusCell.textContent = action === "approve" ? "Approved" : "Rejected";
-            statusCell.className = action === "approve"
-                ? "status approved"
-                : "status rejected";
+            if (statusCell) {
+                statusCell.textContent = action === "approve" ? "Approved" : "Rejected";
+                statusCell.className = action === "approve"
+                    ? "status approved"
+                    : "status rejected";
+            }
 
             
         }
@@ -1122,33 +1135,54 @@ confirmBtn.addEventListener("click", async () => {
         // =============================
         // SUSPEND USER
         // =============================
-        else if (action === "suspend") {
+    else if (action === "suspend" || action === "suspend_report") {
+    const reason = suspendReason.value;
+    const lockApp = document.getElementById("restrict-app").checked;
+    const blockPost = document.getElementById("restrict-post").checked;
+    const blockComment = document.getElementById("restrict-comment").checked;
 
-            const reason = suspendReason.value;
+    if (!reason.trim()) {
+        alert("Please enter a reason.");
+        isProcessingAction = false;
+        confirmBtn.disabled = false;
+        confirmBtn.textContent = "Confirm";
+        return;
+    }
 
-            if (!reason.trim()) {
-                alert("Please enter a reason.");
-                return; // 🔥 safe now (finally will still run)
-            }
+    // Determine target UID based on which tab we are in
+    const userId = action === "suspend" ? currentRow.dataset.userid : targetReportUserId;
 
-            const userId = row.dataset.userid;
+    // 1. Update User State with granular permissions
+    await updateDoc(doc(db, "user", userId), {
+        state: lockApp ? "suspended" : "active", // state remains 'suspended' for full lockdown
+        restrictions: {
+            appLock: lockApp,
+            postBlock: blockPost,
+            commentBlock: blockComment
+        },
+        suspendReason: reason
+    });
 
-            if (!userId) {
-                console.error("Missing userId");
-                return;
-            }
+    // 2. Resolve the report if applicable
+    if (action === "suspend" || action === "suspend_report") {
+        await updateDoc(doc(db, "reports", targetReportId), {
+            status: "resolved",
+            resolvedAt: serverTimestamp()
+        });
+    }
 
-            statusCell.textContent = "Suspended";
-            statusCell.className = "status suspended";
+    // 3. Send Notification
+    await addDoc(collection(db, "user", userId, "notifications"), {
+        type: "suspension",
+        title: "Account Restricted",
+        message: `An admin has applied restrictions to your account. Reason: ${reason}`,
+        read: false,
+        createdAt: serverTimestamp()
+    });
 
-            const btn = row.querySelector(".suspend-user, .activate-user");
-            if (btn) {
-                btn.textContent = "Activate";
-                btn.className = "btn-pill activate-user action-success";
-            }
+    alert("Restrictions applied successfully.");
+}
 
-            row.setAttribute("data-state", "suspended");
-        }
 
         closeAll();
 
@@ -1179,7 +1213,6 @@ function closeAll(){
     overlay.style.display = "none";
 
     suspendReason.value = "";
-    suspendReason.style.display = "none";
 }
 
 function applyNoteFilter() {
@@ -1423,3 +1456,165 @@ window.goToSection = function(sectionId) {
     // 3. If going back to dashboard, refresh the numbers
     if (sectionId === 'dashboard-section') syncDashboardStats();
 };
+
+
+// =========================================
+// REPORTS MANAGEMENT
+// =========================================
+let currentReportFilter = "pending";
+
+// Target variables for the Modal
+let targetReportUserId = null;
+let targetReportId = null;
+
+// 1. Filter Buttons
+document.querySelectorAll("#reports-section .filters button").forEach(btn => {
+    btn.addEventListener("click", (e) => {
+        document.querySelectorAll("#reports-section .filters button").forEach(b => b.classList.remove("active"));
+        e.target.classList.add("active");
+        currentReportFilter = e.target.dataset.reportFilter;
+        loadReports();
+    });
+});
+
+// 2. Load Reports from Firestore (FULLY STABILIZED)
+function loadReports() {
+    const tbody = document.getElementById("reports-table");
+    if (!tbody) return;
+
+    onSnapshot(query(collection(db, "reports"), orderBy("timestamp", "desc")), async (snap) => {
+        tbody.innerHTML = "";
+        
+        for (const docSnap of snap.docs) {
+            const report = docSnap.data();
+            const reportId = docSnap.id;
+            
+            if ((report.status || "pending") !== currentReportFilter) continue;
+
+            let targetTitle = "Content Not Found";
+            let reportedRealName = "Name Hidden"; 
+            let reportedAlias = "No Alias";
+            let reportedUserId = null;
+
+            let reporterRealName = "Name Hidden";
+            let reporterAlias = "No Alias";
+
+            try {
+                // 1. FETCH REPORTER IDENTITY
+                if (report.reporterUid) {
+                    const reporterSnap = await getDoc(doc(db, "user", report.reporterUid));
+                    if (reporterSnap.exists()) {
+                        const rData = reporterSnap.data();
+                        // 🔥 PRIORITY: Google Name > Username > Alias
+                        reporterRealName = rData.name || rData.username || rData.alias || "Google User";
+                        reporterAlias = rData.alias || "No Alias";
+                    }
+                }
+
+                // 2. SEARCH ALL COLLECTIONS FOR THE CONTENT
+                const collections = ["posts", "pendingPosts", "rejectedPosts"];
+                let postData = null;
+
+                for (const colName of collections) {
+                    const postSnap = await getDoc(doc(db, colName, report.targetId));
+                    if (postSnap.exists()) {
+                        postData = postSnap.data();
+                        break; 
+                    }
+                }
+                
+                if (postData) {
+                    // 3. TARGET THE CORRECT USER (Commenter vs Poster)
+                    if (report.targetType === "post") {
+                        targetTitle = `Post: ${postData.title || "Untitled"}`;
+                        reportedUserId = postData.userId;
+                    } 
+                    else if (report.targetType === "comment" && postData.comments) {
+                        const comment = postData.comments[report.commentIndex];
+                        if (comment) {
+                            targetTitle = `Comment: "${comment.text.substring(0, 30)}..."`;
+                            // 🔥 Targeted UID of the specific commenter
+                            reportedUserId = comment.uid || comment.userId || null;
+                        }
+                    }
+
+                    // 4. FETCH THE OFFENDER'S IDENTITY
+                    if (reportedUserId) {
+                        const offenderSnap = await getDoc(doc(db, "user", reportedUserId));
+                        if (offenderSnap.exists()) {
+                            const aData = offenderSnap.data();
+                            reportedRealName = aData.name || aData.username || aData.alias || "Google User";
+                            reportedAlias = aData.alias || "No Alias";
+                        }
+                    }
+                }
+            } catch(e) { console.error("Identity fetch error:", e); }
+
+            const tr = document.createElement("tr");
+            tr.innerHTML = `
+                <td>
+                    <b>${targetTitle}</b><br>
+                    <div style="font-size: 13px; color: #4B5563; margin-top: 6px; line-height: 1.5;">
+                        Reported User: <strong>${reportedRealName}</strong> <span style="color:#DC2626; font-weight:700;">(@${reportedAlias})</span><br>
+                        Reported By: <strong>${reporterRealName}</strong> <span style="color:#10B981; font-weight:700;">(@${reporterAlias})</span>
+                    </div>
+                </td>
+                <td>
+                    <b>${report.reason || "No Reason"}</b><br>
+                    <span style="font-size: 12px; color: #6B7280;">"${report.description || "No description provided."}"</span>
+                </td>
+                <td><span class="status ${report.status || 'pending'}">${report.status || 'Pending'}</span></td>
+                <td class="action-cells">
+                    ${(report.status || 'pending') === 'pending' ? `
+                        <div style="display: flex; gap: 8px; justify-content: flex-end;">
+                            <button class="btn-pill action-success" onclick="resolveReport('${reportId}')">Ignore Flag</button>
+                            ${reportedUserId ? `
+                                <button class="btn-pill action-danger" style="background:#FEF3C7; color:#D97706;" onclick="suspendFromReport('${reportedUserId}', '${reportId}')">Suspend</button>
+                                <button class="btn-pill action-danger" style="background:#111827; color:white;" onclick="deleteUserFromReport('${reportedUserId}', '${reportId}')">Delete User</button>
+                            ` : `<span style="font-size: 11px; color: #EF4444;">ID Missing</span>`}
+                        </div>
+                    ` : `<span style="font-size: 12px; color: #9CA3AF;">Resolved</span>`}
+                </td>
+            `;
+            tbody.appendChild(tr);
+        }
+    });
+}
+
+window.resolveReport = async function(reportId) {
+    if (!confirm("Dismiss this report without taking action against the user?")) return;
+    await updateDoc(doc(db, "reports", reportId), { status: "resolved", resolvedAt: serverTimestamp() });
+};
+
+window.deleteUserFromReport = async function(userId, reportId) {
+    if (!confirm("WARNING: Permanently delete this user account? This cannot be undone.")) return;
+    await deleteDoc(doc(db, "user", userId)); 
+    await updateDoc(doc(db, "reports", reportId), { status: "resolved", resolvedAt: serverTimestamp() });
+    alert("User account deleted.");
+};
+
+// 🔥 NEW: Opens the Action Modal to get a reason instead of instantly suspending
+window.suspendFromReport = function(userId, reportId) {
+    targetReportUserId = userId;
+    targetReportId = reportId;
+    currentAction = "suspend_report"; // Tell the confirm button what to do
+    
+    // Set up the Modal UI
+    document.getElementById("modal-title").textContent = "Suspend User?";
+    document.getElementById("modal-text").textContent = "Provide a reason. The user will be notified and suspended.";
+    
+    const wrapper = document.getElementById("suspend-wrapper");
+    document.getElementById("suspend-reason").value = "";
+    wrapper.style.display = "block";
+    
+    const icon = document.getElementById("modal-header-icon");
+    icon.innerHTML = `<span class="material-icons">gavel</span>`;
+    icon.style.background = "#FEF3C7";
+    icon.style.color = "#D97706";
+
+    document.getElementById("action-modal").style.display = "block";
+    document.getElementById("overlay").style.display = "block";
+};
+
+// Trigger load on startup
+document.addEventListener("DOMContentLoaded", loadReports);

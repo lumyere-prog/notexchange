@@ -88,68 +88,114 @@ function loadNotifications() {
     orderBy("createdAt", "desc")
   );
 
+  // 🔥 This is the missing listener that fetches the data!
   onSnapshot(q, (snapshot) => {
-    container.innerHTML = "";
-
+    container.querySelectorAll('.notification').forEach(el => el.remove());
+    
     const emptyState = document.getElementById("emptyState");
-
-if (snapshot.empty) {
-  emptyState.style.display = "block";
-} else {
-  emptyState.style.display = "none";
-}
-
+    if (emptyState) {
+        emptyState.style.display = snapshot.empty ? "block" : "none";
+    }
 
     let unreadCount = 0;
 
- snapshot.forEach((docSnap) => {
-  const n = docSnap.data();
-  const notifId = docSnap.id; // 🔥 NEW: Grab the ID to mark it as read
+    snapshot.forEach((docSnap) => {
+      const n = docSnap.data();
+      const notifId = docSnap.id; 
 
-  if (!n.read) unreadCount++;
+      if (!n.read) unreadCount++;
 
-  let div = document.createElement("div");
-  div.className = "notification";
+      let div = document.createElement("div");
+      div.className = "notification";
 
-  // 🔥 NEW: This is the click listener that was missing!
-  div.onclick = () => {
-    openPostFromNotif(n.postId, n.type, n.fromUsername);
-    markRead(notifId); 
-  };
+      // 1. Identify if this is a System/Admin message
+      const isSystemNotif = n.type === "suspension" || n.type === "alert" || !n.postId;
 
-  // 🔴 unread dot (Kept from your original)
-  if (!n.read) {
-    let dot = document.createElement("div");
-    dot.className = "unread-dot";
-    div.appendChild(dot);
-  }
+      // 2. Set Click Behavior
+      div.onclick = () => {
+        markRead(notifId);
+        if (isSystemNotif) {
+          openSystemAlert(n.title, n.message); 
+        } else {
+          openPostFromNotif(n.postId, n.type, n.fromUsername);
+        }
+      };
 
-  // 🧠 ACTION TEXT (Kept from your original - DO NOT DELETE!)
-  let actionText = "";
+      // 🔴 unread dot
+      if (!n.read) {
+        let dot = document.createElement("div");
+        dot.className = "unread-dot";
+        div.appendChild(dot);
+      }
 
-  if (n.type === "upvote") actionText = "upvoted your post";
-  else if (n.type === "downvote") actionText = "downvoted your post";
-  else if (n.type === "comment") actionText = "commented on your post";
-  else if (n.type === "approve") actionText = "approved your post";
-  else if (n.type === "reject") actionText = "rejected your post";
-  else if (n.type === "archive") actionText = "archived your post";
-  else if (n.type === "restore") actionText = "restored your post to pending";
+      // 🧠 Determine Text to Display
+      let displayHTML = "";
 
-  div.innerHTML += `
-    <img class="avatar" src="${n.fromProfilePic || "/photos/logofinal.jpg"}">
-    <div class="notif-text">
-      <b>${n.fromUsername || "Admin"}</b> ${actionText}
-      <div class="time">${formatTime(n.createdAt)}</div>
-    </div>
-  `;
+      if (isSystemNotif) {
+        const msgText = n.message || ""; 
+        displayHTML = `
+          <img class="avatar" src="/photos/logofinal.jpg">
+          <div class="notif-text">
+            <b style="color: #DC2626;">System Alert:</b> ${n.title || "New Message"}
+            <div class="time" style="margin-top: 4px; font-size: 12px; color: #4B5563;">${msgText.substring(0, 40)}...</div>
+            <div class="time">${formatTime(n.createdAt)}</div>
+          </div>
+        `;
+      } else {
+        let actionText = "interacted with your post";
+        if (n.type === "upvote") actionText = "upvoted your post";
+        else if (n.type === "downvote") actionText = "downvoted your post";
+        else if (n.type === "comment") actionText = "commented on your post";
+        else if (n.type === "approve") actionText = "approved your post";
+        else if (n.type === "reject") actionText = "rejected your post";
+        else if (n.type === "archive") actionText = "archived your post";
+        else if (n.type === "restore") actionText = "restored your post to pending";
 
-  container.appendChild(div);
-});
+        displayHTML = `
+          <img class="avatar" src="${n.fromProfilePic || "/photos/logofinal.jpg"}">
+          <div class="notif-text">
+            <b>${n.fromUsername || "Admin"}</b> ${actionText}
+            <div class="time">${formatTime(n.createdAt)}</div>
+          </div>
+        `;
+      }
 
-    badge.innerText = unreadCount;
-    badge.style.display = unreadCount > 0 ? "block" : "none";
+      div.innerHTML += displayHTML;
+      container.appendChild(div);
+    });
+
+    const badge = document.getElementById("badgeCount");
+    if (badge) {
+        badge.innerText = unreadCount;
+        badge.style.display = unreadCount > 0 ? "block" : "none";
+    }
   });
 }
+
+
+/* =========================
+   OPEN SYSTEM ALERT (ADMIN MESSAGES)
+========================= */
+function openSystemAlert(title, message) {
+    const modal = document.getElementById("postModal");
+    const modalContent = document.querySelector(".modal-content");
+
+    modalContent.innerHTML = `
+        <span class="close" id="closeBtn">&times;</span>
+        <div style="text-align: center; padding: 20px 10px;">
+            <span class="material-icons" style="font-size: 48px; color: #DC2626; margin-bottom: 12px;">gavel</span>
+            <h3 style="color: #111827; margin-bottom: 12px;">${title || "System Alert"}</h3>
+            <p style="color: #4B5563; font-size: 14px; line-height: 1.6;">${message || "No further details provided."}</p>
+        </div>
+    `;
+
+    document.getElementById("closeBtn").onclick = () => {
+        modal.style.display = "none";
+    };
+
+    modal.style.display = "flex";
+}
+
 
 /* =========================
    MARK AS READ

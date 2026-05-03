@@ -64,7 +64,17 @@ export function initAuthGuard(callback) {
 }
 
 
-
+window.getInterestPillHTML = function(interest) {
+    const colors = [
+        { bg: '#FEE2E2', text: '#991B1B' }, { bg: '#FEF3C7', text: '#92400E' },
+        { bg: '#D1FAE5', text: '#065F46' }, { bg: '#DBEAFE', text: '#1E40AF' },
+        { bg: '#E0E7FF', text: '#3730A3' }, { bg: '#F3E8FF', text: '#6B21A8' },
+        { bg: '#FCE7F3', text: '#9D174D' }
+    ];
+    const colorIndex = interest.length % colors.length;
+    const color = colors[colorIndex];
+    return `<span style="background:${color.bg}; color:${color.text}; padding:4px 10px; border-radius:20px; font-size:11px; font-weight:700; display:inline-block; margin-right:4px; margin-bottom:4px;">${interest}</span>`;
+};
 
 
 
@@ -280,15 +290,37 @@ function loadPostsRealtime() {
       if (userId && post.userVotes && post.userVotes[userId] === 1) upClass = "upvoted"; 
       else if (userId && post.userVotes && post.userVotes[userId] === -1) downClass = "downvoted"; 
 
+      // 🔥 REPLACE THIS ENTIRE BLOCK IN loadPostsRealtime
       let commentsHTML = "";
       if (post.comments && post.comments.length > 0) {
-          post.comments.forEach(c => {
-              commentsHTML += `
-                  <div class="comment">
-                      <strong style="font-size: 12px; color: #111827;">${c.username}</strong>
-                      <div style="font-size: 14px; margin-top: 2px;">${c.text}</div>
+          commentsHTML = post.comments.map((c, index) => `
+              <div class="comment" style="position: relative; padding-right: 30px;">
+                  <strong style="font-size: 12px; color: #111827;">${c.username}</strong>
+                  <div style="font-size: 14px; margin-top: 2px;">${c.text}</div>
+                  
+                  <!-- 3-DOT MENU FOR COMMENTS (Home Feed) -->
+                  <div class="comment-menu-container" style="position: absolute; top: 5px; right: 5px;">
+                      <button class="comment-more-btn" style="background:none; border:none; cursor:pointer; color:#9CA3AF; padding: 4px;" onclick="event.stopPropagation(); toggleCommentMenu('${docSnap.id}-${index}')">
+                          <span class="material-icons" style="font-size: 18px;">more_vert</span>
+                      </button>
+                      
+                      <!-- FIXED DROPDOWN WIDTH & WRAPPING -->
+                      <div id="commentMenu-${docSnap.id}-${index}" class="comment-dropdown" style="display:none; position:absolute; right:0; background:white; border:1px solid #E5E7EB; border-radius:8px; box-shadow:0 4px 6px -1px rgba(0,0,0,0.1); z-index:100; min-width: 120px; white-space: nowrap;">
+                          <button onclick="event.stopPropagation(); openReportModal('${docSnap.id}', 'comment', ${index})" style="padding: 10px 16px; border:none; background:none; width:100%; text-align:left; font-size:13px; cursor:pointer; color:#EF4444; font-weight:600; display:flex; align-items:center; gap:8px;">
+                              <span class="material-icons" style="font-size:16px;">flag</span> Report
+                          </button>
+                      </div>
                   </div>
-              `;
+              </div>
+          `).join("");
+      }
+
+      let interestsHTML = "";
+      if (post.interests && Array.isArray(post.interests)) {
+          post.interests.forEach(tag => {
+              if (typeof window.getInterestPillHTML === "function") {
+                  interestsHTML += window.getInterestPillHTML(tag);
+              }
           });
       }
 
@@ -298,15 +330,34 @@ function loadPostsRealtime() {
       card.addEventListener("click", () => openPost(docSnap.id));
       card.dataset.category = post.subject; // ✅ ADDED
 
-      card.innerHTML = `
-        <div class="note-preview">
-          <div class="note-preview-text">${post.description || "No description"}</div>
-          <p class="note-code">${post.subject || ""}</p>
-          <h3 class="note-title">${post.title || "Untitled"}</h3>
-          <div class="note-author">
-          <img src="${post.profilePic || "/photos/profile.jpg"}" class="author-pic">  
-            <span>${post.username || "Unknown"}</span>
-          </div>
+      // Replace the innerHTML block inside loadPostsRealtime
+    card.innerHTML = `
+    <div class="note-preview">
+            <!-- 🔥 DIRECT FLAG BUTTON FOR POSTS -->
+            <div style="position: relative; display: flex; justify-content: space-between; align-items: flex-start;">
+                <h3 class="note-title" style="margin:0; padding-right: 24px;">${post.title || "Untitled"}</h3>
+                
+                <!-- Instant Report Button -->
+                <div style="position: absolute; top: -5px; right: -5px;">
+                    <button onclick="event.stopPropagation(); openReportModal('${docSnap.id}', 'post')" style="background:none; border:none; cursor:pointer; color:#9CA3AF; padding: 4px; transition: color 0.2s;" onmouseover="this.style.color='#EF4444'" onmouseout="this.style.color='#9CA3AF'" title="Report Post">
+                        <span class="material-icons" style="font-size: 20px;">flag</span>
+                    </button>
+                </div>
+            </div>
+
+        <p class="note-code">${post.subject || ""}</p>
+        <div class="note-preview-text">${post.description || "No description"}</div>
+        
+        <!-- Clickable Author Section with larger profile pic layout -->
+        <div class="note-author" onclick="event.stopPropagation(); openUserCard('${post.userId}')" style="display:flex; align-items: flex-start; gap:12px; margin-top: 12px; padding-top: 12px; border-top: 1px solid #F3F4F6; cursor: pointer;">
+            <img src="${post.profilePic || "/photos/profile.jpg"}" style="width: 40px; height: 40px; border-radius: 50%; object-fit: cover; flex-shrink: 0;">
+            <div style="display:flex; flex-direction:column; gap:4px;">
+                <span style="font-weight: 700; font-size: 14px; color: #111827;">${post.alias || post.username || post.name || "Anonymous"}</span>
+                <div class="note-interests" style="display: flex; flex-wrap: wrap; gap: 4px;">
+                    ${interestsHTML}
+                </div>
+            </div>
+        </div>
 
           <div class="note-footer">
             <div class="vote-box">
@@ -430,16 +481,27 @@ async function openPost(postId, showComments = false){
   else if (userId && post.userVotes && post.userVotes[userId] === -1) downClass = "downvoted";
 
   let commentsHTML = "";
-  if (post.comments && post.comments.length > 0) {
-      post.comments.forEach(c => {
-          commentsHTML += `
-              <div class="comment">
-                  <strong style="font-size: 12px; color: #9D182B;">${c.username}</strong>
-                  <div style="font-size: 14px; margin-top: 2px;">${c.text}</div>
-              </div>
-          `;
-      });
-  }
+if (post.comments && post.comments.length > 0) {
+    commentsHTML = post.comments.map((c, index) => `
+        <div class="comment" style="position: relative; padding-right: 30px;">
+            <strong style="font-size: 12px; color: #111827;">${c.username}</strong>
+            <div style="font-size: 14px; margin-top: 2px;">${c.text}</div>
+            
+            <!-- 3-Dot Menu for Reporting Comment -->
+            <div class="comment-menu-container" style="position: absolute; top: 5px; right: 5px;">
+                <button class="comment-more-btn" style="background:none; border:none; cursor:pointer; color:#9CA3AF;" onclick="event.stopPropagation(); toggleCommentMenu(${index})">
+                    <span class="material-icons" style="font-size: 18px;">more_vert</span>
+                </button>
+                
+                <div id="commentMenu-${index}" class="comment-dropdown" style="display:none; position:absolute; right:0; background:white; border:1px solid #E5E7EB; border-radius:8px; box-shadow:0 4px 6px -1px rgba(0,0,0,0.1); z-index:100; min-width: 120px; white-space: nowrap;">
+                    <button onclick="openReportModal('${postId}', 'comment', ${index})" style="padding: 8px 16px; border:none; background:none; width:100%; text-align:left; font-size:12px; cursor:pointer; color:#EF4444; font-weight:600; display:flex; align-items:center; gap:6px;">
+                        <span class="material-icons" style="font-size:14px;">flag</span> Report
+                    </button>
+                </div>
+            </div>
+        </div>
+    `).join("");
+}
 
   body.innerHTML = `
     <h3>${post.title}</h3>
@@ -837,11 +899,34 @@ async function submitComment(event, postId, btn) {
   const user = JSON.parse(localStorage.getItem("user"));
   if (!user) return alert("You must be logged in to comment!");
 
+// 🔥 ADMIN RESTRICTION CHECK (Gets fresh data from Firestore)
+  const userRef = doc(db, "user", user.uid);
+  const userSnap = await getDoc(userRef);
+  if (userSnap.exists()) {
+      const userData = userSnap.data();
+      
+      // Check Full Lockdown OR specific Comment Block
+      if (userData.state === "suspended" || userData.restrictions?.commentBlock === true) {
+          const restrictionMsg = document.getElementById("restrictionMessage");
+          const restrictionModalWrapper = document.getElementById("restrictionModalWrapper");
+
+          if (restrictionMsg && restrictionModalWrapper) {
+              restrictionMsg.textContent = "Your account is restricted from commenting. Reason: " + (userData.suspendReason || "Admin action.");
+              restrictionModalWrapper.style.display = "flex";
+          }
+          
+          const input = btn.previousElementSibling;
+          if (input) input.value = ""; // Clear their typed text
+          return; // Stop the comment submission
+      }
+  }
+
   const input = btn.previousElementSibling;
   const text = input.value.trim();
   if (text === "") return;
 
   const newComment = {
+    uid: user.uid,
     username: user.username || user.name || "Anonymous",
     text: text,
     timestamp: new Date().toISOString()
@@ -1170,3 +1255,194 @@ function syncBellCounter() {
 
 // Start the listener
 syncBellCounter();
+
+// =========================================
+// 1. FLOATING USER CARD LOGIC
+// =========================================
+// =========================================
+// 1. FLOATING USER CARD LOGIC
+// =========================================
+window.openUserCard = async function(targetUserId) {
+    // 🔥 FIXED: Removed the block preventing you from clicking your own card!
+    if (!targetUserId || targetUserId === 'undefined') {
+        return showToast("User data not available for this post.");
+    }
+
+    const modal = document.getElementById("userCardModal");
+    if (!modal) return console.error("User Card Modal HTML is missing!");
+
+    // Reset UI while loading
+    document.getElementById("uc-alias").textContent = "Loading...";
+    document.getElementById("uc-username").textContent = "";
+    document.getElementById("uc-bio").textContent = "";
+    document.getElementById("uc-interests").innerHTML = "";
+    document.getElementById("uc-posts").textContent = "...";
+    document.getElementById("uc-pic").src = "/photos/profile.jpg";
+
+    modal.style.display = "flex";
+
+    try {
+        // Fetch User Info
+        const userRef = doc(db, "user", targetUserId);
+        const userSnap = await getDoc(userRef);
+        if (userSnap.exists()) {
+            const data = userSnap.data();
+            document.getElementById("uc-alias").textContent = data.alias || data.name || "Anonymous";
+            document.getElementById("uc-username").textContent = data.username ? "@" + data.username : "";
+            document.getElementById("uc-bio").textContent = data.bio || "No bio available.";
+            document.getElementById("uc-pic").src = data.profilePic || "/photos/profile.jpg";
+
+            let pills = "";
+            if (data.interests && Array.isArray(data.interests)) {
+                data.interests.forEach(tag => {
+                    pills += window.getInterestPillHTML(tag);
+                });
+            }
+            document.getElementById("uc-interests").innerHTML = pills;
+        }
+
+        // 🔥 FIXED: Wrapped in its own try/catch so missing indexes don't break the profile
+        try {
+            const postsQuery = query(collection(db, "posts"), where("userId", "==", targetUserId));
+            const postsSnap = await getDocs(postsQuery);
+            document.getElementById("uc-posts").textContent = postsSnap.size;
+        } catch (indexError) {
+            console.warn("Index needed for post counts:", indexError);
+            document.getElementById("uc-posts").textContent = "N/A";
+        }
+
+    } catch (error) {
+        console.error("Error fetching user data:", error);
+        document.getElementById("uc-alias").textContent = "Error loading user";
+    }
+};
+
+window.closeUserCard = function() {
+    document.getElementById("userCardModal").style.display = "none";
+};
+
+// =========================================
+// 2. UNIVERSAL REPORTING SYSTEM
+// =========================================
+let pendingReportData = null;
+const REPORT_REASONS = ["Spam", "Harassment", "Hate Speech", "Inappropriate Content"];
+let selectedReason = "";
+
+function showToast(message) {
+    const toast = document.getElementById("toast");
+    if(toast) {
+        toast.textContent = message;
+        toast.classList.add("show");
+        setTimeout(() => toast.classList.remove("show"), 3000);
+    }
+}
+
+window.togglePostMenu = function(postId) {
+    const menu = document.getElementById(`postMenu-${postId}`);
+    document.querySelectorAll('.post-dropdown, .comment-dropdown').forEach(m => { if(m !== menu) m.style.display = 'none'; });
+    if (menu) menu.style.display = menu.style.display === 'block' ? 'none' : 'block';
+};
+
+window.toggleCommentMenu = function(index) {
+    const menu = document.getElementById(`commentMenu-${index}`);
+    document.querySelectorAll('.comment-dropdown, .post-dropdown').forEach(m => { if(m !== menu) m.style.display = 'none'; });
+    if (menu) menu.style.display = menu.style.display === 'block' ? 'none' : 'block';
+};
+
+window.openReportModal = function(targetId, type, commentIndex = null) {
+    pendingReportData = { targetId, type, commentIndex };
+    selectedReason = ""; 
+    
+    document.getElementById("reportModal").style.display = "flex";
+    document.getElementById("reportModalTitle").textContent = type === 'post' ? "Report Post" : "Report Comment";
+    document.getElementById("selectedReasonText").textContent = "Select a reason";
+    document.getElementById("reportDescription").value = "";
+    
+    const listContainer = document.getElementById("reportOptionsList");
+    listContainer.innerHTML = REPORT_REASONS.map(reason => `
+        <div style="padding: 12px; border-bottom: 1px solid #E5E7EB; cursor: pointer; font-size: 14px;" onclick="handleSelectReason('${reason}')">
+            ${reason}
+        </div>
+    `).join("");
+    
+    document.querySelectorAll('.comment-dropdown, .post-dropdown').forEach(m => m.style.display = 'none');
+    window.validateReport(); 
+};
+
+window.closeReportModal = function() {
+    pendingReportData = null;
+    document.getElementById("reportModal").style.display = "none";
+};
+
+window.toggleReportDropdown = function() {
+    const list = document.getElementById("reportOptionsList");
+    list.style.display = list.style.display === "block" ? "none" : "block";
+};
+
+window.handleSelectReason = function(reason) {
+    selectedReason = reason;
+    document.getElementById("selectedReasonText").textContent = reason;
+    window.toggleReportDropdown();
+    window.validateReport(); 
+};
+
+window.validateReport = function() {
+    const description = document.getElementById("reportDescription").value;
+    const submitBtn = document.getElementById("submitReportBtn");
+    const indicator = document.getElementById("charCount");
+    const isReasonSelected = selectedReason !== "";
+    const isUnderLimit = description.length <= 100;
+
+    if (isReasonSelected && isUnderLimit) {
+        submitBtn.disabled = false;
+        submitBtn.style.opacity = "1";
+        submitBtn.style.cursor = "pointer";
+    } else {
+        submitBtn.disabled = true;
+        submitBtn.style.opacity = "0.5";
+        submitBtn.style.cursor = "not-allowed";
+    }
+
+    if (indicator) {
+        indicator.textContent = `${description.length} / 100`;
+        indicator.style.color = isUnderLimit ? "#9CA3AF" : "#EF4444";
+    }
+};
+
+window.submitReport = async function() {
+    if (!pendingReportData || !currentUser) return;
+    
+    const submitBtn = document.getElementById("submitReportBtn");
+    submitBtn.disabled = true;
+    submitBtn.textContent = "Sending...";
+
+    try {
+        await setDoc(doc(collection(db, "reports")), {
+            targetId: pendingReportData.targetId,
+            targetType: pendingReportData.type,
+            commentIndex: pendingReportData.commentIndex,
+            reporterUid: currentUser.uid,
+            reason: selectedReason,
+            description: document.getElementById("reportDescription").value,
+            status: "pending",
+            timestamp: serverTimestamp()
+        });
+
+        window.closeReportModal();
+        showToast("Report sent successfully");
+
+    } catch (error) {
+        console.error("Error submitting report:", error);
+        showToast("Error sending report");
+    } finally {
+        submitBtn.disabled = false;
+        submitBtn.textContent = "Submit";
+    }
+};
+
+// Close dropdowns if clicked outside
+document.addEventListener('click', (e) => {
+    if (!e.target.closest('.post-menu-container') && !e.target.closest('.comment-menu-container')) {
+        document.querySelectorAll('.post-dropdown, .comment-dropdown').forEach(m => m.style.display = 'none');
+    }
+});

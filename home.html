@@ -139,7 +139,87 @@
         </div>
     </div>
 
+    <!-- ===================================== -->
+<!-- 1. MOBILE TOAST NOTIFICATION          -->
+<!-- ===================================== -->
+<div id="toast" class="toast-hidden"></div>
+<style>
+#toast {
+    position: fixed; bottom: 80px; left: 50%; transform: translateX(-50%);
+    background-color: #333; color: #fff; padding: 12px 24px;
+    border-radius: 30px; font-size: 14px; z-index: 10000;
+    opacity: 0; transition: opacity 0.3s, bottom 0.3s;
+    pointer-events: none; white-space: nowrap;
+}
+#toast.show { opacity: 1; bottom: 100px; }
+</style>
+
+<!-- ===================================== -->
+<!-- 2. FLOATING USER CARD MODAL           -->
+<!-- ===================================== -->
+<div id="userCardModal" class="reward-modal" onclick="closeUserCard()">
+    <div class="reward-content" style="padding: 30px 20px; text-align: center; border-radius: 24px; max-width: 320px; width: 90%; margin: auto; position: relative;" onclick="event.stopPropagation()">
+        
+        <!-- Close button for better mobile UX -->
+        <button onclick="closeUserCard()" style="position: absolute; top: 16px; right: 16px; background: none; border: none; font-size: 20px; color: #9CA3AF; cursor: pointer; display: flex; align-items: center; justify-content: center; width: 32px; height: 32px; border-radius: 50%;" onmouseover="this.style.background='#F3F4F6'" onmouseout="this.style.background='none'">✕</button>
+
+        <!-- 🔥 Forced Center Image -->
+        <img id="uc-pic" src="" style="display: block; width: 80px; height: 80px; border-radius: 50%; object-fit: cover; margin: 0 auto 16px auto; border: 3px solid #F3F4F6; box-shadow: 0 4px 8px rgba(0,0,0,0.05);">
+        
+        <h3 id="uc-alias" style="margin: 0; font-size: 22px; color: #111827; font-weight: 800;"></h3>
+        <p id="uc-username" style="font-size: 14px; color: #6B7280; margin: 4px 0 16px 0; font-weight: 500;"></p>
+        
+        <div id="uc-bio" style="font-size: 14px; color: #374151; margin-bottom: 20px; line-height: 1.5; padding: 0 10px;"></div>
+        
+        <div id="uc-interests" style="display: flex; flex-wrap: wrap; justify-content: center; gap: 6px; margin-bottom: 24px;"></div>
+        
+        <div style="font-size: 15px; font-weight: 700; color: #111827; padding-top: 16px; border-top: 1px solid #F3F4F6;">
+            Total Posts: <span id="uc-posts" style="color: #DC2626; font-size: 16px;">0</span>
+        </div>
+    </div>
+</div>
+
+<!-- ===================================== -->
+<!-- 3. REPORT FLAG MODAL                  -->
+<!-- ===================================== -->
+<div id="reportModal" class="post-modal" onclick="if(event.target===this) closeReportModal()">
+    <div class="modal-content" style="max-width: 320px;">
+        <h3 id="reportModalTitle" style="margin-top:0; color:#111827; font-weight:800;">Report</h3>
+        <p style="font-size: 14px; color: #6B7280; margin-bottom: 16px;">Why are you reporting this?</p>
+        
+        <div style="position:relative; margin-bottom: 16px;">
+            <button id="reportTrigger" type="button" onclick="toggleReportDropdown()" style="width:100%; padding:10px; border-radius:8px; border:1px solid #E5E7EB; background:#F9FAFB; text-align:left; display:flex; justify-content:space-between; align-items:center;">
+                <span id="selectedReasonText" style="color: #111827;">Select a reason</span>
+                <span class="material-icons" style="font-size:18px;">expand_more</span>
+            </button>
+            <div id="reportOptionsList" style="display:none; position:absolute; top:100%; left:0; width:100%; background:white; border:1px solid #E5E7EB; border-radius:8px; box-shadow:0 4px 12px rgba(0,0,0,0.1); z-index:10;"></div>
+        </div>
+
+        <textarea id="reportDescription" placeholder="Additional details (optional)..." oninput="validateReport()" style="width:100%; height:80px; padding:10px; border-radius:8px; border:1px solid #E5E7EB; resize:none; font-family:inherit; margin-bottom:4px; outline:none; color: #111827;"></textarea>
+        <div style="text-align:right; font-size:12px; color:#9CA3AF; margin-bottom:16px;"><span id="charCount">0 / 100</span></div>
+
+        <div style="display:flex; gap:10px;">
+            <button onclick="closeReportModal()" style="flex:1; padding:10px; border:none; background:#F3F4F6; color:#374151; border-radius:10px; font-weight:600; cursor:pointer;">Cancel</button>
+            <button id="submitReportBtn" onclick="submitReport()" disabled style="flex:1; padding:10px; border:none; background:#9D182B; color:white; border-radius:10px; font-weight:600; cursor:not-allowed; opacity:0.5;">Submit</button>
+        </div>
+    </div>
+</div>
     
+
+<!-- Custom Restriction Modal Wrapper -->
+<div id="restrictionModalWrapper" style="display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.6); z-index: 99999; justify-content: center; align-items: center; backdrop-filter: blur(2px);">
+    <div style="background: white; padding: 24px; border-radius: 16px; width: 90%; max-width: 350px; text-align: center; box-shadow: 0 20px 40px rgba(0,0,0,0.2);">
+        <div style="background: #FEE2E2; color: #DC2626; width: 56px; height: 56px; border-radius: 50%; display: flex; justify-content: center; align-items: center; margin: 0 auto;">
+            <span class="material-icons" style="font-size: 28px;">block</span>
+        </div>
+        <h3 style="margin-top: 16px; font-weight: 800; color: #111827; font-size: 20px;">Action Restricted</h3>
+        <p id="restrictionMessage" style="color: #4B5563; font-size: 14px; margin: 12px 0 24px 0; line-height: 1.5;"></p>
+        <button onclick="document.getElementById('restrictionModalWrapper').style.display='none';" style="background: #111827; color: white; border: none; padding: 14px 24px; border-radius: 12px; font-weight: 700; font-size: 15px; cursor: pointer; width: 100%;">
+            Understood
+        </button>
+    </div>
+</div>
+
     <script type="module" src="/js/chatbotscript.js"></script>
     <script type="module" src="/js/auth-state.js?v=2"></script>
     <script type="module" src="/js/home.js"></script>
