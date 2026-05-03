@@ -29,9 +29,7 @@
             <div class="hero-text">
                 <h1>FROM ONE STUDENT TO ANOTHER, KNOWLEDGE THAT CONNECTS.</h1>
                 <p>Designed to help students easily share, discover, and access academic resources within <strong>QUEZON CITY UNIVERSITY</strong> community.</p>
-                <a href="#" class="download-btn-small" onclick="installApp(); return false;">
-    Download <span class="material-icons" style="font-size: 16px;">file_download</span>
-</a>
+                <a href="/apk/NoteX-signed.apk" download id="installBtn" onclick="showInstallInstructions()" style="display: inline-block; background: white; color: black; padding: 12px 24px; text-decoration: none; border-radius: 8px; font-weight: bold; margin-top: 16px;">Install App</a>
                 
             </div>
             <div class="hero-image">
@@ -176,6 +174,10 @@
                 observer.observe(el);
             });
         });
+
+        function showInstallInstructions() {
+            alert("Downloading NoteXchange! 🚀\n\nWhen the download finishes, tap 'Open' on the notification at the top or bottom of your screen to install the app.");
+        }
     </script>
     <script src="install.js"></script>
     <link rel="manifest" href="/manifest.json">
