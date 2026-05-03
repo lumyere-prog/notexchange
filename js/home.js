@@ -249,11 +249,12 @@ function generateCategories(categoryList) {
     if (category === "All") button.classList.add("active");
 
     button.addEventListener("click", () => {
-  document.querySelectorAll(".category").forEach(btn => btn.classList.remove("active"));
-  button.classList.add("active");
+    document.querySelectorAll(".category").forEach(btn => btn.classList.remove("active"));
+    button.classList.add("active");
 
   selectedCategory = category;
-applyCategoryFilter();          // 👈 reload posts
+  currentRenderCount = 8; // 🔥 Reset scroll depth for the new category
+  renderCurrentBatch();
 }); 
     container.appendChild(button);
   });
@@ -278,65 +279,80 @@ function applyCategoryFilter() {
 
 
 
-// 🔥 NEW: Variables to control the Infinite Scroll
-let currentLimit = 8;
-let postListener = null;
 
-function loadPostsRealtime() {
+
+// 🔥 NEW: Variables to control the Batch & Shuffle Feed
+let allShuffledPosts = [];
+let currentRenderCount = 8;
+
+async function loadRandomFeed() {
   const container = document.getElementById("notesFeed");
+  container.innerHTML = "<div style='text-align:center; padding:40px; color:#6B7280; font-weight:bold;'>Getting the good stuff... </div>";
+
+  try {
+      // 1. Fetch a large pool of recent posts (up to 150)
+      const q = query(collection(db, "posts"), orderBy("timestamp", "desc"), limit(150));
+      const snapshot = await getDocs(q);
+      
+      let tempPosts = [];
+      snapshot.forEach(docSnap => tempPosts.push({ id: docSnap.id, data: docSnap.data() }));
+
+      // 2. The Magic Shuffle (Fisher-Yates style randomizer)
+      allShuffledPosts = tempPosts.sort(() => Math.random() - 0.5);
+
+      // 3. Render the very first batch
+      currentRenderCount = 8;
+      renderCurrentBatch();
+  } catch (error) {
+      console.error("Error loading random feed:", error);
+  }
+}
+
+function renderCurrentBatch() {
+  const container = document.getElementById("notesFeed");
+  container.innerHTML = ""; // Clear feed for a clean render
   const userId = currentUser ? currentUser.uid : null;
 
-  // 🔥 Stop the old listener before creating a new one with a bigger limit
-  if (postListener) postListener();
+  // 1. Filter the massive shuffled array by the active Category Tab
+  const filteredPosts = allShuffledPosts.filter(postObj => {
+      return selectedCategory === "All" || postObj.data.subject === selectedCategory;
+  });
 
-  const q = query(
-    collection(db, "posts"),
-    orderBy("timestamp", "desc"),
-    limit(currentLimit)
-  );
+  // 2. Take only the amount we are allowed to show (Infinite Scroll limit)
+  const batchToRender = filteredPosts.slice(0, currentRenderCount);
 
-  postListener = onSnapshot(q, (snapshot) => {
-    // 🔥 REMOVED container.innerHTML = ""; 
-    // We use docChanges() to cleanly insert, update, or remove without breaking the screen!
-    snapshot.docChanges().forEach(change => {
-      const docSnap = change.doc;
+  if (batchToRender.length === 0) {
+      container.innerHTML = "<div style='text-align:center; padding:40px; color:#6B7280; font-weight:600;'>No notes found in this category.</div>";
+      return;
+  }
 
-      // If a post was deleted by an admin, safely remove it from the screen
-      if (change.type === "removed") {
-          const oldCard = document.querySelector(`.note-card[data-postid="${docSnap.id}"]`);
-          if (oldCard) oldCard.remove();
-          return; // Skip the rest of the loop
-      }
+  // 3. Draw the cards!
+  batchToRender.forEach(postObj => {
+      const docId = postObj.id;
+      const post = postObj.data;
 
-      const post = docSnap.data();
       const fullDesc = (post.description || "No description").trim();
       const isLong = fullDesc.length > 150; 
       const displayDesc = isLong ? fullDesc.substring(0, 150) + "..." : fullDesc;
-      const safeFullDesc = fullDesc.replace(/"/g, '&quot;').replace(/\n/g, '&#10;');
+      const safeFullDesc = encodeURIComponent(fullDesc);
       
       let upClass = "";
       let downClass = "";
-      
       if (userId && post.userVotes && post.userVotes[userId] === 1) upClass = "upvoted"; 
       else if (userId && post.userVotes && post.userVotes[userId] === -1) downClass = "downvoted"; 
 
-      // 🔥 REPLACE THIS ENTIRE BLOCK IN loadPostsRealtime
       let commentsHTML = "";
       if (post.comments && post.comments.length > 0) {
           commentsHTML = post.comments.map((c, index) => `
               <div class="comment" style="position: relative; padding-right: 30px;">
                   <strong style="font-size: 12px; color: #111827;">${c.username}</strong>
                   <div style="font-size: 14px; margin-top: 2px;">${c.text}</div>
-                  
-                  <!-- 3-DOT MENU FOR COMMENTS (Home Feed) -->
                   <div class="comment-menu-container" style="position: absolute; top: 5px; right: 5px;">
-                      <button class="comment-more-btn" style="background:none; border:none; cursor:pointer; color:#9CA3AF; padding: 4px;" onclick="event.stopPropagation(); toggleCommentMenu('${docSnap.id}-${index}')">
+                      <button class="comment-more-btn" style="background:none; border:none; cursor:pointer; color:#9CA3AF; padding: 4px;" onclick="event.stopPropagation(); toggleCommentMenu('${docId}-${index}')">
                           <span class="material-icons" style="font-size: 18px;">more_vert</span>
                       </button>
-                      
-                      <!-- FIXED DROPDOWN WIDTH & WRAPPING -->
-                      <div id="commentMenu-${docSnap.id}-${index}" class="comment-dropdown" style="display:none; position:absolute; right:0; background:white; border:1px solid #E5E7EB; border-radius:8px; box-shadow:0 4px 6px -1px rgba(0,0,0,0.1); z-index:100; min-width: 120px; white-space: nowrap;">
-                          <button onclick="event.stopPropagation(); openReportModal('${docSnap.id}', 'comment', ${index})" style="padding: 10px 16px; border:none; background:none; width:100%; text-align:left; font-size:13px; cursor:pointer; color:#EF4444; font-weight:600; display:flex; align-items:center; gap:8px;">
+                      <div id="commentMenu-${docId}-${index}" class="comment-dropdown" style="display:none; position:absolute; right:0; background:white; border:1px solid #E5E7EB; border-radius:8px; box-shadow:0 4px 6px -1px rgba(0,0,0,0.1); z-index:100; min-width: 120px; white-space: nowrap;">
+                          <button onclick="event.stopPropagation(); openReportModal('${docId}', 'comment', ${index})" style="padding: 10px 16px; border:none; background:none; width:100%; text-align:left; font-size:13px; cursor:pointer; color:#EF4444; font-weight:600; display:flex; align-items:center; gap:8px;">
                               <span class="material-icons" style="font-size:16px;">flag</span> Report
                           </button>
                       </div>
@@ -348,151 +364,86 @@ function loadPostsRealtime() {
       let interestsHTML = "";
       if (post.interests && Array.isArray(post.interests)) {
           post.interests.forEach(tag => {
-              if (typeof window.getInterestPillHTML === "function") {
-                  interestsHTML += window.getInterestPillHTML(tag);
-              }
+              if (typeof window.getInterestPillHTML === "function") interestsHTML += window.getInterestPillHTML(tag);
           });
       }
 
       const card = document.createElement("div");
       card.className = "note-card";
-      card.dataset.postid = docSnap.id;
-      card.addEventListener("click", () => openPost(docSnap.id));
-      card.dataset.category = post.subject; // ✅ ADDED
+      card.dataset.postid = docId;
+      card.dataset.category = post.subject; 
+      card.addEventListener("click", () => openPost(docId));
 
-      // Replace the innerHTML block inside loadPostsRealtime
-    card.innerHTML = `
-    <div class="note-preview">
-            <!-- 🔥 DIRECT FLAG BUTTON FOR POSTS -->
+      card.innerHTML = `
+        <div class="note-preview">
             <div style="position: relative; display: flex; justify-content: space-between; align-items: flex-start;">
                 <h3 class="note-title" style="margin:0; padding-right: 24px;">${post.title || "Untitled"}</h3>
-                
-                <!-- Instant Report Button -->
                 <div style="position: absolute; top: -5px; right: -5px;">
-                    <button onclick="event.stopPropagation(); openReportModal('${docSnap.id}', 'post')" style="background:none; border:none; cursor:pointer; color:#9CA3AF; padding: 4px; transition: color 0.2s;" onmouseover="this.style.color='#EF4444'" onmouseout="this.style.color='#9CA3AF'" title="Report Post">
+                    <button onclick="event.stopPropagation(); openReportModal('${docId}', 'post')" style="background:none; border:none; cursor:pointer; color:#9CA3AF; padding: 4px; transition: color 0.2s;" onmouseover="this.style.color='#EF4444'" onmouseout="this.style.color='#9CA3AF'" title="Report Post">
                         <span class="material-icons" style="font-size: 20px;">flag</span>
                     </button>
                 </div>
             </div>
 
-        <p class="note-code">${post.subject || ""}</p>
-        
-        <div class="note-preview-text" id="desc-${docSnap.id}" data-fulldesc="${safeFullDesc}" style="white-space: pre-wrap;">${displayDesc.replace(/</g, '&lt;').replace(/>/g, '&gt;')}${isLong ? `\n\n<span class="read-more-btn" style="color: #3B82F6; font-weight: bold; cursor: pointer; display: block; margin-top: 4px;" onclick="event.stopPropagation(); toggleReadMore('${docSnap.id}')">Read More</span>` : ""}</div>
-        
-        <!-- Clickable Author Section with larger profile pic layout -->
-        
-        <!-- Clickable Author Section with larger profile pic layout -->
-        <div class="note-author" onclick="event.stopPropagation(); openUserCard('${post.userId}')" style="display:flex; align-items: flex-start; gap:12px; margin-top: 12px; padding-top: 12px; border-top: 1px solid #F3F4F6; cursor: pointer;">
-            <img src="${post.profilePic || "/photos/profile.jpg"}" style="width: 40px; height: 40px; border-radius: 50%; object-fit: cover; flex-shrink: 0;">
-            <div style="display:flex; flex-direction:column; gap:4px;">
-                <span style="font-weight: 700; font-size: 14px; color: #111827;">${post.alias || post.username || post.name || "Anonymous"}</span>
-                <div class="note-interests" style="display: flex; flex-wrap: wrap; gap: 4px;">
-                    ${interestsHTML}
+            <p class="note-code">${post.subject || ""}</p>
+            <div class="note-preview-text" id="desc-${docId}" data-fulldesc="${safeFullDesc}" style="white-space: pre-wrap;">${displayDesc.replace(/</g, '&lt;').replace(/>/g, '&gt;')}${isLong ? `\n\n<span class="read-more-btn" style="color: #3B82F6; font-weight: bold; cursor: pointer; display: block; margin-top: 4px;" onclick="event.stopPropagation(); toggleReadMore('${docId}')">Read More</span>` : ""}</div>
+            
+            <div class="note-author" onclick="event.stopPropagation(); openUserCard('${post.userId}')" style="display:flex; align-items: flex-start; gap:12px; margin-top: 12px; padding-top: 12px; border-top: 1px solid #F3F4F6; cursor: pointer;">
+                <img src="${post.profilePic || "/photos/profile.jpg"}" style="width: 40px; height: 40px; border-radius: 50%; object-fit: cover; flex-shrink: 0;">
+                <div style="display:flex; flex-direction:column; gap:4px;">
+                    <span style="font-weight: 700; font-size: 14px; color: #111827;">${post.alias || post.username || post.name || "Anonymous"}</span>
+                    <div class="note-interests" style="display: flex; flex-wrap: wrap; gap: 4px;">
+                        ${interestsHTML}
+                    </div>
                 </div>
             </div>
-        </div>
 
-          <div class="note-footer">
-            <div class="vote-box">
-              <button class="vote-btn upvote-btn ${upClass}"><span class="material-icons">arrow_upward</span></button>
-              <span id="voteCount" class="vote-count">${post.upvotes || 0} |  ${post.downvotes || 0}</span>
-              <button class="vote-btn downvote-btn ${downClass}"><span class="material-icons">arrow_downward</span></button>
+            <div class="note-footer">
+                <div class="vote-box">
+                  <button class="vote-btn upvote-btn ${upClass}"><span class="material-icons">arrow_upward</span></button>
+                  <span id="voteCount" class="vote-count">${post.upvotes || 0} |  ${post.downvotes || 0}</span>
+                  <button class="vote-btn downvote-btn ${downClass}"><span class="material-icons">arrow_downward</span></button>
+                </div>
+
+                <div style="display: flex; align-items: center; gap: 4px;">
+                    <button class="fav-btn" data-postid="${docId}" onclick="toggleFav(event, this, '${docId}')">🔖</button>
+                    <button class="comment-icon-btn" onclick="toggleComments(event, this, '${docId}')"><span class="material-icons">chat_bubble_outline</span></button>
+                    <button class="open-file-btn" onclick="event.stopPropagation(); openFileModal('${post.fileURL}', '${post.title}', '${post.fileName || "Unknown File"}')"><span class="material-icons" style="font-size: 18px;">description</span> Open</button>
+                </div>
             </div>
 
-            <div style="display: flex; align-items: center; gap: 4px;">
-                <button class="fav-btn" data-postid="${docSnap.id}" onclick="toggleFav(event, this, '${docSnap.id}')">🔖</button>
-                <button class="comment-icon-btn" onclick="toggleComments(event, this, '${docSnap.id}')"><span class="material-icons">chat_bubble_outline</span></button>
-                  <button class="open-file-btn"
-  onclick="event.stopPropagation(); openFileModal(
-    '${post.fileURL}',
-    '${post.title}',
-    '${post.fileName || "Unknown File"}'
-  )">
-  <span class="material-icons" style="font-size: 18px;">description</span>
-  Open
-</button>
-              </div>
-              
-          </div>
-
-          <div class="comment-section" style="display: ${openComments.has(docSnap.id) ? 'block' : 'none'};" onclick="event.stopPropagation()">
-              <div class="comments-list">${commentsHTML}</div>
-              <div class="comment-input-wrapper">
-                  <input type="text" class="comment-input" placeholder="Write a comment...">
-                  <button class="comment-btn" onclick="submitComment(event, '${docSnap.id}', this)">Post</button>
-              </div>
-          </div>
+            <div class="comment-section" style="display: ${openComments.has(docId) ? 'block' : 'none'};" onclick="event.stopPropagation()">
+                <div class="comments-list">${commentsHTML}</div>
+                <div class="comment-input-wrapper">
+                    <input type="text" class="comment-input" placeholder="Write a comment...">
+                    <button class="comment-btn" onclick="submitComment(event, '${docId}', this)">Post</button>
+                </div>
+            </div>
         </div>
       `;
 
       const user = JSON.parse(localStorage.getItem("user"));
+      card.querySelector(".upvote-btn").addEventListener("click", async (e) => {
+          e.stopPropagation();
+          await vote(e, docId, 1);
+          await sendNotification({ post: { id: docId, title: post.title || "Untitled", userId: post.userId }, currentUser: { uid: user?.uid, name: user?.name, photo: user?.photo }, type: "upvote" });
+      });
 
-card.querySelector(".upvote-btn").addEventListener("click", async (e) => {
-  e.stopPropagation();
+      card.querySelector(".downvote-btn").addEventListener("click", async (e) => {
+          e.stopPropagation();
+          await vote(e, docId, -1);
+          await sendNotification({ post: { id: docId, title: post.title || "Untitled", userId: post.userId }, currentUser: { uid: user?.uid, name: user?.name, photo: user?.photo }, type: "downvote" });
+      });
 
-  await vote(e, docSnap.id, 1);
-
-  await sendNotification({
-    post: {
-      id: docSnap.id,
-      title: post.title || "Untitled",
-      userId: post.userId
-    },
-    currentUser: {
-      uid: user?.uid,
-      name: user?.name,
-      photo: user?.photo
-    },
-    type: "upvote"
+      container.appendChild(card);
   });
-});
 
-card.querySelector(".downvote-btn").addEventListener("click", async (e) => {
-  e.stopPropagation();
-
-  await vote(e, docSnap.id, -1);
-
-  await sendNotification({
-    post: {
-      id: docSnap.id,
-      title: post.title || "Untitled",
-      userId: post.userId
-    },
-    currentUser: {
-      uid: user?.uid,
-      name: user?.name,
-      photo: user?.photo
-    },
-    type: "downvote"
-  });
-});
-      card.dataset.title = post.title || "";
-      card.dataset.desc = post.description || "";
-      card.dataset.subject = post.subject || "";
-      card.dataset.user = post.username || "";
-
-      // 🔥 SMART RENDER: Updates existing cards, or places new ones in the exact right order!
-      const existingCard = document.querySelector(`.note-card[data-postid="${docSnap.id}"]`);
-      
-      if (existingCard) {
-          container.replaceChild(card, existingCard); // Update (keeps your scroll position safe)
-      } else {
-          // Insert precisely where Firebase says it belongs in the timeline
-          const targetNode = container.children[change.newIndex];
-          if (targetNode) {
-              container.insertBefore(card, targetNode);
-          } else {
-              container.appendChild(card);
-          }
-      }
-    });
-
-    // Sync buttons after the updates
-    syncAllSaveButtons();
-  });
+  // Sync buttons after the updates
+  syncAllSaveButtons();
 }
 
-loadPostsRealtime();
+// 🔥 KICK OFF THE FEED!
+loadRandomFeed();
 
 window.activeFile = null;
 window.selectedPDF = null;
@@ -1526,24 +1477,23 @@ window.toggleReadMore = function(postId) {
 };
 
 // ==========================================
-// 🔥 INFINITE SCROLL SENSOR
+// 🔥 BATCH INFINITE SCROLL SENSOR
 // ==========================================
 let isLoadingMore = false;
 
 window.addEventListener("scroll", () => {
-    if (isLoadingMore) return; // Prevent spamming the database
+    if (isLoadingMore) return; 
 
-    // Calculate how far down the user has scrolled
     const scrollPosition = window.innerHeight + window.scrollY;
     const pageHeight = document.documentElement.scrollHeight;
 
-    // If they are near the bottom of the feed (800px away)...
+    // If they scroll near the bottom...
     if (scrollPosition >= pageHeight - 800) {
         isLoadingMore = true;
-        currentLimit += 8; // Ask Firebase for 8 more posts
-        loadPostsRealtime(); // Re-fetch
-
-        // 1.5 second cooldown before allowing another fetch
-        setTimeout(() => { isLoadingMore = false; }, 1500);
+        
+        currentRenderCount += 8; // Unlock 8 more posts from our shuffled array
+        renderCurrentBatch();    // Redraw instantly without touching the database!
+        
+        setTimeout(() => { isLoadingMore = false; }, 500); // 0.5 second cooldown
     }
 });
