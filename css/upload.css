@@ -356,7 +356,7 @@ textarea{
     align-items: center;
     justify-content: center;
     font-size: 24px; 
-    background: #DC2626; 
+    background: #461111; 
     color: white;
     border-radius: 12px; 
     margin-top: 0; 
@@ -366,7 +366,7 @@ textarea{
 
 .add-btn:active {
     transform: scale(0.95);
-    background: #991B1B;
+    background: #461111;
 }
 
 .add-btn .material-icons {

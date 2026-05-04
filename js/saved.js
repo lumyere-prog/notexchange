@@ -61,7 +61,7 @@ export function initAuthGuard(callback) {
 
 window.getInterestPillHTML = function(interest) {
     const colors = [
-        { bg: '#FEE2E2', text: '#991B1B' }, { bg: '#FEF3C7', text: '#92400E' },
+        { bg: '#FEE2E2', text: '#461111' }, { bg: '#FEF3C7', text: '#92400E' },
         { bg: '#D1FAE5', text: '#065F46' }, { bg: '#DBEAFE', text: '#1E40AF' },
         { bg: '#E0E7FF', text: '#3730A3' }, { bg: '#F3E8FF', text: '#6B21A8' },
         { bg: '#FCE7F3', text: '#9D174D' }
@@ -150,7 +150,7 @@ function renderEmptyState() {
     const userVote = post.userVotes?.[userId] || 0;
     const upStyle = userVote === 1 ? `background: #DCFCE7; color: #10B981; border-radius: 50%;` : `color: #6B7280;`;
     const downStyle = userVote === -1 ? `background: #FEE2E2; color: #EF4444; border-radius: 50%;` : `color: #6B7280;`;
-    const pinStyle = `background: #FEE2E2; color: #DC2626; border-radius: 8px; padding: 6px;`;
+    const pinStyle = `background: #461111; color: #461111; border-radius: 8px; padding: 6px;`;
 
     // Identity Fallbacks
     const displayName = post.alias || post.username || post.name || "Anonymous";
@@ -233,7 +233,7 @@ async function openSavedModal(postId, showComments = false){
     const isSaved = globalSavedPosts.includes(postId);
     const upStyle = userVote === 1 ? `background: #DCFCE7; color: #10B981; border-radius: 50%;` : `color: #6B7280;`;
     const downStyle = userVote === -1 ? `background: #FEE2E2; color: #EF4444; border-radius: 50%;` : `color: #6B7280;`;
-    const pinStyle = isSaved ? `background: #FEE2E2; color: #DC2626; border-radius: 8px; padding: 6px;` : `color: #6B7280;`;
+    const pinStyle = isSaved ? `background: #461111; color: #461111; border-radius: 8px; padding: 6px;` : `color: #6B7280;`;
 
     if (showComments) openComments.add(postId);
 
@@ -283,7 +283,14 @@ async function openSavedModal(postId, showComments = false){
 
     body.querySelector(".upvote-btn").onclick = (e) => vote(e, postId, 1);
     body.querySelector(".downvote-btn").onclick = (e) => vote(e, postId, -1);
+    
     modal.style.display = "flex";
+    document.body.style.overflow = "hidden"; 
+    document.documentElement.style.overflow = "hidden"; // 🔥 Hard Freeze!
+
+    // Force the 'X' button to trigger our unfreeze function
+    const closeBtn = modal.querySelector(".close-btn");
+    if (closeBtn) closeBtn.onclick = window.closeModal;
 }
 
 /* =========================
@@ -292,11 +299,14 @@ async function openSavedModal(postId, showComments = false){
 
 window.addEventListener("click", (event) => {
     const modal = document.getElementById("postModal");
-    if (event.target === modal) closeModal();
+    if (event.target === modal) window.closeModal();
 });
 
 window.closeModal = function() {
-    document.getElementById("postModal").style.display = "none";
+    const modal = document.getElementById("postModal");
+    if (modal) modal.style.display = "none";
+    document.body.style.overflow = ""; 
+    document.documentElement.style.overflow = ""; // 🔥 Unfreeze!
 }
 
 window.toggleFav = async function(event, btn, postId) {
@@ -314,6 +324,23 @@ async function vote(event, postId, value){
     event.stopPropagation();
     if (votingInProgress || !currentUser) return;
     votingInProgress = true;
+
+    // 1. Find the specific footer for the clicked button
+    const btnClicked = event.currentTarget;
+    const voteBox = btnClicked.closest('.note-footer');
+    
+    // 2. 🔥 STRICT TARGETING: Look for the span that holds numbers (contains '|')
+    const allSpans = voteBox.querySelectorAll('span');
+    let voteDisplay = null;
+    allSpans.forEach(s => { 
+        // Only target short spans containing the pipe, not icon spans
+        if (s.innerText.includes('|') && s.innerText.length < 15) {
+            voteDisplay = s; 
+        }
+    });
+    
+    // 3. Show loading animation ONLY on the numbers
+    if (voteDisplay) voteDisplay.innerText = "...";
 
     const postRef = doc(db, "posts", postId);
     try {
@@ -343,9 +370,61 @@ async function vote(event, postId, value){
         updates.voteRewards = voteRewards;
         transaction.update(postRef, updates);
       });
-      openSavedModal(postId); 
-    } catch (err) { console.error(err); }
-    votingInProgress = false;
+
+      // 4. 🔥 LIVE REFRESH: Update style and numbers without replacing icons
+      const freshSnap = await getDoc(postRef);
+      if (freshSnap.exists()) {
+          const freshData = freshSnap.data();
+          const newUserVote = freshData.userVotes?.[currentUser.uid] || 0;
+
+          // Update numbers in the specific card or modal clicked
+          if (voteDisplay) {
+              voteDisplay.innerText = `${freshData.upvotes || 0} | ${freshData.downvotes || 0}`;
+          }
+
+          // Force colors and circle shape for buttons on the card
+          const upBtn = voteBox.querySelector('.upvote-btn') || voteBox.querySelector('button:first-child');
+          const downBtn = voteBox.querySelector('.downvote-btn') || voteBox.querySelector('button:last-child');
+
+          if (upBtn) {
+              upBtn.style.background = newUserVote === 1 ? "#DCFCE7" : "transparent";
+              upBtn.style.color = newUserVote === 1 ? "#10B981" : "#6B7280";
+              upBtn.style.borderRadius = "50%"; // Keep it circle
+          }
+          if (downBtn) {
+              downBtn.style.background = newUserVote === -1 ? "#FEE2E2" : "transparent";
+              downBtn.style.color = newUserVote === -1 ? "#EF4444" : "#6B7280";
+              downBtn.style.borderRadius = "50%"; // Keep it circle
+          }
+
+          // 5. 🔥 SYNC MODAL: If modal is open, update its state too
+          const modal = document.getElementById("postModal");
+          if (modal && modal.style.display === "flex") {
+              const mUp = modal.querySelector(".upvote-btn");
+              const mDown = modal.querySelector(".downvote-btn");
+              const mSpans = modal.querySelectorAll(".note-footer span");
+              let mText = null;
+              mSpans.forEach(s => { if (s.innerText.includes('|')) mText = s; });
+              
+              if (mText) mText.innerText = `${freshData.upvotes || 0} | ${freshData.downvotes || 0}`;
+              if (mUp) {
+                  mUp.style.background = newUserVote === 1 ? "#DCFCE7" : "transparent";
+                  mUp.style.color = newUserVote === 1 ? "#10B981" : "#6B7280";
+                  mUp.style.borderRadius = "50%";
+              }
+              if (mDown) {
+                  mDown.style.background = newUserVote === -1 ? "#FEE2E2" : "transparent";
+                  mDown.style.color = newUserVote === -1 ? "#EF4444" : "#6B7280";
+                  mDown.style.borderRadius = "50%";
+              }
+          }
+      }
+    } catch (err) { 
+        console.error("Vote error:", err); 
+        renderSavedPosts(); // Fallback refresh
+    } finally {
+        votingInProgress = false;
+    }
 }
 window.vote = vote;
 
@@ -442,6 +521,8 @@ window.openFileModal = async function(url, title) {
     // 3. Setup UI for new document
     document.getElementById("pdfJsTitle").innerText = title || "Document";
     pdfModal.style.display = "flex"; 
+    document.body.style.overflow = "hidden"; 
+    document.documentElement.style.overflow = "hidden"; // 🔥 Hard Freeze!
     
     const canvas = document.getElementById('pdfCanvas');
     const ctx = canvas.getContext('2d');
@@ -464,6 +545,8 @@ window.openFileModal = async function(url, title) {
 
 window.closePdfJsModal = function() {
     document.getElementById("pdfJsModal").style.display = "none";
+    document.body.style.overflow = ""; 
+    document.documentElement.style.overflow = ""; // 🔥 Unfreeze!
 };
 
 // 🔥 NEW: Function to force the file to download
@@ -589,6 +672,8 @@ window.openUserCard = async function(targetUserId) {
     document.getElementById("uc-pic").src = "/photos/profile.jpg";
     
     modal.style.display = "flex";
+    document.body.style.overflow = "hidden"; 
+    document.documentElement.style.overflow = "hidden"; // 🔥 Hard Freeze!
 
     try {
         const userSnap = await getDoc(doc(db, "user", targetUserId));
@@ -623,7 +708,17 @@ window.openUserCard = async function(targetUserId) {
     }
 };
 
-window.closeUserCard = function() { document.getElementById("userCardModal").style.display = "none"; };
+window.closeReportModal = function() {
+    pendingReportData = null; 
+    document.getElementById("reportModal").style.display = "none";
+    
+    // 🔥 Check if the big Note Modal is still open before unfreezing
+    const mainNoteModal = document.getElementById("postModal");
+    if (!mainNoteModal || mainNoteModal.style.display !== "flex") {
+        document.body.style.overflow = ""; 
+        document.documentElement.style.overflow = ""; 
+    }
+};
 
 let pendingReportData = null;
 const REPORT_REASONS = ["Spam", "Harassment", "Hate Speech", "Inappropriate Content"];
@@ -647,6 +742,8 @@ window.openReportModal = function(targetId, type, commentIndex = null) {
     pendingReportData = { targetId, type, commentIndex };
     selectedReason = ""; 
     document.getElementById("reportModal").style.display = "flex";
+    document.body.style.overflow = "hidden"; 
+    document.documentElement.style.overflow = "hidden"; // 🔥 Hard Freeze!
     document.getElementById("selectedReasonText").textContent = "Select a reason";
     document.getElementById("reportDescription").value = "";
     document.getElementById("reportOptionsList").innerHTML = REPORT_REASONS.map(reason => `
@@ -657,7 +754,15 @@ window.openReportModal = function(targetId, type, commentIndex = null) {
 };
 
 window.closeReportModal = function() {
-    pendingReportData = null; document.getElementById("reportModal").style.display = "none";
+    pendingReportData = null; 
+    document.getElementById("reportModal").style.display = "none";
+    
+    // 🔥 SMART UNFREEZE: Only unfreeze if the main Note Modal isn't open
+    const mainNoteModal = document.getElementById("postModal");
+    if (!mainNoteModal || mainNoteModal.style.display !== "flex") {
+        document.body.style.overflow = ""; 
+        document.documentElement.style.overflow = ""; 
+    }
 };
 
 window.toggleReportDropdown = function() {

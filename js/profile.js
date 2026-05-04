@@ -16,7 +16,7 @@ import {
 function getInterestPillHTML(interest) {
     // A palette of nice pastel UI colors with dark text
     const colors = [
-        { bg: '#FEE2E2', text: '#991B1B' }, // Red
+        { bg: '#FEE2E2', text: '#461111' }, // Red
         { bg: '#FEF3C7', text: '#92400E' }, // Yellow
         { bg: '#D1FAE5', text: '#065F46' }, // Green
         { bg: '#DBEAFE', text: '#1E40AF' }, // Blue
@@ -30,6 +30,12 @@ function getInterestPillHTML(interest) {
     const color = colors[colorIndex];
     
     return `<span style="background:${color.bg}; color:${color.text}; padding:4px 10px; border-radius:20px; font-size:11px; font-weight:700; display:inline-block; margin-right:4px; margin-bottom:4px;">${interest}</span>`;
+}
+
+function setFreeze(isFrozen) {
+    const state = isFrozen ? "hidden" : "";
+    document.body.style.overflow = state;
+    document.documentElement.style.overflow = state;
 }
 
 function showToast(message) {
@@ -195,7 +201,10 @@ let currentInterests = [];
 // 1. Open Modal and Fetch Data
 window.openEditProfile = async function() {
     const modal = document.getElementById("editProfileModal");
-    if (modal) modal.classList.add("active");
+    if (modal) {
+        modal.classList.add("active");
+        setFreeze(true); // 🔥 Freeze background
+    }
     
     // Fetch fresh data from Firebase
     const userRef = doc(db, "user", currentUser.uid);
@@ -227,7 +236,10 @@ window.openEditProfile = async function() {
 
 window.closeEditProfile = function() {
     const modal = document.getElementById("editProfileModal");
-    if (modal) modal.classList.remove("active");
+    if (modal) {
+        modal.classList.remove("active");
+        setFreeze(false); // 🔥 Unfreeze
+    }
 };
 
 // 2. Render the Clickable Options Grid (Using your CSS classes)
@@ -333,6 +345,7 @@ window.openSettings = function() {
     const modal = document.getElementById("editSettingsModal");
     if (modal) {
         modal.classList.add("active");
+        setFreeze(true); // 🔥 Freeze background
     }
     // Close dropdown
     const dropdown = document.getElementById("dropdownMenu");
@@ -343,6 +356,7 @@ window.closeSettings = function() {
     const modal = document.getElementById("editSettingsModal");
     if (modal) {
         modal.classList.remove("active");
+        setFreeze(false); // 🔥 Unfreeze
     }
 };
 
@@ -433,17 +447,16 @@ window.openTerms = async function() {
     const modal = document.getElementById("legalModal");
     const container = document.querySelector(".pdf-viewer-container");
 
-    if (modal) modal.classList.add("active");
+    if (modal) {
+        modal.classList.add("active");
+        setFreeze(true); // 🔥 Freeze background
+    }
 
     try {
-        // Ensure this path matches where your terms.pdf is stored!
         const loadingTask = pdfjsLib.getDocument("/assets/terms.pdf"); 
         currentLegalPdf = await loadingTask.promise;
-        
-        // Reset to page 1 every time it opens
         currentLegalPageNumber = 1; 
         await renderLegalPage(currentLegalPageNumber);
-
     } catch (error) {
         console.error("Error loading Terms PDF:", error);
         const canvas = document.getElementById("legalPdfCanvas");
@@ -463,7 +476,10 @@ window.closeTerms = function() {
     const modal = document.getElementById("legalModal");
     const canvas = document.getElementById("legalPdfCanvas");
 
-    if (modal) modal.classList.remove("active");
+    if (modal) {
+        modal.classList.remove("active");
+        setFreeze(false); // 🔥 Unfreeze
+    }
 
     setTimeout(() => {
         if (canvas) {
@@ -507,6 +523,7 @@ window.openNotifications = function() {
     const modal = document.getElementById("notificationsModal");
     if (modal) {
         modal.classList.add("active");
+        setFreeze(true); // 🔥 Freeze background
     }
 };
 
@@ -514,6 +531,7 @@ window.closeNotifications = function() {
     const modal = document.getElementById("notificationsModal");
     if (modal) {
         modal.classList.remove("active");
+        setFreeze(false); // 🔥 Unfreeze
     }
 };
 
@@ -655,58 +673,94 @@ function createProfileNoteCard(docSnap) {
 }
 
 let votingInProgress = false;
-async function vote(event, postId, value) {
+async function vote(event, postId, value){
     event.stopPropagation();
-    if (votingInProgress) return;
+    if (votingInProgress || !currentUser) return;
     votingInProgress = true;
-    const user = JSON.parse(localStorage.getItem("user"));
-    if (!user) {
-        votingInProgress = false;
-        return alert("Login first");
-    }
+
+    // 1. Find the specific footer for the clicked button
+    const btnClicked = event.currentTarget;
+    const voteBox = btnClicked.closest('.note-footer');
+    
+    // 2. 🔥 STRICT TARGETING: Only target the span that holds numbers
+    const allSpans = voteBox.querySelectorAll('span');
+    let voteDisplay = null;
+    allSpans.forEach(s => { 
+        // Only target the span containing the pipe symbol, ignoring icon spans
+        if (s.innerText.includes('|') && s.innerText.length < 15) {
+            voteDisplay = s; 
+        }
+    });
+    
+    // 3. Visual Feedback: Only change the numbers to "..."
+    if (voteDisplay) voteDisplay.innerText = "...";
 
     const postRef = doc(db, "posts", postId);
     try {
-        await runTransaction(db, async (transaction) => {
-            const snap = await transaction.get(postRef);
-            if (!snap.exists()) return;
-            const post = snap.data();
-            let userVotes = post.userVotes || {};
-            let voteRewards = post.voteRewards || {};
-            let currentVote = userVotes[user.uid] || 0;
-            let alreadyRewarded = voteRewards[user.uid] || false;
-            let givePoints = false;
-            let updates = {};
+      await runTransaction(db, async (transaction) => {
+        const snap = await transaction.get(postRef);
+        if (!snap.exists()) return;
+        const post = snap.data();
+        let userVotes = post.userVotes || {};
+        let currentVote = userVotes[currentUser.uid] || 0;
+        let voteRewards = post.voteRewards || {};
+        
+        let updates = {};
+        if (currentVote === value) {
+          delete userVotes[currentUser.uid];
+          updates[value === 1 ? 'upvotes' : 'downvotes'] = increment(-1);
+        } else {
+          userVotes[currentUser.uid] = value;
+          updates[value === 1 ? 'upvotes' : 'downvotes'] = increment(1);
+          if (currentVote !== 0) updates[currentVote === 1 ? 'upvotes' : 'downvotes'] = increment(-1);
+          
+          if (!voteRewards[currentUser.uid]) {
+              voteRewards[currentUser.uid] = true;
+              await addPoints(currentUser.uid, 1);
+          }
+        }
+        updates.userVotes = userVotes;
+        updates.voteRewards = voteRewards;
+        transaction.update(postRef, updates);
+      });
 
-            if (currentVote === value) {
-                delete userVotes[user.uid];
-                if (value === 1) updates.upvotes = increment(-1);
-                else updates.downvotes = increment(-1);
-            } else {
-                userVotes[user.uid] = value;
-                if (!alreadyRewarded) {
-                    givePoints = true;
-                    voteRewards[user.uid] = true;
-                }
-                if (value === 1) {
-                    updates.upvotes = increment(1);
-                    if (currentVote === -1) updates.downvotes = increment(-1);
-                }
-                if (value === -1) {
-                    updates.downvotes = increment(1);
-                    if (currentVote === 1) updates.upvotes = increment(-1);
-                }
-            }
+      // 4. 🔥 LIVE REFRESH: Update style and numbers instantly
+      const freshSnap = await getDoc(postRef);
+      if (freshSnap.exists()) {
+          const freshData = freshSnap.data();
+          const newUserVote = freshData.userVotes?.[currentUser.uid] || 0;
 
-            updates.userVotes = userVotes;
-            updates.voteRewards = voteRewards;
-            transaction.update(postRef, updates);
-            if (givePoints) await addPoints(user.uid, 1);
-        });
-    } catch (err) {
-        console.error("Vote error:", err);
+          if (voteDisplay) {
+              voteDisplay.innerText = `${freshData.upvotes || 0} | ${freshData.downvotes || 0}`;
+          }
+
+          // Force background circles and colors
+          const upBtn = voteBox.querySelector('.upvote-btn');
+          const downBtn = voteBox.querySelector('.downvote-btn');
+
+          if (upBtn) {
+              upBtn.style.background = newUserVote === 1 ? "#DCFCE7" : "transparent";
+              upBtn.style.color = newUserVote === 1 ? "#10B981" : "#6B7280";
+              upBtn.style.borderRadius = "50%"; // Keep it circle!
+          }
+          if (downBtn) {
+              downBtn.style.background = newUserVote === -1 ? "#FEE2E2" : "transparent";
+              downBtn.style.color = newUserVote === -1 ? "#EF4444" : "#6B7280";
+              downBtn.style.borderRadius = "50%"; // Keep it circle!
+          }
+
+          // 5. 🔥 MODAL SYNC: Ensure the background card matches the modal numbers
+          const backgroundCard = document.querySelector(`.note-card[data-postid="${postId}"]`);
+          if (backgroundCard) {
+              const bgVoteText = backgroundCard.querySelector(".vote-count");
+              if (bgVoteText) bgVoteText.innerText = `${freshData.upvotes || 0} | ${freshData.downvotes || 0}`;
+          }
+      }
+    } catch (err) { 
+        console.error("Vote error:", err); 
+    } finally {
+        votingInProgress = false;
     }
-    votingInProgress = false;
 }
 
 const openComments = new Set();
@@ -800,6 +854,8 @@ async function openPost(postId, showComments = false) {
     }
 
     modal.style.display = "flex";
+    setFreeze(true); // 🔥 Freeze the background!
+
     if (showComments) {
         setTimeout(() => {
             const input = body.querySelector('.comment-input');
@@ -810,7 +866,15 @@ async function openPost(postId, showComments = false) {
 
 function closeModal() {
     const modal = document.getElementById("postModal");
-    if (modal) modal.style.display = "none";
+    if (modal) {
+        modal.style.display = "none";
+        
+        // 🔥 Only unfreeze if NO other major modals are active[cite: 8]
+        const activeModals = document.querySelectorAll('.modal.active, .confirm-modal.active');
+        if (activeModals.length === 0) {
+            setFreeze(false);
+        }
+    }
 }
 window.closeModal = closeModal;
 

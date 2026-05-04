@@ -423,18 +423,46 @@ function renderCurrentBatch() {
       `;
 
       const user = JSON.parse(localStorage.getItem("user"));
-      card.querySelector(".upvote-btn").addEventListener("click", async (e) => {
-          e.stopPropagation();
-          await vote(e, docId, 1);
-          await sendNotification({ post: { id: docId, title: post.title || "Untitled", userId: post.userId }, currentUser: { uid: user?.uid, name: user?.name, photo: user?.photo }, type: "upvote" });
-      });
 
-      card.querySelector(".downvote-btn").addEventListener("click", async (e) => {
+      // 🔥 THE NEW LIVE VOTE LOGIC FOR THE MAIN FEED
+      async function handleLiveFeedVote(e, voteValue) {
           e.stopPropagation();
-          await vote(e, docId, -1);
-          await sendNotification({ post: { id: docId, title: post.title || "Untitled", userId: post.userId }, currentUser: { uid: user?.uid, name: user?.name, photo: user?.photo }, type: "downvote" });
-      });
+          
+          // 1. Give instant visual feedback so it feels responsive
+          card.querySelector(".vote-count").innerText = "...";
 
+          // 2. Send vote to database
+          await vote(e, docId, voteValue);
+
+          // 3. Send the notification
+          const notifType = voteValue === 1 ? "upvote" : "downvote";
+          await sendNotification({ 
+              post: { id: docId, title: post.title || "Untitled", userId: post.userId }, 
+              currentUser: { uid: user?.uid, name: user?.name, photo: user?.photo }, 
+              type: notifType 
+          });
+          
+          // 4. Fetch fresh data and update the UI instantly!
+          const freshSnap = await getDoc(doc(db, "posts", docId));
+          if (freshSnap.exists()) {
+              const freshData = freshSnap.data();
+              card.querySelector(".vote-count").innerText = `${freshData.upvotes || 0} |  ${freshData.downvotes || 0}`;
+              
+              const upBtn = card.querySelector(".upvote-btn");
+              const downBtn = card.querySelector(".downvote-btn");
+              upBtn.classList.remove("upvoted");
+              downBtn.classList.remove("downvoted");
+              
+              if (freshData.userVotes && freshData.userVotes[userId] === 1) upBtn.classList.add("upvoted");
+              if (freshData.userVotes && freshData.userVotes[userId] === -1) downBtn.classList.add("downvoted");
+              
+              // Keep our background memory array updated!
+              postObj.data = freshData;
+          }
+      }
+
+      card.querySelector(".upvote-btn").addEventListener("click", (e) => handleLiveFeedVote(e, 1));
+      card.querySelector(".downvote-btn").addEventListener("click", (e) => handleLiveFeedVote(e, -1));
       container.appendChild(card);
   });
 
@@ -573,6 +601,8 @@ body.querySelector(".downvote-btn").addEventListener("click", async (e) => {
 });
 
 modal.style.display = "flex";
+document.body.style.overflow = "hidden"; 
+document.documentElement.style.overflow = "hidden"; // 🔥 The Mobile Freeze!
   
   // 🔥 Sync button immediately after opening modal
   syncAllSaveButtons();
@@ -681,9 +711,10 @@ window.openFileModal = async function(url, title) {
         document.getElementById('nextPage').addEventListener('click', onNextPage);
     }
 
-    // 3. Setup UI for new document
+// 3. Setup UI for new document
     document.getElementById("pdfJsTitle").innerText = title || "Document";
     pdfModal.style.display = "flex"; 
+    document.body.style.overflow = "hidden"; // 🔥 Freeze background
     
     const canvas = document.getElementById('pdfCanvas');
     const ctx = canvas.getContext('2d');
@@ -706,6 +737,7 @@ window.openFileModal = async function(url, title) {
 
 window.closePdfJsModal = function() {
     document.getElementById("pdfJsModal").style.display = "none";
+    document.body.style.overflow = ""; // 🔥 Unfreeze background
 };
 
 // 🔥 NEW: Function to force the file to download
@@ -825,8 +857,23 @@ function showMessage(text) {
 }
 
 const modal = document.getElementById("postModal");
-function closeModal() { modal.style.display = "none"; }
-modal.addEventListener("click", (event) => { if (event.target === modal) closeModal(); });
+
+function closeModal() { 
+    if (modal) {
+        modal.style.display = "none"; 
+        document.body.style.overflow = ""; 
+        document.documentElement.style.overflow = ""; // 🔥 Unfreeze Mobile!
+    }
+}
+
+if (modal) {
+    modal.addEventListener("click", (event) => { 
+        if (event.target === modal) {
+            closeModal(); 
+        }
+    });
+}
+
 window.closeModal = closeModal;
 
 let votingInProgress = false;
@@ -1028,146 +1075,162 @@ function loadRecentSearches() {
   });
 }
 
+// =====================================
+// THE NEW SEARCH ENGINE & LIVE VOTING
+// =====================================
 if (searchInput) {
   const results = document.getElementById("searchResults");
 
   searchInput.addEventListener("input", function () {
     const query = this.value.toLowerCase().trim();
-    const cards = document.querySelectorAll("#notesFeed .note-card");
-
     results.innerHTML = "";
 
-    if (!query) {
-      cards.forEach(c => (c.style.display = ""));
-      return;
-    }
+    if (!query) return;
 
     const tokens = query.split(" ").filter(Boolean);
-
     let scored = [];
+    const userId = currentUser ? currentUser.uid : null;
 
-    cards.forEach(card => {
-      const title = (card.dataset.title || "").toLowerCase();
-      const desc = (card.dataset.desc || "").toLowerCase();
-      const subject = (card.dataset.subject || "").toLowerCase();
-      const user = (card.dataset.user || "").toLowerCase();
+    // Search the massive 150-post memory array
+    allShuffledPosts.forEach(postObj => {
+      const post = postObj.data;
+      const title = (post.title || "").toLowerCase();
+      const desc = (post.description || "").toLowerCase();
+      const subject = (post.subject || "").toLowerCase();
+      const author = (post.alias || post.username || post.name || "").toLowerCase();
 
       let score = 0;
 
-      // normalize helper
-      const fields = { title, desc, subject, user };
-
-      // EXACT MATCH (highest priority)
+      // EXACT MATCH
       if (subject === query) score += 200;
       if (title === query) score += 180;
+      if (author === query) score += 150;
 
-      // PREFIX MATCH (feels like autocomplete)
+      // PREFIX MATCH
       if (subject.startsWith(query)) score += 120;
       if (title.startsWith(query)) score += 100;
+      if (author.startsWith(query)) score += 90;
 
-      // TOKEN MATCH (social media style)
+      // TOKEN / LETTER MATCH
       tokens.forEach(t => {
         if (subject.includes(t)) score += 60;
         if (title.includes(t)) score += 50;
-        if (user.includes(t)) score += 30;
+        if (author.includes(t)) score += 40;
         if (desc.includes(t)) score += 10;
       });
 
-      // FULL TEXT MATCH BONUS
-      if (
-        subject.includes(query) ||
-        title.includes(query) ||
-        user.includes(query) ||
-        desc.includes(query)
-      ) {
-        score += 20;
-      }
-
       if (score > 0) {
-        scored.push({ card, score });
+        scored.push({ postObj, score });
       }
     });
 
-    // sort best match first (THIS is what makes it "social media-like")
     scored.sort((a, b) => b.score - a.score);
 
     if (scored.length === 0) {
-      results.innerHTML = `<div style="padding:10px;color:#888;">No results found</div>`;
+      results.innerHTML = `<div style="padding:40px; text-align:center; color:#6B7280; font-weight:600;">No results found for "${query}"</div>`;
       return;
     }
 
-    // render results
-    scored.forEach(({ card }) => {
-      const clone = card.cloneNode(true);
-      clone.style.display = "block";
+    // Draw the live results
+    scored.forEach(({ postObj }) => {
+      const docId = postObj.id;
+      const post = postObj.data;
+
+      const fullDesc = (post.description || "No description").trim();
+      const isLong = fullDesc.length > 150; 
+      const displayDesc = isLong ? fullDesc.substring(0, 150) + "..." : fullDesc;
+      const safeFullDesc = encodeURIComponent(fullDesc);
       
-      // Hide inline comment sections in search results since we use modal
-      const commentSection = clone.querySelector('.comment-section');
-      if (commentSection) commentSection.style.display = 'none';
-      
-      results.appendChild(clone);
+      let upClass = userId && post.userVotes && post.userVotes[userId] === 1 ? "upvoted" : "";
+      let downClass = userId && post.userVotes && post.userVotes[userId] === -1 ? "downvoted" : "";
 
-      const postId = clone.dataset.postid;
-      if (postId) {
-        clone.addEventListener("click", () => openPost(postId));
-
-        const commentBtn = clone.querySelector(".comment-icon-btn");
-        if (commentBtn) {
-          commentBtn.removeAttribute('onclick'); // Remove inline onclick to prevent inline toggle
-          commentBtn.addEventListener("click", (e) => {
-            e.stopPropagation();
-            openPost(postId, true);
+      let interestsHTML = "";
+      if (post.interests && Array.isArray(post.interests)) {
+          post.interests.forEach(tag => {
+              if (typeof window.getInterestPillHTML === "function") interestsHTML += window.getInterestPillHTML(tag);
           });
-        }
-
-        const upBtn = clone.querySelector(".upvote-btn");
-        if (upBtn) {
-          upBtn.addEventListener("click", async (e) => {
-            e.stopPropagation();
-            await vote(e, postId, 1);
-            // Refresh the search results to show updated vote counts
-            searchInput.dispatchEvent(new Event("input", { bubbles: true }));
-          });
-        }
-
-        const downBtn = clone.querySelector(".downvote-btn");
-        if (downBtn) {
-          downBtn.addEventListener("click", async (e) => {
-            e.stopPropagation();
-            await vote(e, postId, -1);
-            // Refresh the search results to show updated vote counts
-            searchInput.dispatchEvent(new Event("input", { bubbles: true }));
-          });
-        }
-
-        const openBtn = clone.querySelector(".open-file-btn");
-        if (openBtn) {
-          openBtn.addEventListener("click", (e) => {
-            e.stopPropagation();
-          });
-        }
       }
+
+      const card = document.createElement("div");
+      card.className = "note-card";
+      card.dataset.postid = docId;
+      card.addEventListener("click", () => openPost(docId));
+
+      card.innerHTML = `
+        <div class="note-preview">
+            <h3 class="note-title" style="margin:0; padding-right: 24px;">${post.title || "Untitled"}</h3>
+            <p class="note-code">${post.subject || ""}</p>
+            <div class="note-preview-text" style="white-space: pre-wrap; background: #F9FAFB; padding: 12px; border-radius: 12px; margin: 12px 0;">${displayDesc.replace(/</g, '&lt;').replace(/>/g, '&gt;')}</div>
+            
+            <div class="note-author" style="display:flex; align-items: flex-start; gap:12px; margin-top: 12px; padding-top: 12px; border-top: 1px solid #F3F4F6;">
+                <img src="${post.profilePic || "/photos/profile.jpg"}" style="width: 40px; height: 40px; border-radius: 50%; object-fit: cover;">
+                <div style="display:flex; flex-direction:column; gap:4px;">
+                    <span style="font-weight: 700; font-size: 14px; color: #111827;">${post.alias || post.username || post.name || "Anonymous"}</span>
+                    <div class="note-interests" style="display: flex; flex-wrap: wrap; gap: 4px;">${interestsHTML}</div>
+                </div>
+            </div>
+
+            <div class="note-footer" style="display: flex; justify-content: space-between; align-items: center; border-top: 1px solid #F3F4F6; padding-top: 12px; margin-top: 16px;">
+                <div class="vote-box">
+                  <button class="vote-btn upvote-btn ${upClass}"><span class="material-icons">arrow_upward</span></button>
+                  <span class="vote-count" style="font-weight: 700;">${post.upvotes || 0} |  ${post.downvotes || 0}</span>
+                  <button class="vote-btn downvote-btn ${downClass}"><span class="material-icons">arrow_downward</span></button>
+                </div>
+                <div style="display: flex; align-items: center; gap: 4px;">
+                    <button class="fav-btn" data-postid="${docId}" onclick="toggleFav(event, this, '${docId}')">🔖</button>
+                    <button class="open-file-btn" onclick="event.stopPropagation(); openFileModal('${post.fileURL}', '${post.title}', '${post.fileName || "Unknown File"}')"><span class="material-icons" style="font-size: 18px;">description</span> Open</button>
+                </div>
+            </div>
+        </div>
+      `;
+
+      // LIVE VOTE UPDATES
+      async function handleLiveVote(e, voteValue) {
+          e.stopPropagation();
+          card.querySelector(".vote-count").innerText = "...";
+
+          await vote(e, docId, voteValue);
+          
+          const freshSnap = await getDoc(doc(db, "posts", docId));
+          if (freshSnap.exists()) {
+              const freshData = freshSnap.data();
+              card.querySelector(".vote-count").innerText = `${freshData.upvotes || 0} |  ${freshData.downvotes || 0}`;
+              
+              const upBtn = card.querySelector(".upvote-btn");
+              const downBtn = card.querySelector(".downvote-btn");
+              upBtn.classList.remove("upvoted");
+              downBtn.classList.remove("downvoted");
+              
+              if (freshData.userVotes && freshData.userVotes[userId] === 1) upBtn.classList.add("upvoted");
+              if (freshData.userVotes && freshData.userVotes[userId] === -1) downBtn.classList.add("downvoted");
+              
+              postObj.data = freshData;
+          }
+      }
+
+      card.querySelector(".upvote-btn").addEventListener("click", (e) => handleLiveVote(e, 1));
+      card.querySelector(".downvote-btn").addEventListener("click", (e) => handleLiveVote(e, -1));
+
+      results.appendChild(card);
     });
+    
+    syncAllSaveButtons();
   });
 
-
-
-
+  // 📂 2. YOUR EXISTING SEARCH PAGE TRIGGER
   document.addEventListener("DOMContentLoaded", () => {
-  const trigger = document.getElementById("searchInputTrigger");
+    const trigger = document.getElementById("searchInputTrigger");
 
-  if (trigger) {
-    trigger.addEventListener("click", () => {
-      document.getElementById("searchPage").classList.add("active");
-      loadRecentSearches();
-      history.pushState({ page: "search" }, "", "#search");
-    });
-  }
-});
+    if (trigger) {
+      trigger.addEventListener("click", () => {
+        document.getElementById("searchPage").classList.add("active");
+        loadRecentSearches();
+        history.pushState({ page: "search" }, "", "#search");
+      });
+    }
+  });
 
-  /* =========================
-     SAVE RECENT SEARCH
-     ========================= */
+  // 💾 3. YOUR EXISTING RECENT SEARCHES SAVING LOGIC
   searchInput.addEventListener("keydown", function (event) {
     if (event.key === "Enter") {
       event.preventDefault();
@@ -1180,24 +1243,29 @@ if (searchInput) {
   });
 }
 
-/* =========================
-   END SEARCH CONTROLLER
-   ========================= */
 function removeSearch(index) {
   recentSearches.splice(index, 1);
   localStorage.setItem(SEARCH_HISTORY_KEY, JSON.stringify(recentSearches));
   loadRecentSearches();
 }
+
 function openSearch(){
   document.getElementById("searchPage").classList.add("active");
+  document.body.style.overflow = "hidden"; // 🔥 Freeze background
   loadRecentSearches();
   history.pushState({page:"search"}, "", "#search");
 }
-function closeSearch(){ document.getElementById("searchPage").classList.remove("active"); }
+function closeSearch(){ 
+  document.getElementById("searchPage").classList.remove("active"); 
+  document.body.style.overflow = ""; // 🔥 Unfreeze background
+}
 function goBack(){ window.history.back(); }
 window.addEventListener("popstate", function(){
   let searchPage = document.getElementById("searchPage");
-  if(searchPage && searchPage.classList.contains("active")) searchPage.classList.remove("active");
+  if(searchPage && searchPage.classList.contains("active")) {
+      searchPage.classList.remove("active");
+      document.body.style.overflow = ""; // 🔥 Unfreeze background
+  }
 });
 window.openSearch = openSearch;
 window.closeSearch = closeSearch;
@@ -1207,9 +1275,20 @@ window.removeSearch = removeSearch;
 const chatBtn = document.getElementById("chatbot-btn");
 const chatModal = document.getElementById("chatbot-modal");
 const closeChat = document.getElementById("close-chat");
-if (chatBtn) chatBtn.addEventListener("click", () => { chatModal.style.display = "flex"; });
-if (closeChat) closeChat.addEventListener("click", () => { chatModal.style.display = "none"; });
 
+if (chatBtn) {
+    chatBtn.addEventListener("click", () => { 
+        chatModal.style.display = "flex"; 
+        document.body.style.overflow = "hidden"; // 🔥 Freeze background
+    });
+}
+
+if (closeChat) {
+    closeChat.addEventListener("click", () => { 
+        chatModal.style.display = "none"; 
+        document.body.style.overflow = ""; // 🔥 Unfreeze background
+    });
+}
 let lastScrollTop = 0;
 const topArea = document.getElementById("topArea");
 if (topArea) {
@@ -1257,9 +1336,6 @@ syncBellCounter();
 // =========================================
 // 1. FLOATING USER CARD LOGIC
 // =========================================
-// =========================================
-// 1. FLOATING USER CARD LOGIC
-// =========================================
 window.openUserCard = async function(targetUserId) {
     // 🔥 FIXED: Removed the block preventing you from clicking your own card!
     if (!targetUserId || targetUserId === 'undefined') {
@@ -1278,6 +1354,7 @@ window.openUserCard = async function(targetUserId) {
     document.getElementById("uc-pic").src = "/photos/profile.jpg";
 
     modal.style.display = "flex";
+    document.body.style.overflow = "hidden"; // 🔥 Freeze background
 
     try {
         // Fetch User Info
@@ -1317,6 +1394,7 @@ window.openUserCard = async function(targetUserId) {
 
 window.closeUserCard = function() {
     document.getElementById("userCardModal").style.display = "none";
+    document.body.style.overflow = ""; // 🔥 Unfreeze background
 };
 
 // =========================================
@@ -1352,6 +1430,7 @@ window.openReportModal = function(targetId, type, commentIndex = null) {
     selectedReason = ""; 
     
     document.getElementById("reportModal").style.display = "flex";
+    document.body.style.overflow = "hidden"; // 🔥 Freeze background
     document.getElementById("reportModalTitle").textContent = type === 'post' ? "Report Post" : "Report Comment";
     document.getElementById("selectedReasonText").textContent = "Select a reason";
     document.getElementById("reportDescription").value = "";
@@ -1370,6 +1449,7 @@ window.openReportModal = function(targetId, type, commentIndex = null) {
 window.closeReportModal = function() {
     pendingReportData = null;
     document.getElementById("reportModal").style.display = "none";
+    document.body.style.overflow = ""; // 🔥 Unfreeze background
 };
 
 window.toggleReportDropdown = function() {

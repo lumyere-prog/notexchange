@@ -1438,23 +1438,27 @@ document.getElementById("user-history").addEventListener("click", (e) => {
     }
 });
 
-// 🔥 Change the old 'function goToSection' to this:
 window.goToSection = function(sectionId) {
-    // 1. Hide all sections and remove active classes from nav
     document.querySelectorAll(".section").forEach(s => s.classList.remove("active"));
     document.querySelectorAll(".nav-link").forEach(l => l.classList.remove("active"));
 
-    // 2. Show the target section
     const target = document.getElementById(sectionId);
     if (target) {
         target.classList.add("active");
-        // Also add active class to the corresponding sidebar link
         const navLink = document.querySelector(`[data-target="${sectionId}"]`);
         if (navLink) navLink.classList.add("active");
     }
 
-    // 3. If going back to dashboard, refresh the numbers
+    // 🔥 Load specific section data immediately
     if (sectionId === 'dashboard-section') syncDashboardStats();
+    if (sectionId === 'reports-section') {
+        currentReportFilter = "pending"; // Default to pending
+        // Reset filter button UI
+        document.querySelectorAll("#reports-section .filters button").forEach(b => {
+            b.classList.toggle("active", b.dataset.reportFilter === "pending");
+        });
+        loadReports(); // 🔥 Trigger Load
+    }
 };
 
 
@@ -1462,8 +1466,7 @@ window.goToSection = function(sectionId) {
 // REPORTS MANAGEMENT
 // =========================================
 let currentReportFilter = "pending";
-
-// Target variables for the Modal
+let unsubscribeReports = null;
 let targetReportUserId = null;
 let targetReportId = null;
 
@@ -1477,14 +1480,20 @@ document.querySelectorAll("#reports-section .filters button").forEach(btn => {
     });
 });
 
-// 2. Load Reports from Firestore (FULLY STABILIZED)
+// 2. Load Reports from Firestore (FIXED & STABILIZED)
 function loadReports() {
     const tbody = document.getElementById("reports-table");
     if (!tbody) return;
 
-    onSnapshot(query(collection(db, "reports"), orderBy("timestamp", "desc")), async (snap) => {
-        tbody.innerHTML = "";
+    if (unsubscribeReports) unsubscribeReports();
+
+    const reportQuery = query(collection(db, "reports"), orderBy("timestamp", "desc"));
+
+    unsubscribeReports = onSnapshot(reportQuery, async (snap) => {
+        tbody.innerHTML = "<tr><td colspan='4' style='text-align:center; padding:20px;'>Loading report details...</td></tr>";
         
+        let rowsHtml = "";
+
         for (const docSnap of snap.docs) {
             const report = docSnap.data();
             const reportId = docSnap.id;
@@ -1495,26 +1504,23 @@ function loadReports() {
             let reportedRealName = "Name Hidden"; 
             let reportedAlias = "No Alias";
             let reportedUserId = null;
-
             let reporterRealName = "Name Hidden";
             let reporterAlias = "No Alias";
+            let postData = null;
 
             try {
-                // 1. FETCH REPORTER IDENTITY
+                // 1. Reporter Identity
                 if (report.reporterUid) {
                     const reporterSnap = await getDoc(doc(db, "user", report.reporterUid));
                     if (reporterSnap.exists()) {
                         const rData = reporterSnap.data();
-                        // 🔥 PRIORITY: Google Name > Username > Alias
-                        reporterRealName = rData.name || rData.username || rData.alias || "Google User";
+                        reporterRealName = rData.name || rData.username || "Google User";
                         reporterAlias = rData.alias || "No Alias";
                     }
                 }
 
-                // 2. SEARCH ALL COLLECTIONS FOR THE CONTENT
+                // 2. Search for the Post Context
                 const collections = ["posts", "pendingPosts", "rejectedPosts"];
-                let postData = null;
-
                 for (const colName of collections) {
                     const postSnap = await getDoc(doc(db, colName, report.targetId));
                     if (postSnap.exists()) {
@@ -1524,60 +1530,70 @@ function loadReports() {
                 }
                 
                 if (postData) {
-                    // 3. TARGET THE CORRECT USER (Commenter vs Poster)
                     if (report.targetType === "post") {
                         targetTitle = `Post: ${postData.title || "Untitled"}`;
                         reportedUserId = postData.userId;
-                    } 
-                    else if (report.targetType === "comment" && postData.comments) {
+                    } else if (report.targetType === "comment" && postData.comments) {
                         const comment = postData.comments[report.commentIndex];
                         if (comment) {
                             targetTitle = `Comment: "${comment.text.substring(0, 30)}..."`;
-                            // 🔥 Targeted UID of the specific commenter
-                            reportedUserId = comment.uid || comment.userId || null;
+                            reportedUserId = comment.uid || null;
                         }
                     }
 
-                    // 4. FETCH THE OFFENDER'S IDENTITY
                     if (reportedUserId) {
                         const offenderSnap = await getDoc(doc(db, "user", reportedUserId));
                         if (offenderSnap.exists()) {
                             const aData = offenderSnap.data();
-                            reportedRealName = aData.name || aData.username || aData.alias || "Google User";
+                            reportedRealName = aData.name || aData.username || "Google User";
                             reportedAlias = aData.alias || "No Alias";
                         }
                     }
                 }
             } catch(e) { console.error("Identity fetch error:", e); }
 
-            const tr = document.createElement("tr");
-            tr.innerHTML = `
-                <td>
-                    <b>${targetTitle}</b><br>
-                    <div style="font-size: 13px; color: #4B5563; margin-top: 6px; line-height: 1.5;">
-                        Reported User: <strong>${reportedRealName}</strong> <span style="color:#DC2626; font-weight:700;">(@${reportedAlias})</span><br>
-                        Reported By: <strong>${reporterRealName}</strong> <span style="color:#10B981; font-weight:700;">(@${reporterAlias})</span>
-                    </div>
-                </td>
-                <td>
-                    <b>${report.reason || "No Reason"}</b><br>
-                    <span style="font-size: 12px; color: #6B7280;">"${report.description || "No description provided."}"</span>
-                </td>
-                <td><span class="status ${report.status || 'pending'}">${report.status || 'Pending'}</span></td>
-                <td class="action-cells">
-                    ${(report.status || 'pending') === 'pending' ? `
-                        <div style="display: flex; gap: 8px; justify-content: flex-end;">
-                            <button class="btn-pill action-success" onclick="resolveReport('${reportId}')">Ignore Flag</button>
-                            ${reportedUserId ? `
-                                <button class="btn-pill action-danger" style="background:#FEF3C7; color:#D97706;" onclick="suspendFromReport('${reportedUserId}', '${reportId}')">Suspend</button>
-                                <button class="btn-pill action-danger" style="background:#111827; color:white;" onclick="deleteUserFromReport('${reportedUserId}', '${reportId}')">Delete User</button>
-                            ` : `<span style="font-size: 11px; color: #EF4444;">ID Missing</span>`}
+            rowsHtml += `
+                <tr style="border-bottom: 1px solid #F3F4F6;">
+                    <td style="padding: 16px;">
+                        <div style="margin-bottom: 8px;">
+                            <b style="color: #111827; font-size: 15px;">${targetTitle}</b>
+                            ${postData ? `
+                                <div style="margin-top: 6px; display: flex; flex-direction: column; gap: 4px;">
+                                    <span style="font-size: 11px; color: #6B7280; font-weight: 600;">FROM POST: "${postData.title}"</span>
+                                    <button class="btn-pill" style="width: fit-content; padding: 2px 10px; font-size: 11px; background: #EEF2FF; color: #4338CA; border: 1px solid #C7D2FE;" 
+                                        onclick="viewReportContext('${postData.fileURL}', '${postData.title}')">
+                                        View Original PDF
+                                    </button>
+                                </div>
+                            ` : '<div style="font-size:11px; color:#EF4444; margin-top:4px;">Original post has been deleted</div>'}
                         </div>
-                    ` : `<span style="font-size: 12px; color: #9CA3AF;">Resolved</span>`}
-                </td>
+                        <div style="font-size: 12px; color: #4B5563; line-height: 1.4; background: #F9FAFB; padding: 8px; border-radius: 8px; border: 1px solid #F3F4F6;">
+                            Target: <strong>${reportedRealName}</strong> (@${reportedAlias})<br>
+                            Flagged By: <strong>${reporterRealName}</strong> (@${reporterAlias})
+                        </div>
+                    </td>
+                    <td style="padding: 16px;">
+                        <b style="font-size:13px; color: #111827;">${report.reason || "No Reason"}</b><br>
+                        <span style="font-size: 12px; color: #6B7280; font-style: italic;">"${report.description || "No details."}"</span>
+                    </td>
+                    <td style="padding: 16px;"><span class="status ${report.status || 'pending'}">${report.status || 'Pending'}</span></td>
+                    <td style="padding: 16px;" class="action-cells">
+                        ${(report.status || 'pending') === 'pending' ? `
+                            <div style="display: flex; gap: 6px; flex-direction: column;">
+                                <button class="btn-pill action-success" style="width: 100%;" onclick="resolveReport('${reportId}')">Ignore Flag</button>
+                                ${report.targetType === 'comment' ? `
+                                    <button class="btn-pill" style="width: 100%; background:#111827; color:white;" onclick="deleteReportedComment('${report.targetId}', ${report.commentIndex}, '${reportId}')">Delete Comment</button>
+                                ` : ''}
+                                ${reportedUserId ? `
+                                    <button class="btn-pill action-danger" style="width: 100%; background:#FEF3C7; color:#D97706;" onclick="suspendFromReport('${reportedUserId}', '${reportId}')">Suspend</button>
+                                ` : ''}
+                            </div>
+                        ` : `<span style="font-size: 12px; color: #9CA3AF; font-weight: 600;">RESOLVED</span>`}
+                    </td>
+                </tr>
             `;
-            tbody.appendChild(tr);
         }
+        tbody.innerHTML = rowsHtml || "<tr><td colspan='4' style='text-align:center;'>No reports found.</td></tr>";
     });
 }
 
@@ -1618,3 +1634,64 @@ window.suspendFromReport = function(userId, reportId) {
 
 // Trigger load on startup
 document.addEventListener("DOMContentLoaded", loadReports);
+
+window.deleteReportedComment = async function(postId, commentIndex, reportId) {
+    if (!confirm("Are you sure you want to delete this comment? This cannot be undone.")) return;
+
+    try {
+        const postRef = doc(db, "posts", postId);
+        const postSnap = await getDoc(postRef);
+
+        if (!postSnap.exists()) {
+            return alert("Post not found. It may have been deleted already.");
+        }
+
+        const postData = postSnap.data();
+        const comments = postData.comments || [];
+        
+        // 🔥 SAFETY FIX: Instead of just using the index, we find the specific comment object
+        const commentToDelete = comments[commentIndex];
+
+        if (commentToDelete) {
+            // 1. Remove the specific object from the array in the main post
+            await updateDoc(postRef, {
+                comments: arrayRemove(commentToDelete)
+            });
+
+            // 2. Automatically mark the report as resolved
+            await updateDoc(doc(db, "reports", reportId), {
+                status: "resolved",
+                resolvedAt: serverTimestamp(),
+                adminAction: "comment_deleted"
+            });
+
+            alert("Comment successfully removed from the post and report resolved.");
+        } else {
+            alert("Comment could not be located. It might have been deleted by the user already.");
+            // Resolve the report anyway since the content is gone
+            await updateDoc(doc(db, "reports", reportId), { status: "resolved" });
+        }
+    } catch (err) {
+        console.error("Delete comment error:", err);
+        alert("Action failed. Check console for details.");
+    }
+};
+
+window.viewReportContext = function(fileURL, title) {
+    if (!fileURL) return alert("File URL not found for this post.");
+
+    const pdfViewer = document.getElementById("pdf-viewer");
+    const viewModal = document.getElementById("view-modal");
+    const overlay = document.getElementById("overlay");
+
+    if (pdfViewer && viewModal) {
+        pdfViewer.src = fileURL;
+        
+        // Hide the Approve/Reject buttons since we are just viewing context
+        const modalActions = viewModal.querySelector(".view-actions");
+        if (modalActions) modalActions.style.display = "none";
+
+        viewModal.style.display = "flex";
+        overlay.style.display = "block";
+    }
+};
