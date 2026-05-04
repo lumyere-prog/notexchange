@@ -967,3 +967,70 @@ input:checked + .slider:before {
     opacity: 1;
     bottom: 100px;
 }
+
+
+
+
+.delete-modal {
+    position: fixed;
+    inset: 0;
+    display: none;
+    justify-content: center;
+    align-items: center;
+
+    /* 🔥 blur background */
+    background: rgba(0,0,0,0.4);
+    backdrop-filter: blur(6px);
+
+    z-index: 9999;
+}
+
+/* show modal */
+.delete-modal.active {
+    display: flex;
+}
+
+/* square box */
+.delete-box {
+    width: 320px;
+    background: #fff;
+    border-radius: 12px;
+    padding: 20px;
+    text-align: center;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+}
+
+/* input */
+.delete-box input {
+    width: 100%;
+    padding: 10px;
+    margin-top: 10px;
+    border-radius: 8px;
+    border: 1px solid #ddd;
+}
+
+/* buttons */
+.delete-actions {
+    display: flex;
+    gap: 10px;
+    margin-top: 15px;
+}
+
+.cancel-btn {
+    flex: 1;
+    padding: 10px;
+    background: #e5e7eb;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+}
+
+.delete-btn {
+    flex: 1;
+    padding: 10px;
+    background: #ef4444;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+}
