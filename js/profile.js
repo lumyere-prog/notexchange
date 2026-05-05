@@ -194,7 +194,9 @@ window.onclick = function(event) {
 const AVAILABLE_INTERESTS = [
     "Programming", "Web Dev", "Mobile Apps", "AI & ML", 
     "Data Science", "Design", "Mathematics", "Science", 
-    "History", "Business", "Art", "Writing"
+    "History", "Business", "Art", "Writing", "Selenophile", "Coffee", 
+    "67", "Triple T", "NoteXchange Fan", "Anubini Mummynini", "Matcha",
+    "Hiking", "Anime", "Gambling"
 ];
 
 let currentInterests = [];
@@ -279,7 +281,7 @@ window.toggleInterest = function(interest) {
         if (warning) warning.style.display = "none";
     } else {
         // If they click a new item, check the limit first
-        if (currentInterests.length >= 3) {
+        if (currentInterests.length >= 4) {
             if (warning) warning.style.display = "block";
             return;
         }
