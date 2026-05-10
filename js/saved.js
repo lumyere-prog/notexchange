@@ -139,19 +139,18 @@ function renderEmptyState() {
     if (!container) return;
     container.innerHTML = `
         <div class="empty" style="opacity: 0.3; text-align: center; margin-top: 100px;">
-            <div style="font-size: 56px;">🔖</div>
+            <div style="font-size: 56px;"><span class="material-icons" style="font-size: 64px;">bookmark_border</span></div>
             <h3 style="margin-top: 10px;">No saved notes yet</h3>
         </div>
     `;
 }
 
-    function renderCard(postId, post, container) {
+   function renderCard(postId, post, container) {
     const userId = currentUser ? currentUser.uid : null;
     const userVote = post.userVotes?.[userId] || 0;
     const upStyle = userVote === 1 ? `background: #DCFCE7; color: #10B981; border-radius: 50%;` : `color: #6B7280;`;
     const downStyle = userVote === -1 ? `background: #FEE2E2; color: #EF4444; border-radius: 50%;` : `color: #6B7280;`;
-    const pinStyle = `background: #461111; color: #461111; border-radius: 8px; padding: 6px;`;
-
+    
     // Identity Fallbacks
     const displayName = post.alias || post.username || post.name || "Anonymous";
     const displayPic = post.profilePic || "/photos/profile.jpg";
@@ -163,7 +162,11 @@ function renderEmptyState() {
 
     let interestsHTML = "";
     if (post.interests && Array.isArray(post.interests)) {
-        post.interests.forEach(tag => interestsHTML += window.getInterestPillHTML(tag));
+        post.interests.forEach(tag => {
+            if (typeof window.getInterestPillHTML === "function") {
+                interestsHTML += window.getInterestPillHTML(tag);
+            }
+        });
     }
 
     const card = document.createElement("div");
@@ -174,7 +177,6 @@ function renderEmptyState() {
 
     card.innerHTML = `
       <div class="note-preview">
-        <!-- DIRECT FLAG BUTTON FOR POSTS -->
         <div style="position: relative; display: flex; justify-content: space-between; align-items: flex-start;">
             <h3 class="note-title" style="margin:0; padding-right: 32px; word-break: break-word; font-size: 18px; font-weight: 800; color: #111827;">${post.title || "Untitled"}</h3>
             <div style="position: absolute; top: -5px; right: -5px;">
@@ -187,7 +189,6 @@ function renderEmptyState() {
         <p style="font-size: 12px; font-weight: 700; color: #111827; margin: 4px 0 12px 0; text-transform: uppercase;">${post.subject || "GENERAL"}</p>
         <div class="note-preview-text" id="desc-${postId}" data-fulldesc="${safeFullDesc}" style="white-space: pre-wrap; background: #F9FAFB; padding: 12px; border-radius: 12px; margin-bottom: 12px; font-size: 14px; color: #4B5563;">${displayDesc.replace(/</g, '&lt;').replace(/>/g, '&gt;')}${isLong ? `\n\n<span class="read-more-btn" style="color: #3B82F6; font-weight: bold; cursor: pointer; display: block; margin-top: 4px;" onclick="event.stopPropagation(); toggleReadMore('${postId}')">Read More</span>` : ""}</div>
         
-        <!-- NEW AUTHOR LAYOUT -->
         <div class="note-author" onclick="event.stopPropagation(); window.openUserCard ? window.openUserCard('${post.userId}') : null" style="display:flex; align-items: flex-start; gap:12px; margin-top: 12px; padding-top: 12px; border-top: 1px solid #F3F4F6; cursor: pointer;">
             <img src="${displayPic}" style="width: 40px; height: 40px; border-radius: 50%; object-fit: cover; flex-shrink: 0;">
             <div style="display:flex; flex-direction:column; gap:4px;">
@@ -198,12 +199,12 @@ function renderEmptyState() {
 
         <div class="note-footer" style="display: flex; justify-content: space-between; align-items: center; border-top: 1px solid #F3F4F6; padding-top: 12px; margin-top: 16px;">
           <div style="display: flex; align-items: center; gap: 4px;">
-            <button style="background:transparent; border:none; cursor:pointer; width:32px; height:32px; display:flex; align-items:center; justify-content:center; ${upStyle}" onclick="vote(event, '${postId}', 1)"><span class="material-icons" style="font-size: 18px;">arrow_upward</span></button>
-            <span style="font-size: 13px; font-weight: 700; padding: 0 4px; color: #4B5563;">${post.upvotes || 0} | ${post.downvotes || 0}</span>
-            <button style="background:transparent; border:none; cursor:pointer; width:32px; height:32px; display:flex; align-items:center; justify-content:center; ${downStyle}" onclick="vote(event, '${postId}', -1)"><span class="material-icons" style="font-size: 18px;">arrow_downward</span></button>
+            <button class="upvote-btn" style="background:transparent; border:none; cursor:pointer; width:32px; height:32px; display:flex; align-items:center; justify-content:center; ${upStyle}" onclick="vote(event, '${postId}', 1)"><span class="material-icons" style="font-size: 18px;">arrow_upward</span></button>
+            <span class="vote-count" style="font-size: 13px; font-weight: 700; padding: 0 4px; color: #4B5563;">${post.upvotes || 0} | ${post.downvotes || 0}</span>
+            <button class="downvote-btn" style="background:transparent; border:none; cursor:pointer; width:32px; height:32px; display:flex; align-items:center; justify-content:center; ${downStyle}" onclick="vote(event, '${postId}', -1)"><span class="material-icons" style="font-size: 18px;">arrow_downward</span></button>
           </div>
           <div style="display: flex; align-items: center; gap: 4px;">
-              <button onclick="toggleFav(event, this, '${postId}')" style="background:none; border:none; cursor:pointer; display:flex; align-items:center; justify-content:center; width:32px; height:32px; ${pinStyle}">📌</button>
+              <button onclick="toggleFav(event, this, '${postId}')" style="background:transparent; border:none; box-shadow:none; cursor:pointer; display:flex; padding:6px;"><span class="material-icons" style="font-size: 24px; color: #461111;">bookmark</span></button>
               <button onclick="event.stopPropagation(); openSavedModal('${postId}', true)" style="background:none; border:none; cursor:pointer; color: #6B7280; display:flex; padding:6px;"><span class="material-icons" style="font-size:20px;">chat_bubble_outline</span></button>
               <button onclick="event.stopPropagation(); openFileModal('${post.fileURL}', '${post.title}')" style="background: white; color: #111827; border: 1px solid #E5E7EB; padding: 8px 16px; border-radius: 50px; font-weight: 800; cursor: pointer; display: flex; align-items: center; gap: 4px; font-size: 13px;"><span class="material-icons" style="font-size: 18px;">description</span> Open</button>
           </div>
@@ -233,11 +234,9 @@ async function openSavedModal(postId, showComments = false){
     const isSaved = globalSavedPosts.includes(postId);
     const upStyle = userVote === 1 ? `background: #DCFCE7; color: #10B981; border-radius: 50%;` : `color: #6B7280;`;
     const downStyle = userVote === -1 ? `background: #FEE2E2; color: #EF4444; border-radius: 50%;` : `color: #6B7280;`;
-    const pinStyle = isSaved ? `background: #461111; color: #461111; border-radius: 8px; padding: 6px;` : `color: #6B7280;`;
 
     if (showComments) openComments.add(postId);
 
-    // 🔥 3-DOT REPORT MENU ADDED HERE
     let commentsHTML = (post.comments || []).map((c, index) => `
         <div class="comment" style="position: relative; background: #F9FAFB; padding: 12px; padding-right: 30px; border-radius: 8px; margin-bottom: 8px;">
             <strong style="font-size: 12px; color: #111827;">${c.username}</strong>
@@ -262,11 +261,13 @@ async function openSavedModal(postId, showComments = false){
         <div class="note-footer" style="margin-top: 24px; display: flex; justify-content: space-between; align-items: center; border-top: 1px solid #F3F4F6; padding-top: 16px;">
             <div style="display: flex; align-items: center; gap: 4px;">
               <button class="upvote-btn" style="background:transparent; border:none; cursor:pointer; width:34px; height:34px; display:flex; align-items:center; justify-content:center; ${upStyle}"><span class="material-icons" style="font-size: 20px;">arrow_upward</span></button>
-              <span style="font-size: 13px; font-weight: 700; color: #4B5563;">${post.upvotes || 0} | ${post.downvotes || 0}</span>
+              <span class="vote-count" style="font-size: 13px; font-weight: 700; color: #4B5563;">${post.upvotes || 0} | ${post.downvotes || 0}</span>
               <button class="downvote-btn" style="background:transparent; border:none; cursor:pointer; width:34px; height:34px; display:flex; align-items:center; justify-content:center; ${downStyle}"><span class="material-icons" style="font-size: 20px;">arrow_downward</span></button>
             </div>
             <div style="display: flex; align-items: center; gap: 8px;">
-                <button onclick="toggleFav(event, this, '${postId}')" style="background:none; border:none; cursor:pointer; display:flex; align-items:center; justify-content:center; width:34px; height:34px; ${pinStyle}">📌</button>
+                <button onclick="toggleFav(event, this, '${postId}')" style="background:transparent; border:none; box-shadow:none; cursor:pointer; display:flex; padding:6px;">
+                    <span class="material-icons" style="font-size: 24px; color: ${isSaved ? '#461111' : '#6B7280'};">${isSaved ? 'bookmark' : 'bookmark_border'}</span>
+                </button>
                 <button onclick="toggleComments(event, this, '${postId}')" style="background:none; border:none; cursor:pointer; color: #6B7280; display:flex; padding:6px;"><span class="material-icons" style="font-size:22px;">chat_bubble_outline</span></button>
                 <button onclick="openFileModal('${post.fileURL}', '${post.title}')" style="background: white; color: #111827; border: 1px solid #E5E7EB; padding: 10px 20px; border-radius: 50px; font-weight: 800; cursor: pointer; display: flex; align-items: center; gap: 6px; font-size: 14px;"><span class="material-icons" style="font-size: 18px; color: #111827;">description</span> Open</button>
             </div>
@@ -286,9 +287,8 @@ async function openSavedModal(postId, showComments = false){
     
     modal.style.display = "flex";
     document.body.style.overflow = "hidden"; 
-    document.documentElement.style.overflow = "hidden"; // 🔥 Hard Freeze!
+    document.documentElement.style.overflow = "hidden"; 
 
-    // Force the 'X' button to trigger our unfreeze function
     const closeBtn = modal.querySelector(".close-btn");
     if (closeBtn) closeBtn.onclick = window.closeModal;
 }
@@ -705,6 +705,18 @@ window.openUserCard = async function(targetUserId) {
     } catch (error) { 
         console.error("Error fetching user data:", error); 
         document.getElementById("uc-alias").textContent = "Error loading user";
+    }
+};
+
+window.closeUserCard = function() {
+    const modal = document.getElementById("userCardModal");
+    if (modal) modal.style.display = "none";
+    
+    // 🔥 SMART UNFREEZE: Only unfreeze if the main Note Modal isn't open
+    const mainNoteModal = document.getElementById("postModal");
+    if (!mainNoteModal || mainNoteModal.style.display !== "flex") {
+        document.body.style.overflow = ""; 
+        document.documentElement.style.overflow = ""; 
     }
 };
 

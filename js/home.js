@@ -110,22 +110,30 @@ if (currentUser?.uid) {
     });
 }
 
-// 🔥 3. SYNC FUNCTION: Finds all buttons and fixes their icons
-function syncAllSaveButtons() {
-    const saveButtons = document.querySelectorAll(".fav-btn");
-    saveButtons.forEach(btn => {
-        const postId = btn.getAttribute("data-postid");
-        if (!postId) return;
+        function syncAllSaveButtons() {
+            const saveButtons = document.querySelectorAll(".fav-btn");
+            saveButtons.forEach(btn => {
+                const postId = btn.getAttribute("data-postid");
+                if (!postId) return;
 
-        if (globalSavedPosts.includes(postId)) {
-            btn.classList.add("saved");
-            btn.innerText = "📌";
-        } else {
-            btn.classList.remove("saved");
-            btn.innerText = "🔖";
+                // Force completely transparent background to remove the box
+                btn.style.background = "transparent";
+                btn.style.border = "none";
+                btn.style.boxShadow = "none";
+                btn.style.display = "flex";
+                btn.style.padding = "6px";
+                btn.style.cursor = "pointer";
+
+                // 🔥 IMPORTANT: We remove the 'saved' class so your CSS doesn't add a pink background
+                btn.classList.remove("saved");
+
+                if (globalSavedPosts.includes(postId)) {
+                    btn.innerHTML = '<span class="material-icons" style="font-size: 24px; color: #461111;">bookmark</span>'; 
+                } else {
+                    btn.innerHTML = '<span class="material-icons" style="font-size: 24px; color: #6B7280;">bookmark_border</span>'; 
+                }
+            });
         }
-    });
-}
 
 // ===========================================
 // 🔥 THE COMPLETE PH TIME CHECK-IN SYNC
@@ -539,10 +547,12 @@ if (post.comments && post.comments.length > 0) {
         <span id="voteCount" class="vote-count">${post.upvotes || 0} |  ${post.downvotes || 0}</span>
         <button class="vote-btn downvote-btn ${downClass}"><span class="material-icons">arrow_downward</span></button>
       </div>
-      <div style="display: flex; align-items: center; gap: 2px;">
-          <button class="fav-btn" data-postid="${postId}" onclick="toggleFav(event, this, '${postId}')">🔖</button>
-          <button class="comment-icon-btn" onclick="toggleComments(event, this, '${postId}')"><span class="material-icons">chat_bubble_outline</span></button>
-          <button class="open-file-btn" onclick="event.stopPropagation(); openFileModal('${post.fileURL}', '${post.title}')"><span class="material-icons" style="font-size: 18px;">description</span> Open</button>
+      <div style="display: flex; align-items: center; gap: 4px;">
+          <button class="fav-btn" data-postid="${postId}" onclick="toggleFav(event, this, '${postId}')" style="background:transparent; border:none; cursor:pointer; display:flex; padding:6px;">
+              <span class="material-icons" style="font-size: 24px; color: #6B7280;">bookmark_border</span>
+          </button>
+          <button class="comment-icon-btn" onclick="toggleComments(event, this, '${postId}')" style="background:transparent; border:none; cursor:pointer; display:flex; padding:6px; color:#6B7280;"><span class="material-icons" style="font-size: 24px;">chat_bubble_outline</span></button>
+          <button class="open-file-btn" onclick="event.stopPropagation(); openFileModal('${post.fileURL}', '${post.title}')" style="background: white; color: #111827; border: 1px solid #E5E7EB; padding: 8px 16px; border-radius: 50px; font-weight: 800; cursor: pointer; display: flex; align-items: center; gap: 4px; font-size: 13px; margin-left: 4px;"><span class="material-icons" style="font-size: 18px;">description</span> Open</button>
       </div>
     </div>
     <div class="comment-section" style="display: ${openComments.has(postId) ? 'block' : 'none'};" onclick="event.stopPropagation()">
@@ -630,13 +640,17 @@ async function toggleFav(event, btn, postId) {
   // Check the global array, not just the button class
   const isCurrentlySaved = globalSavedPosts.includes(postId);
 
+    // Force transparent background to prevent CSS flashing
+  btn.style.background = "transparent";
+  btn.style.border = "none";
+
   // Optimistic Visual Update
   if (isCurrentlySaved) {
     btn.classList.remove("saved");
-    btn.innerText = "🔖";
+    btn.innerHTML = '<span class="material-icons" style="font-size: 24px; color: #6B7280;">bookmark_border</span>';
   } else {
     btn.classList.add("saved");
-    btn.innerText = "📌";
+    btn.innerHTML = '<span class="material-icons" style="font-size: 24px; color: #111827;">bookmark</span>';
   }
 
   try {
