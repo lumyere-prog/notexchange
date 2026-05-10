@@ -180,6 +180,11 @@
                     <span>Legal & Policies</span>
                     <span class="material-icons">chevron_right</span>
                 </div>
+                <div class="settings-row" onclick="openDeleteAccountModal()">
+                    <span style="color: #ff4d4d;">Delete Account</span>
+                    <span class="material-icons" style="color: #ff4d4d;">delete_forever</span>
+                </div>
+                            
             </div>
 
         </div>
@@ -222,39 +227,74 @@
                         <p class="notif-sub">Major platform and academic alerts</p>
                     </div>
                     <label class="switch">
-                        <input type="checkbox" checked>
+                        <input type="checkbox" id="systemUpdates">
                         <span class="slider"></span>
                     </label>
                 </div>
             </div>
 
-            <div class="notif-section">
-                <h4 class="notif-category">CONTENT AND SUBJECT ALERTS</h4>
-                
-                <div class="notif-row">
-                    <div class="notif-text">
-                        <p class="notif-title">Note Approvals</p>
-                        <p class="notif-sub">When your notes is verified for sharing</p>
-                    </div>
-                    <label class="switch">
-                        <input type="checkbox" checked>
-                        <span class="slider"></span>
-                    </label>
-                </div>
+                    <div class="notif-section">
+                        <h4 class="notif-category">CONTENT AND SUBJECT ALERTS</h4>
+                        
+                        <div class="notif-row">
+                            <div class="notif-text">
+                                <p class="notif-title">Note Approvals</p>
+                                <p class="notif-sub">When your notes is verified for sharing</p>
+                            </div>
+                            <label class="switch">
+                                <input type="checkbox" id="noteApprovals">
+                                <span class="slider"></span>
+                            </label>
+                        </div>
 
-                <div class="notif-row">
-                    <div class="notif-text">
-                        <p class="notif-title">Note Ratings & Comments</p>
-                        <p class="notif-sub">Review Notifications</p>
+                        <div class="notif-row">
+                            <div class="notif-text">
+                                <p class="notif-title">Note Ratings & Comments</p>
+                                <p class="notif-sub">Review Notifications</p>
+                            </div>
+                            <label class="switch">
+                                <input type="checkbox" id="noteInteractions">
+                                <span class="slider"></span>
+                            </label>
+                        </div>
                     </div>
-                    <label class="switch">
-                        <input type="checkbox" checked>
-                        <span class="slider"></span>
-                    </label>
-                </div>
-            </div>
-        </div>
+        </div>  
     </div>
+<div id="deleteAccountModal" class="delete-modal hidden">
+
+    <div class="delete-box">
+
+        <h3>Delete Account</h3>
+
+        <p>This action is permanent.</p>
+<!-- 👇 Username display (copy-friendly) -->
+        <div class="username-box">
+            <span>Type your username to confirm:</span>
+            <p id="displayUsername" class="username-value" style="color: #9CA3AF;"></p>
+        </div>
+
+        <input 
+            type="text" 
+            id="deleteUsernameInput"
+            placeholder="Enter username"
+        >
+
+        <div class="delete-actions">
+            <button onclick="closeDeleteAccountModal()" class="cancel-btn">
+                Cancel
+            </button>
+
+            <button onclick="confirmDeleteAccount()" class="delete-btn">
+                Delete
+            </button>
+        </div>
+
+    </div>
+
+
+
+
+</div>
 
 <!-- Report Comment Modal -->
 <div id="reportModal" class="modal-overlay">
@@ -310,6 +350,7 @@
 
 
 <script type="module" src="/js/profile-stats.js"></script>
+<script type="module" src="/js/notification-settings.js"></script>
 <script type="module" src="/js/auth-state.js"></script>
 <script type="module" src="/js/profile.js"></script>
 <script type="module" src="js/logout.js"></script>

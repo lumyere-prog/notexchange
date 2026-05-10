@@ -1,6 +1,7 @@
-import { db } from "/firebase/firebase-client.js";
+import { auth, db } from "/firebase/firebase-client.js";
 import { getDoc, getDocs, onSnapshot,collection, doc, deleteDoc, addDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 import { addPoints } from "/js/points.js";
+import { deleteUser } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 import {
   query,
   limit,
@@ -193,7 +194,9 @@ window.onclick = function(event) {
 const AVAILABLE_INTERESTS = [
     "Programming", "Web Dev", "Mobile Apps", "AI & ML", 
     "Data Science", "Design", "Mathematics", "Science", 
-    "History", "Business", "Art", "Writing"
+    "History", "Business", "Art", "Writing", "Selenophile", "Coffee", 
+    "67", "Triple T", "NoteXchange Fan", "Anubini Mummynini", "Matcha",
+    "Hiking", "Anime", "Gambling"
 ];
 
 let currentInterests = [];
@@ -278,7 +281,7 @@ window.toggleInterest = function(interest) {
         if (warning) warning.style.display = "none";
     } else {
         // If they click a new item, check the limit first
-        if (currentInterests.length >= 3) {
+        if (currentInterests.length >= 4) {
             if (warning) warning.style.display = "block";
             return;
         }
@@ -375,6 +378,54 @@ window.handleLogout = function() {
 let currentLegalPdf = null; 
 let currentLegalPageNumber = 1;
 let isLegalPageRendering = false;
+
+function openDeleteAccountModal() {
+    const user = JSON.parse(localStorage.getItem("user"));
+    if (user) {
+        document.getElementById("displayUsername").innerText = user.name;
+    }
+    document.getElementById("deleteAccountModal").classList.add("active");
+}
+
+function closeDeleteAccountModal() {
+    document.getElementById("deleteAccountModal").style.display = "none";
+}
+
+async function confirmDeleteAccount() {
+
+    const input = document.getElementById("deleteUsernameInput").value.trim();
+    const user = JSON.parse(localStorage.getItem("user"));
+
+    if (!user) return;
+
+    if (input !== user.name) {
+        alert("Username does not match.");
+        return;
+    }
+
+    try {
+        // delete Firestore user
+        await deleteDoc(doc(db, "user", user.uid));
+
+        // delete auth user
+        await deleteUser(auth.currentUser);
+
+        localStorage.removeItem("user");
+
+        window.location.href = "login.html";
+
+    } catch (err) {
+        console.error(err);
+
+        if (err.code === "auth/requires-recent-login") {
+            alert("Please log in again before deleting your account.");
+        } else {
+            alert("Failed to delete account.");
+        }
+    }
+}
+
+
 
 // 1. Dedicated function to render a specific page
 async function renderLegalPage(pageNum) {
@@ -518,6 +569,8 @@ document.addEventListener("DOMContentLoaded", () => {
 // =========================================
 // NOTIFICATIONS: SLIDE ANIMATION LOGIC
 // =========================================
+
+
 
 window.openNotifications = function() {
     const modal = document.getElementById("notificationsModal");
@@ -1176,3 +1229,7 @@ window.toggleReadMore = function(postId) {
         descEl.dataset.expanded = "true";
     }
 };
+
+window.openDeleteAccountModal = openDeleteAccountModal;
+window.closeDeleteAccountModal = closeDeleteAccountModal;
+window.confirmDeleteAccount = confirmDeleteAccount;
