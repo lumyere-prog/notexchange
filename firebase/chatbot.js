@@ -53,10 +53,11 @@ router.post("/", async (req, res) => {
     /* =========================
        HISTORY
        ========================= */
-    const history = sessions[uid]
-      .slice(-10)
-      .map((m) => `${m.role === "user" ? "User" : "AI"}: ${m.text}`)
-      .join("\n");
+     const history = sessions[uid]
+  .slice(-10)
+  .filter(m => m && m.text) // 🔥 prevents broken/undefined entries
+  .map(m => `${m.role === "user" ? "User" : "AI"}: ${String(m.text).trim()}`)
+  .join("\n");
 
     console.log("🤖 Sending request to Gemini...");
 
@@ -64,7 +65,7 @@ router.post("/", async (req, res) => {
     const apiKey = GEMINI_API_KEY.value();
 
     const response = await axios.post(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemma-3-1b-it:generateContent?key=${apiKey}`,
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent?key=${apiKey}`,
       {
         contents: [
           {

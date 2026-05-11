@@ -65,7 +65,7 @@ router.post("/", async (req, res) => {
 const apiKey = GEMINI_API_KEY.value();
 
 const response = await axios.post(
-  `https://generativelanguage.googleapis.com/v1beta/models/gemma-3-1b-it:generateContent?key=${apiKey}`,
+  `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent?key=${apiKey}`,
   {
     contents: [
       {

@@ -194,9 +194,7 @@ window.onclick = function(event) {
 const AVAILABLE_INTERESTS = [
     "Programming", "Web Dev", "Mobile Apps", "AI & ML", 
     "Data Science", "Design", "Mathematics", "Science", 
-    "History", "Business", "Art", "Writing", "Selenophile", "Coffee", 
-    "67", "Triple T", "NoteXchange Fan", "Anubini Mummynini", "Matcha",
-    "Hiking", "Anime", "Gambling"
+    "History", "Business", "Art", "Writing"
 ];
 
 let currentInterests = [];
