@@ -958,35 +958,36 @@ async function submitComment(event, postId, btn) {
   const user = JSON.parse(localStorage.getItem("user"));
   if (!user) return alert("You must be logged in to comment!");
 
-// 🔥 ADMIN RESTRICTION CHECK (Gets fresh data from Firestore)
+  // 🔥 1. Pull fresh data from database (guarantees we get the latest Alias)
   const userRef = doc(db, "user", user.uid);
   const userSnap = await getDoc(userRef);
-  if (userSnap.exists()) {
-      const userData = userSnap.data();
-      
-      // Check Full Lockdown OR specific Comment Block
-      if (userData.state === "suspended" || userData.restrictions?.commentBlock === true) {
-          const restrictionMsg = document.getElementById("restrictionMessage");
-          const restrictionModalWrapper = document.getElementById("restrictionModalWrapper");
+  const userData = userSnap.exists() ? userSnap.data() : {};
+  
+  // Check Full Lockdown OR specific Comment Block
+  if (userData.state === "suspended" || userData.restrictions?.commentBlock === true) {
+      const restrictionMsg = document.getElementById("restrictionMessage");
+      const restrictionModalWrapper = document.getElementById("restrictionModalWrapper");
 
-          if (restrictionMsg && restrictionModalWrapper) {
-              restrictionMsg.textContent = "Your account is restricted from commenting. Reason: " + (userData.suspendReason || "Admin action.");
-              restrictionModalWrapper.style.display = "flex";
-          }
-          
-          const input = btn.previousElementSibling;
-          if (input) input.value = ""; // Clear their typed text
-          return; // Stop the comment submission
+      if (restrictionMsg && restrictionModalWrapper) {
+          restrictionMsg.textContent = "Your account is restricted from commenting. Reason: " + (userData.suspendReason || "Admin action.");
+          restrictionModalWrapper.style.display = "flex";
       }
+      
+      const input = btn.previousElementSibling;
+      if (input) input.value = ""; 
+      return; 
   }
 
   const input = btn.previousElementSibling;
   const text = input.value.trim();
   if (text === "") return;
 
+  // 🔥 2. Bulletproof Alias Fallback
+  const finalName = userData.alias || user.alias || userData.username || user.username || user.name || "Anonymous";
+
   const newComment = {
     uid: user.uid,
-    username: user.username || user.name || "Anonymous",
+    username: finalName,
     text: text,
     timestamp: new Date().toISOString()
   };
@@ -1002,11 +1003,9 @@ async function submitComment(event, postId, btn) {
 
     input.value = "";
 
-    // 🔥 GET POST DATA (IMPORTANT)
     const snap = await getDoc(postRef);
     const post = snap.data();
 
-    // 🔥 SEND NOTIFICATION
     await sendNotification({
       post: {
         id: postId,
@@ -1015,20 +1014,37 @@ async function submitComment(event, postId, btn) {
       },
       currentUser: {
         uid: user.uid,
-        name: user.name,
+        name: finalName,
         photo: user.photo
       },
       type: "comment"
     });
 
-    // refresh modal if needed
-    if (btn.closest('#modalBody')) openPost(postId);
+    // 🔥 LIVE UPDATE: Instantly inject the ALIAS comment into the UI
+    const newCommentHTML = `
+        <div class="comment" style="position: relative; padding-right: 30px;">
+            <strong style="font-size: 12px; color: #111827;">${newComment.username}</strong>
+            <div style="font-size: 14px; margin-top: 2px;">${newComment.text}</div>
+        </div>
+    `;
+
+    // 1. Instantly update the Modal (if open)
+    const modalList = document.querySelector('#modalBody .comments-list');
+    if (modalList && btn.closest('#modalBody')) {
+        modalList.insertAdjacentHTML('beforeend', newCommentHTML);
+        modalList.scrollTop = modalList.scrollHeight; // Scroll to bottom
+    }
+
+    // 2. Instantly update the Background Feed Card
+    const cardList = document.querySelector(`.note-card[data-postid="${postId}"] .comments-list`);
+    if (cardList) {
+        cardList.insertAdjacentHTML('beforeend', newCommentHTML);
+    }
 
   } catch (error) {
     console.error("Error posting comment:", error);
   }
 }
-
 window.submitComment = submitComment;
 
 function updateNotificationCount(count){

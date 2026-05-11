@@ -437,29 +437,8 @@ window.toggleComments = function(event, btn, postId) {
     }
 };
 
-window.submitComment = async function(event, postId, btn) {
-    const input = btn.previousElementSibling;
-    const text = input.value.trim();
-    if (!text || !currentUser) return;
 
-    const postRef = doc(db, "posts", postId);
-    try {
-        await updateDoc(postRef, { 
-            comments: arrayUnion({ 
-                uid: currentUser.uid,
-                username: currentUser.username || "Anonymous", 
-                text: text, 
-                timestamp: new Date().toISOString() 
-            }) 
-        });
-        input.value = ""; 
-        openSavedModal(postId); 
-    } catch (error) { console.error(error); }
-};
 
-// ==========================================
-// 🔥 PDF.JS CANVAS RENDERER (DESIGN MATCHED)
-// ==========================================
 // ==========================================
 // 🔥 PDF.JS CANVAS RENDERER WITH DOWNLOAD
 // ==========================================
@@ -832,29 +811,27 @@ document.addEventListener('click', (e) => {
 window.submitComment = async function(event, postId, btn) {
     if (event) event.stopPropagation();
     
-    const user = JSON.parse(localStorage.getItem("user"));
-    if (!user?.uid) return alert("You must be logged in to comment!");
+    const authUser = JSON.parse(localStorage.getItem("user"));
+    if (!authUser?.uid) return alert("You must be logged in to comment!");
 
-    // 🔥 1. ADMIN RESTRICTION CHECK (Gets fresh data from Firestore)
-    const userRef = doc(db, "user", user.uid);
+    // 🔥 1. PULL FRESH DATA (For Admin Check & to guarantee we get the latest Alias)
+    const userRef = doc(db, "user", authUser.uid);
     const userSnap = await getDoc(userRef);
-    if (userSnap.exists()) {
-        const userData = userSnap.data();
-        
-        // Check Full Lockdown OR specific Comment Block
-        if (userData.state === "suspended" || userData.restrictions?.commentBlock === true) {
-            const restrictionMsg = document.getElementById("restrictionMessage");
-            const restrictionModalWrapper = document.getElementById("restrictionModalWrapper");
+    const userData = userSnap.exists() ? userSnap.data() : {};
+    
+    // Check Full Lockdown OR specific Comment Block
+    if (userData.state === "suspended" || userData.restrictions?.commentBlock === true) {
+        const restrictionMsg = document.getElementById("restrictionMessage");
+        const restrictionModalWrapper = document.getElementById("restrictionModalWrapper");
 
-            if (restrictionMsg && restrictionModalWrapper) {
-                restrictionMsg.textContent = "Your account is restricted from commenting. Reason: " + (userData.suspendReason || "Admin action.");
-                restrictionModalWrapper.style.display = "flex";
-            }
-            
-            const input = btn.previousElementSibling;
-            if (input) input.value = ""; 
-            return; 
+        if (restrictionMsg && restrictionModalWrapper) {
+            restrictionMsg.textContent = "Your account is restricted from commenting. Reason: " + (userData.suspendReason || "Admin action.");
+            restrictionModalWrapper.style.display = "flex";
         }
+        
+        const input = btn.previousElementSibling;
+        if (input) input.value = ""; 
+        return; 
     }
 
     // 2. PROCEED WITH SAVING COMMENT
@@ -862,23 +839,25 @@ window.submitComment = async function(event, postId, btn) {
     const text = input.value.trim();
     if (!text) return;
 
+    // 🔥 3. THE BULLETPROOF ALIAS FALLBACK
+    const finalName = userData.alias || authUser.alias || userData.username || authUser.username || authUser.name || "Anonymous";
+
     const postRef = doc(db, "posts", postId);
     try {
         await updateDoc(postRef, { 
             comments: arrayUnion({ 
-                uid: user.uid,
-                username: user.username || user.name || "Anonymous", 
+                uid: authUser.uid,
+                username: finalName, 
                 text: text, 
                 timestamp: new Date().toISOString() 
             }) 
         });
         input.value = ""; 
-        openSavedModal(postId); // Refresh the modal to show the new comment
+        openSavedModal(postId, true); // Refresh the modal to show the new comment
     } catch (error) { 
         console.error("Comment failed:", error); 
     }
 };
-
 
 window.toggleReadMore = function(postId) {
     const descEl = document.getElementById(`desc-${postId}`);
